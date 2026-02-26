@@ -6,8 +6,42 @@
     <title>8th Grade Science Pro</title>
     <style>
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin-bottom: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        
+        /* --- DRAMATIC LANDING PAGE --- */
+        #landingPage {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; color: white; text-align: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+        .welcome-title {
+            font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px;
+            animation: reveal 1.5s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+        .start-btn {
+            background: var(--primary); color: white; border: none; padding: 18px 36px;
+            font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+            transition: transform 0.3s, background 0.3s;
+            animation: fadeInUp 2s ease;
+        }
+        .start-btn:hover { transform: scale(1.05); background: #3b82f6; }
+        
+        @keyframes reveal {
+            0% { opacity: 0; transform: translateY(30px); filter: blur(10px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        @keyframes fadeInUp {
+            0%, 50% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- MAIN APP STYLING --- */
+        .app-container { padding: 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; }
+        .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; margin-bottom: 20px; }
         .hidden { display: none !important; }
         
         /* Flashcards */
@@ -36,8 +70,8 @@
 
         /* UI */
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1rem; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .mode-toggle { background: #64748b; margin-bottom: 20px; }
+        .main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .mode-toggle { background: #64748b; margin-bottom: 20px; width: fit-content; padding: 8px 16px; font-size: 0.85rem; }
         .study-tabs { display: flex; gap: 5px; margin-top: 15px; flex-wrap: wrap; }
         .study-tabs button { background: #e2e8f0; color: #475569; padding: 10px; font-size: 0.85rem; flex: 1 1 45%; }
         .study-tabs button.active { background: var(--primary); color: white; }
@@ -46,76 +80,83 @@
 </head>
 <body>
 
-    <h1>Science Vocab Master</h1>
-    <div id="syncStatus">Syncing with Teacher's Sheet...</div>
-    
-    <button class="mode-toggle" onclick="protectedToggle()">Switch to Manager / Study Mode</button>
-
-    <div id="studyView" class="panel">
-        <label><strong>Select Unit:</strong></label>
-        <select id="classDropdown" onchange="loadClass(this.value)"></select>
-        
-        <div class="study-tabs">
-            <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
-            <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
-            <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
-            <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
-        </div>
-
-        <hr>
-
-        <div id="listMode">
-            <div id="fullListArea"></div>
-            <div id="historyArea" style="margin-top:20px; background:#f8fafc; padding:15px; border-radius:8px;">
-                <h4 style="margin:0 0 10px 0;">Your Session Performance:</h4>
-                <div id="historyLog">No attempts yet.</div>
-            </div>
-        </div>
-        
-        <div id="flashMode" class="hidden">
-            <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
-                <div class="inner"><div class="front" id="displayTerm"></div><div class="back" id="displayDef"></div></div>
-            </div>
-            <div style="display:flex; gap:10px;"><button onclick="changeCard(-1)">Previous</button><button onclick="changeCard(1)">Next</button></div>
-        </div>
-
-        <div id="quizMode" class="hidden">
-            <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom:10px;">Score: 0/0</div>
-            <div id="quizContent">
-                <div id="quizQuestion" style="font-weight:bold; font-size:1.2rem; margin-bottom:15px;"></div>
-                <div id="quizOptions"></div>
-                <button id="nextQuizBtn" class="hidden" onclick="renderQuiz()" style="margin-top:15px; background:var(--accent);">Next Question</button>
-            </div>
-            <div id="quizEnd" class="hidden end-screen"></div>
-        </div>
-
-        <div id="matchMode" class="hidden">
-            <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom:5px;">Accuracy: 0%</div>
-            <div id="matchContent">
-                <div class="match-container" id="matchContainer"></div>
-            </div>
-            <div id="matchEnd" class="hidden end-screen"></div>
-        </div>
+    <div id="landingPage">
+        <h1 class="welcome-title">Welcome to Vocabulary Sojourn</h1>
+        <button class="start-btn" onclick="enterApp()">Click Here to Start Your Journey to Vocabulary Mastery</button>
     </div>
 
-    <div id="adminView" class="panel hidden">
-        <h3>Manager Mode</h3>
-        <input type="text" id="newClassName" placeholder="New List Name">
-        <button onclick="addClass()" style="background: var(--accent);">Create List</button>
-        <hr>
-        <select id="adminDropdown" onchange="loadClass(this.value)"></select>
-        <input type="text" id="newTerm" placeholder="Word">
-        <input type="text" id="newDef" placeholder="Definition">
-        <input type="text" id="newImg" placeholder="Image URL (Optional)">
-        <button onclick="addWord()">Add Word</button>
-        <div id="adminWordList" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;"></div>
+    <div class="app-container">
+        <h1>Science Vocab Master</h1>
+        <div id="syncStatus">Syncing with Teacher's Sheet...</div>
+        
+        <button class="mode-toggle main-btn" onclick="protectedToggle()">Switch to Manager / Study Mode</button>
+
+        <div id="studyView" class="panel">
+            <label><strong>Select Unit:</strong></label>
+            <select id="classDropdown" onchange="loadClass(this.value)"></select>
+            
+            <div class="study-tabs">
+                <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
+                <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
+                <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
+                <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
+            </div>
+
+            <hr>
+
+            <div id="listMode">
+                <div id="fullListArea"></div>
+                <div id="historyArea" style="margin-top:20px; background:#f8fafc; padding:15px; border-radius:8px;">
+                    <h4 style="margin:0 0 10px 0;">Your Session Performance:</h4>
+                    <div id="historyLog">No attempts yet.</div>
+                </div>
+            </div>
+            
+            <div id="flashMode" class="hidden">
+                <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
+                    <div class="inner"><div class="front" id="displayTerm"></div><div class="back" id="displayDef"></div></div>
+                </div>
+                <div style="display:flex; gap:10px;"><button class="main-btn" onclick="changeCard(-1)">Previous</button><button class="main-btn" onclick="changeCard(1)">Next</button></div>
+            </div>
+
+            <div id="quizMode" class="hidden">
+                <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom:10px;">Score: 0/0</div>
+                <div id="quizContent">
+                    <div id="quizQuestion" style="font-weight:bold; font-size:1.2rem; margin-bottom:15px;"></div>
+                    <div id="quizOptions"></div>
+                    <button id="nextQuizBtn" class="hidden main-btn" onclick="renderQuiz()" style="margin-top:15px; background:var(--accent);">Next Question</button>
+                </div>
+                <div id="quizEnd" class="hidden end-screen"></div>
+            </div>
+
+            <div id="matchMode" class="hidden">
+                <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom:5px;">Accuracy: 0%</div>
+                <div id="matchContent">
+                    <div class="match-container" id="matchContainer"></div>
+                </div>
+                <div id="matchEnd" class="hidden end-screen"></div>
+            </div>
+        </div>
+
+        <div id="adminView" class="panel hidden">
+            <h3>Manager Mode</h3>
+            <input type="text" id="newClassName" placeholder="New List Name">
+            <button class="main-btn" onclick="addClass()" style="background: var(--accent);">Create List</button>
+            <hr>
+            <select id="adminDropdown" onchange="loadClass(this.value)"></select>
+            <input type="text" id="newTerm" placeholder="Word">
+            <input type="text" id="newDef" placeholder="Definition">
+            <input type="text" id="newImg" placeholder="Image URL (Optional)">
+            <button class="main-btn" onclick="addWord()">Add Word</button>
+            <div id="adminWordList" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;"></div>
+        </div>
     </div>
 
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
         const ADMIN_PASS = "science123";
 
-        let data = JSON.parse(localStorage.getItem('science_v24')) || {};
+        let data = JSON.parse(localStorage.getItem('science_v25')) || {};
         let currentClass = "";
         let cardIdx = 0;
         let currentMode = 'list';
@@ -125,6 +166,12 @@
 
         let matchCorrect = 0, matchTotal = 0, matchGoal = 0;
         let performanceLog = [];
+
+        function enterApp() {
+            const lp = document.getElementById('landingPage');
+            lp.style.opacity = '0';
+            setTimeout(() => lp.classList.add('hidden'), 800);
+        }
 
         window.onload = fetchTeacherData;
 
@@ -173,7 +220,10 @@
 
         function setStudyMode(mode) {
             currentMode = mode;
-            ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
+            ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => {
+                const el = document.getElementById(t);
+                if(el) el.classList.remove('active');
+            });
             const tabEl = document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1));
             if(tabEl) tabEl.classList.add('active');
             ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -220,7 +270,7 @@
             document.getElementById('quizContent').classList.add('hidden');
             const pct = Math.round((quizCorrect / quizTotal) * 100);
             const msg = pct >= 80 ? "&#10024; Well Done!" : "&#128218; Keep Practicing!";
-            document.getElementById('quizEnd').innerHTML = `<h3>${msg}</h3><p>Final Score: ${pct}%</p><button onclick="startQuiz()">Try Again</button>`;
+            document.getElementById('quizEnd').innerHTML = `<h3>${msg}</h3><p>Final Score: ${pct}%</p><button class="main-btn" onclick="startQuiz()">Try Again</button>`;
             document.getElementById('quizEnd').classList.remove('hidden');
             logPerformance("Quiz", `${quizCorrect}/${quizTotal} (${pct}%)`);
         }
@@ -232,7 +282,6 @@
             renderMatching();
         }
 
-        // --- UPDATED MATCHING LOGIC WITH IMAGES ---
         function renderMatching() {
             const list = data[currentClass].sort(() => 0.5 - Math.random()).slice(0, 5);
             matchGoal = list.length;
@@ -268,7 +317,7 @@
         function endMatch(acc) {
             document.getElementById('matchContent').classList.add('hidden');
             const msg = acc >= 70 ? "&#128293; Fast Learner!" : "&#128170; Nice Effort!";
-            document.getElementById('matchEnd').innerHTML = `<h3>${msg}</h3><p>Accuracy: ${acc}%</p><button onclick="startMatch()">Play Again</button>`;
+            document.getElementById('matchEnd').innerHTML = `<h3>${msg}</h3><p>Accuracy: ${acc}%</p><button class="main-btn" onclick="startMatch()">Play Again</button>`;
             document.getElementById('matchEnd').classList.remove('hidden');
             logPerformance("Matching", `${acc}% Accuracy`);
         }
@@ -291,6 +340,7 @@
 
         function updateCard() {
             const list = data[currentClass];
+            if(!list || list.length === 0) return;
             document.getElementById('displayTerm').innerText = list[cardIdx].t;
             let defHtml = `<div>${list[cardIdx].d}</div>`;
             if (list[cardIdx].img && list[cardIdx].img.includes('http')) defHtml += `<img src="${list[cardIdx].img}" class="card-img">`;
@@ -311,7 +361,7 @@
             if (t && d) {
                 if (!data[currentClass]) data[currentClass] = [];
                 data[currentClass].push({t, d, img});
-                localStorage.setItem('science_v24', JSON.stringify(data));
+                localStorage.setItem('science_v25', JSON.stringify(data));
                 renderAdminList();
                 document.getElementById('newTerm').value = "";
                 document.getElementById('newDef').value = "";
@@ -322,7 +372,7 @@
             const name = document.getElementById('newClassName').value.trim();
             if (name && !data[name]) {
                 data[name] = []; currentClass = name;
-                localStorage.setItem('science_v24', JSON.stringify(data));
+                localStorage.setItem('science_v25', JSON.stringify(data));
                 renderClassOptions(); renderAdminList();
                 document.getElementById('newClassName').value = "";
             }
