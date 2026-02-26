@@ -10,49 +10,45 @@
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin-bottom: 20px; }
         .hidden { display: none !important; }
         
-        /* Flashcard Styling */
-        .flashcard { height: 260px; perspective: 1000px; cursor: pointer; margin: 20px 0; }
+        /* Flashcards */
+        .flashcard { height: 280px; perspective: 1000px; cursor: pointer; margin: 20px 0; width: 100%; }
         .inner { position: relative; width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; border: 2px solid #e2e8f0; border-radius: 15px; }
         .flipped .inner { transform: rotateY(180deg); }
-        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.6rem; padding: 20px; text-align: center; box-sizing: border-box; border-radius: 13px; }
+        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.4rem; padding: 20px; text-align: center; box-sizing: border-box; border-radius: 13px; background: white; }
         .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.1rem; overflow-y: auto; }
-        .card-img { max-height: 100px; max-width: 100%; border-radius: 8px; margin-top: 10px; object-fit: contain; }
+        .card-img { max-height: 120px; max-width: 100%; border-radius: 8px; margin-top: 10px; object-fit: contain; background: white; padding: 5px; }
 
-        /* Match Mode Styling */
+        /* Match Mode */
         .match-container { display: flex; gap: 15px; margin-top: 10px; }
         .match-col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-        .match-item { padding: 15px; background: white; border: 2px solid #cbd5e1; border-radius: 8px; cursor: grab; text-align: center; font-size: 0.95rem; user-select: none; transition: border-color 0.2s; }
-        .match-item:hover { border-color: var(--primary); }
-        #accuracyDisplay { text-align: right; font-weight: bold; margin-top: 10px; color: var(--primary); font-size: 1.1rem; }
+        .match-item { padding: 15px; background: white; border: 2px solid #cbd5e1; border-radius: 8px; cursor: grab; text-align: center; font-size: 0.9rem; user-select: none; transition: all 0.2s; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+        .match-item:hover { border-color: var(--primary); background: #f8fafc; }
+        #accuracyDisplay { text-align: right; font-weight: bold; margin-bottom: 5px; color: var(--primary); font-size: 1.1rem; }
 
-        /* General UI */
+        /* UI Components */
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1rem; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
-        button:hover { opacity: 0.9; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         .mode-toggle { background: #64748b; margin-bottom: 20px; }
-        .delete-btn { background: #ef4444; width: auto; padding: 5px 10px; font-size: 0.8rem; float: right; margin-top: 5px; }
         .study-tabs { display: flex; gap: 5px; margin-top: 15px; }
-        .study-tabs button { background: #e2e8f0; color: #475569; padding: 10px; font-size: 0.9rem; }
+        .study-tabs button { background: #e2e8f0; color: #475569; padding: 10px; font-size: 0.9rem; flex: 1; }
         .study-tabs button.active { background: var(--primary); color: white; }
         #syncStatus { font-size: 0.85rem; color: #64748b; margin-bottom: 10px; text-align: center; font-style: italic; }
-        hr { border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0; }
     </style>
 </head>
 <body>
 
     <h1>Science Vocab Master</h1>
-    <div id="syncStatus">Connecting to Teacher's Google Sheet...</div>
+    <div id="syncStatus">Syncing with Teacher's Sheet...</div>
     
-    <button class="mode-toggle" onclick="toggleMainView()">Switch to Manager / Study Mode</button>
+    <button class="mode-toggle" onclick="protectedToggle()">Switch to Manager / Study Mode</button>
 
     <div id="studyView" class="panel">
-        <label><strong>Current Vocabulary List:</strong></label>
+        <label><strong>Select Unit:</strong></label>
         <select class="class-sync" onchange="loadClass(this.value)"></select>
         
         <div class="study-tabs">
-            <button id="tabList" class="active" onclick="setStudyMode('list')">List View</button>
+            <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
             <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
-            <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
             <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
         </div>
 
@@ -61,8 +57,8 @@
         <div id="cardMode" class="hidden">
             <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
                 <div class="inner">
-                    <div class="front" id="displayTerm">Loading...</div>
-                    <div class="back" id="displayDef">...</div>
+                    <div class="front" id="displayTerm"></div>
+                    <div class="back" id="displayDef"></div>
                 </div>
             </div>
             <div style="display:flex; gap:10px;">
@@ -70,8 +66,6 @@
                 <button onclick="changeCard(1)">Next</button>
             </div>
         </div>
-
-        <div id="quizMode" class="hidden"></div>
 
         <div id="matchMode" class="hidden">
             <div id="accuracyDisplay">Accuracy: 0%</div>
@@ -81,65 +75,55 @@
 
     <div id="adminView" class="panel hidden">
         <h3>1. Create Vocabulary List</h3>
-        <input type="text" id="newClassName" placeholder="New List Name (e.g. Weather Patterns)">
-        <button onclick="addClass()" style="background: var(--accent);">Create New Local List</button>
-        
+        <input type="text" id="newClassName" placeholder="New List Name">
+        <button onclick="addClass()" style="background: var(--accent);">Create List</button>
         <hr>
-
         <h3>2. Manage Vocabulary List</h3>
-        <p style="font-size: 0.8rem; color: #64748b;">Note: Words from the Google Sheet cannot be deleted here; edit your Spreadsheet to update the Master List.</p>
-        <label><strong>Select List to Edit:</strong></label>
         <select class="class-sync" onchange="loadClass(this.value)"></select>
-
-        <input type="text" id="newTerm" placeholder="Vocabulary Word">
+        <input type="text" id="newTerm" placeholder="Word">
         <input type="text" id="newDef" placeholder="Definition">
         <input type="text" id="newImg" placeholder="Image URL (Optional)">
-        <button onclick="addWord()">Add Word to Local List</button>
-        
-        <div id="adminWordList" style="margin-top: 20px;"></div>
+        <button onclick="addWord()">Add Word</button>
+        <div id="adminWordList"></div>
     </div>
 
     <script>
-        // HARDCODED TEACHER URL
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
+        const ADMIN_PASS = "science123"; // CHANGE YOUR PASSWORD HERE
 
-        let data = JSON.parse(localStorage.getItem('scienceApp_V16')) || {};
+        let data = JSON.parse(localStorage.getItem('science_v16_data')) || {};
         let currentClass = "";
         let cardIdx = 0;
         let currentMode = 'list';
-        let draggedItem = null;
+        let matchesFound = 0;
+        let totalAttempts = 0;
 
-        window.onload = () => {
-            fetchTeacherData();
-        };
+        window.onload = fetchTeacherData;
 
         async function fetchTeacherData() {
             try {
                 const response = await fetch(SHEET_CSV_URL);
                 const csvText = await response.text();
-                const rows = csvText.split('\n').slice(1); 
+                const rows = csvText.split('\n').slice(1);
                 
                 rows.forEach(row => {
-                    // Basic CSV split logic
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if (cols.length >= 4) {
+                    // Regex handles commas inside quotes
+                    const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                    if (cols && cols.length >= 4) {
                         const term = cols[0].replace(/"/g, '').trim();
                         const def = cols[1].replace(/"/g, '').trim();
                         const img = cols[2].replace(/"/g, '').trim();
-                        const listName = cols[3].replace(/"/g, '').trim();
+                        const list = cols[3].replace(/"/g, '').trim();
                         
-                        if (term && def && listName) {
-                            if (!data[listName]) data[listName] = [];
-                            // Don't duplicate if already exists in memory
-                            if (!data[listName].some(item => item.t === term)) {
-                                data[listName].push({t: term, d: def, img: img});
-                            }
+                        if (!data[list]) data[list] = [];
+                        if (!data[list].some(item => item.t === term)) {
+                            data[list].push({t: term, d: def, img: img});
                         }
                     }
                 });
-                document.getElementById('syncStatus').innerText = "? Master Lists Synced Successfully";
+                document.getElementById('syncStatus').innerText = "? Master Sheet Connected";
             } catch (e) {
-                document.getElementById('syncStatus').innerText = "?? Offline Mode (Could not reach Google Sheet)";
+                document.getElementById('syncStatus').innerText = "?? Offline / Local Mode";
             }
             initApp();
         }
@@ -150,12 +134,18 @@
                 currentClass = keys[0];
                 renderClassOptions();
                 setStudyMode('list');
-            } else {
-                document.getElementById('fullListArea').innerHTML = "No vocabulary found. Please check your Google Sheet or add a local list.";
             }
         }
 
-        function save() { localStorage.setItem('scienceApp_V16', JSON.stringify(data)); }
+        function protectedToggle() {
+            if (document.getElementById('adminView').classList.contains('hidden')) {
+                const pass = prompt("Enter Teacher Password:");
+                if (pass === ADMIN_PASS) toggleMainView();
+                else alert("Incorrect Password");
+            } else {
+                toggleMainView();
+            }
+        }
 
         function toggleMainView() {
             document.getElementById('studyView').classList.toggle('hidden');
@@ -167,44 +157,32 @@
             currentMode = mode;
             document.querySelectorAll('.study-tabs button').forEach(b => b.classList.remove('active'));
             document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-            ['listMode', 'cardMode', 'quizMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['listMode', 'cardMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById(mode + 'Mode').classList.remove('hidden');
             
             if (mode === 'list') renderFullList();
-            if (mode === 'flash') updateCard();
-            if (mode === 'match') renderMatching();
-        }
-
-        function renderClassOptions() {
-            const selects = document.querySelectorAll('.class-sync');
-            const options = Object.keys(data).map(c => `<option value="${c}" ${c===currentClass?'selected':''}>${c}</option>`).join('');
-            selects.forEach(s => s.innerHTML = options);
-        }
-
-        function loadClass(val) {
-            currentClass = val;
-            cardIdx = 0;
-            setStudyMode(currentMode);
-            renderAdminList();
+            if (mode === 'flash') { cardIdx = 0; updateCard(); }
+            if (mode === 'match') { matchesFound = 0; totalAttempts = 0; updateAccuracy(); renderMatching(); }
         }
 
         function renderFullList() {
             const list = data[currentClass] || [];
             document.getElementById('fullListArea').innerHTML = list.map(item => `
-                <div style="padding:15px; border-bottom:1px solid #e2e8f0; text-align:left;">
-                    <strong style="color:var(--primary); font-size:1.1rem;">${item.t}</strong><br>
-                    <span style="color:#475569;">${item.d}</span>
+                <div style="padding:15px; border-bottom:1px solid #e2e8f0;">
+                    <strong style="color:var(--primary);">${item.t}</strong>: ${item.d}
                 </div>
             `).join('');
         }
 
         function updateCard() {
             const list = data[currentClass] || [];
-            if (list.length === 0) return;
+            if (!list.length) return;
             document.getElementById('displayTerm').innerText = list[cardIdx].t;
-            let defHtml = `<div>${list[cardIdx].d}</div>`;
-            if (list[cardIdx].img) defHtml += `<img src="${list[cardIdx].img}" class="card-img" onerror="this.style.display='none'">`;
-            document.getElementById('displayDef').innerHTML = defHtml;
+            let defContent = `<div>${list[cardIdx].d}</div>`;
+            if (list[cardIdx].img && list[cardIdx].img !== "") {
+                defContent += `<img src="${list[cardIdx].img}" class="card-img" onerror="this.style.display='none'">`;
+            }
+            document.getElementById('displayDef').innerHTML = defContent;
             document.getElementById('cardContainer').classList.remove('flipped');
         }
 
@@ -215,10 +193,16 @@
         }
 
         /* --- MATCHING LOGIC --- */
+        let draggedItem = null;
+        function updateAccuracy() {
+            const acc = totalAttempts === 0 ? 0 : Math.round((matchesFound / totalAttempts) * 100);
+            document.getElementById('accuracyDisplay').innerText = `Accuracy: ${acc}%`;
+        }
+
         function renderMatching() {
             const list = data[currentClass] || [];
             const container = document.getElementById('matchContainer');
-            if (list.length < 2) { container.innerHTML = "<p>Need at least 2 words to match!</p>"; return; }
+            if (list.length < 2) { container.innerHTML = "Not enough words."; return; }
             
             let words = list.map((item, i) => ({ text: item.t, id: i, type: 'word' }));
             let defs = list.map((item, i) => ({ text: item.d, id: i, type: 'def' }));
@@ -229,54 +213,49 @@
                 <div class="match-col">${words.map(w => `<div class="match-item" draggable="true" ondragstart="drag(event)" data-id="${w.id}" data-type="word">${w.text}</div>`).join('')}</div>
                 <div class="match-col">${defs.map(d => `<div class="match-item" ondragover="allowDrop(event)" ondrop="drop(event)" data-id="${d.id}" data-type="def">${d.text}</div>`).join('')}</div>`;
         }
+
         function drag(e) { draggedItem = e.target; }
         function allowDrop(e) { e.preventDefault(); }
         function drop(e) {
             e.preventDefault();
             const target = e.target;
-            if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) {
+            if (draggedItem.dataset.type === target.dataset.type) return; 
+            
+            totalAttempts++;
+            if (draggedItem.dataset.id === target.dataset.id) {
+                matchesFound++;
                 draggedItem.style.visibility = 'hidden';
                 target.style.visibility = 'hidden';
             }
+            updateAccuracy();
         }
 
-        /* --- ADMIN LOGIC --- */
-        function addClass() {
-            const name = document.getElementById('newClassName').value.trim();
-            if (name && !data[name]) {
-                data[name] = [];
-                currentClass = name;
-                save(); renderClassOptions(); renderAdminList();
-                document.getElementById('newClassName').value = "";
-            }
-        }
-
+        /* --- ADMIN FUNCTIONS --- */
         function addWord() {
-            const t = document.getElementById('newTerm').value.trim();
-            const d = document.getElementById('newDef').value.trim();
-            const img = document.getElementById('newImg').value.trim();
+            const t = document.getElementById('newTerm').value;
+            const d = document.getElementById('newDef').value;
+            const img = document.getElementById('newImg').value;
             if (t && d) {
                 data[currentClass].push({t, d, img});
-                save(); renderAdminList(); 
-                document.getElementById('newTerm').value = "";
-                document.getElementById('newDef').value = "";
-                document.getElementById('newImg').value = "";
+                localStorage.setItem('science_v16_data', JSON.stringify(data));
+                renderAdminList();
             }
         }
 
         function renderAdminList() {
             const list = data[currentClass] || [];
-            document.getElementById('adminWordList').innerHTML = `<h4>Current Items in ${currentClass}:</h4>` + list.map((item, i) => `
-                <div style="padding:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                    <span>${item.t}</span>
-                    <button class="delete-btn" onclick="deleteWord(${i})">Delete</button>
-                </div>`).join('');
+            document.getElementById('adminWordList').innerHTML = list.map((item, i) => `
+                <div style="padding:5px; border-bottom:1px solid #eee;">${item.t}</div>
+            `).join('');
         }
 
-        function deleteWord(i) {
-            data[currentClass].splice(i, 1);
-            save(); renderAdminList();
+        function renderClassOptions() {
+            const selects = document.querySelectorAll('.class-sync');
+            const options = Object.keys(data).map(c => `<option value="${c}" ${c===currentClass?'selected':''}>${c}</option>`).join('');
+            selects.forEach(s => s.innerHTML = options);
         }
+
+        function loadClass(val) { currentClass = val; setStudyMode(currentMode); renderAdminList(); }
     </script>
 </body>
 </html>
