@@ -8,44 +8,16 @@
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; position: relative; }
         
-        /* --- STUDENT LOGIN OVERLAY --- */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center;
-            z-index: 10000; color: white;
-        }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 10000; color: white; }
         .login-box { background: white; color: var(--text); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
 
-        /* --- DRAMATIC LANDING PAGE --- */
-        #landingPage {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 9999; color: white; text-align: center;
-            transition: opacity 0.8s ease, visibility 0.8s;
-        }
-        .welcome-title {
-            font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px;
-            animation: reveal 1.5s cubic-bezier(0.77, 0, 0.175, 1);
-        }
-        .start-btn {
-            background: var(--primary); color: white; border: none; padding: 18px 36px;
-            font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
-            transition: transform 0.3s, background 0.3s;
-            animation: fadeInUp 2s ease;
-        }
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: white; text-align: center; transition: opacity 0.8s ease, visibility 0.8s; }
+        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; animation: reveal 1.5s cubic-bezier(0.77, 0, 0.175, 1); }
+        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4); transition: transform 0.3s, background 0.3s; animation: fadeInUp 2s ease; }
         .start-btn:hover { transform: scale(1.05); background: #3b82f6; }
         
-        @keyframes reveal {
-            0% { opacity: 0; transform: translateY(30px); filter: blur(10px); }
-            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
-        }
-        @keyframes fadeInUp {
-            0%, 50% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes reveal { 0% { opacity: 0; transform: translateY(30px); filter: blur(10px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
+        @keyframes fadeInUp { 0%, 50% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 
         .mode-toggle { position: absolute; top: 15px; left: 15px; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; font-weight: bold; cursor: pointer; z-index: 100; opacity: 0.6; transition: opacity 0.3s; }
         .mode-toggle:hover { opacity: 1; }
@@ -169,19 +141,19 @@
         </div>
 
         <div id="adminView" class="panel hidden">
-            <h3>Manager Mode</h3>
-            <select id="adminDropdown" onchange="loadClass(this.value)"></select>
-            <input type="text" id="newTerm" placeholder="Word">
-            <input type="text" id="newDef" placeholder="Definition">
-            <input type="text" id="newImg" placeholder="Image URL">
-            <button class="main-btn" onclick="addWord()">Add Word</button>
-            <div id="adminWordList"></div>
+            <div class="breadcrumb" onclick="protectedToggle()">&larr; Back to App</div>
+            <h3>Manager Mode (View Only)</h3>
+            <p style="font-size: 0.8rem; color: #64748b;">Select a list to preview its contents. Edit the Google Sheet to save permanent changes.</p>
+            <select id="adminDropdown" onchange="renderAdminList(this.value)">
+                <option value="">-- Select a List --</option>
+            </select>
+            <div id="adminWordList" style="margin-top: 15px;"></div>
         </div>
     </div>
 
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynuvfp1kcX7iLtR90ApNiIK9MMsldCbWilL8cU2FI4p6rTqF8cTJ_hiW4E51-WYyvReQ/exec"; 
+        const EXPORT_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE"; 
         const ADMIN_PASS = "science123";
 
         let units = {};
@@ -229,6 +201,7 @@
                 });
                 document.getElementById('syncStatus').innerText = "Curriculum Connected";
                 renderUnitSelection();
+                populateAdminDropdown();
             } catch (e) { document.getElementById('syncStatus').innerText = "Offline Mode"; }
         }
 
@@ -236,6 +209,30 @@
             document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => 
                 `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`
             ).join('');
+        }
+
+        function populateAdminDropdown() {
+            const dropdown = document.getElementById('adminDropdown');
+            dropdown.innerHTML = '<option value="">-- Select a List --</option>';
+            Object.keys(units).forEach(u => {
+                Object.keys(units[u]).forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = `${u}|${l}`;
+                    opt.innerText = `${u} - ${l}`;
+                    dropdown.appendChild(opt);
+                });
+            });
+        }
+
+        function renderAdminList(val) {
+            if (!val) { document.getElementById('adminWordList').innerHTML = ""; return; }
+            const [u, l] = val.split('|');
+            const list = units[u][l];
+            document.getElementById('adminWordList').innerHTML = list.map(item => `
+                <div style="padding:10px; border-bottom:1px solid #eee; font-size: 0.9rem;">
+                    <strong>${item.t}</strong>: ${item.d}
+                </div>
+            `).join('');
         }
 
         function selectUnit(u) {
@@ -368,20 +365,10 @@
         async function exportResult(mode, score) {
             if (!EXPORT_URL || EXPORT_URL.includes("PASTE")) return;
             const payload = JSON.stringify({ name: studentName, unit: currentClass, mode: mode, score: score });
-            
-            // Try fetch first, fallback to beacon for reliability
             try {
-                fetch(EXPORT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: payload
-                });
+                fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', cache: 'no-cache', headers: { 'Content-Type': 'application/json' }, body: payload });
             } catch (e) {
-                if (navigator.sendBeacon) {
-                    navigator.sendBeacon(EXPORT_URL, payload);
-                }
+                if (navigator.sendBeacon) navigator.sendBeacon(EXPORT_URL, payload);
             }
         }
 
@@ -396,9 +383,14 @@
         }
 
         function protectedToggle() {
-            if (prompt("Password:") === ADMIN_PASS) {
-                document.getElementById('studyView').classList.toggle('hidden');
-                document.getElementById('adminView').classList.toggle('hidden');
+            if (document.getElementById('adminView').classList.contains('hidden')) {
+                if (prompt("Password:") === ADMIN_PASS) {
+                    document.getElementById('studyView').classList.add('hidden');
+                    document.getElementById('adminView').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('adminView').classList.add('hidden');
+                document.getElementById('studyView').classList.remove('hidden');
             }
         }
     </script>
