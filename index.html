@@ -6,7 +6,7 @@
     <title>8th Grade Science Pro</title>
     <style>
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; position: relative; }
         
         /* --- DRAMATIC LANDING PAGE --- */
         #landingPage {
@@ -39,8 +39,27 @@
             100% { opacity: 1; transform: translateY(0); }
         }
 
+        /* --- POSITIONED MANAGER TOGGLE --- */
+        .mode-toggle { 
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #64748b; 
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px; 
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+        .mode-toggle:hover { opacity: 1; }
+
         /* --- MAIN APP STYLING --- */
-        .app-container { padding: 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; }
+        .app-container { padding: 60px 20px 20px 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; margin-bottom: 20px; }
         .hidden { display: none !important; }
         
@@ -71,7 +90,6 @@
         /* UI */
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1rem; }
         .main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .mode-toggle { background: #64748b; margin-bottom: 20px; width: fit-content; padding: 8px 16px; font-size: 0.85rem; }
         .study-tabs { display: flex; gap: 5px; margin-top: 15px; flex-wrap: wrap; }
         .study-tabs button { background: #e2e8f0; color: #475569; padding: 10px; font-size: 0.85rem; flex: 1 1 45%; }
         .study-tabs button.active { background: var(--primary); color: white; }
@@ -85,12 +103,12 @@
         <button class="start-btn" onclick="enterApp()">Click Here to Start Your Journey to Vocabulary Mastery</button>
     </div>
 
+    <button class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
+
     <div class="app-container">
         <h1>Science Vocab Master</h1>
         <div id="syncStatus">Syncing with Teacher's Sheet...</div>
         
-        <button class="mode-toggle main-btn" onclick="protectedToggle()">Switch to Manager / Study Mode</button>
-
         <div id="studyView" class="panel">
             <label><strong>Select Unit:</strong></label>
             <select id="classDropdown" onchange="loadClass(this.value)"></select>
@@ -156,7 +174,7 @@
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
         const ADMIN_PASS = "science123";
 
-        let data = JSON.parse(localStorage.getItem('science_v25')) || {};
+        let data = JSON.parse(localStorage.getItem('science_v26')) || {};
         let currentClass = "";
         let cardIdx = 0;
         let currentMode = 'list';
@@ -361,7 +379,7 @@
             if (t && d) {
                 if (!data[currentClass]) data[currentClass] = [];
                 data[currentClass].push({t, d, img});
-                localStorage.setItem('science_v25', JSON.stringify(data));
+                localStorage.setItem('science_v26', JSON.stringify(data));
                 renderAdminList();
                 document.getElementById('newTerm').value = "";
                 document.getElementById('newDef').value = "";
@@ -372,7 +390,7 @@
             const name = document.getElementById('newClassName').value.trim();
             if (name && !data[name]) {
                 data[name] = []; currentClass = name;
-                localStorage.setItem('science_v25', JSON.stringify(data));
+                localStorage.setItem('science_v26', JSON.stringify(data));
                 renderClassOptions(); renderAdminList();
                 document.getElementById('newClassName').value = "";
             }
