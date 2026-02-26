@@ -25,7 +25,7 @@
         .match-item:hover { border-color: var(--primary); background: #f8fafc; }
         #accuracyDisplay { text-align: right; font-weight: bold; margin-bottom: 5px; color: var(--primary); font-size: 1.1rem; }
 
-        /* UI Components */
+        /* UI */
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1rem; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         .mode-toggle { background: #64748b; margin-bottom: 20px; }
@@ -44,7 +44,7 @@
 
     <div id="studyView" class="panel">
         <label><strong>Select Unit:</strong></label>
-        <select class="class-sync" onchange="loadClass(this.value)"></select>
+        <select id="classDropdown" onchange="loadClass(this.value)"></select>
         
         <div class="study-tabs">
             <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
@@ -53,20 +53,12 @@
         </div>
 
         <div id="listMode"><div id="fullListArea"></div></div>
-
         <div id="flashMode" class="hidden">
             <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
-                <div class="inner">
-                    <div class="front" id="displayTerm"></div>
-                    <div class="back" id="displayDef"></div>
-                </div>
+                <div class="inner"><div class="front" id="displayTerm"></div><div class="back" id="displayDef"></div></div>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button onclick="changeCard(-1)">Previous</button>
-                <button onclick="changeCard(1)">Next</button>
-            </div>
+            <div style="display:flex; gap:10px;"><button onclick="changeCard(-1)">Previous</button><button onclick="changeCard(1)">Next</button></div>
         </div>
-
         <div id="matchMode" class="hidden">
             <div id="accuracyDisplay">Accuracy: 0%</div>
             <div class="match-container" id="matchContainer"></div>
@@ -75,14 +67,10 @@
 
     <div id="adminView" class="panel hidden">
         <h3>Manager Mode</h3>
-        <input type="text" id="newClassName" placeholder="New List Name">
-        <button onclick="addClass()" style="background: var(--accent);">Create List</button>
+        <input type="text" id="newClassName" placeholder="New List Name"><button onclick="addClass()">Create List</button>
         <hr>
-        <select class="class-sync" onchange="loadClass(this.value)"></select>
-        <input type="text" id="newTerm" placeholder="Word">
-        <input type="text" id="newDef" placeholder="Definition">
-        <input type="text" id="newImg" placeholder="Image URL (Optional)">
-        <button onclick="addWord()">Add Word</button>
+        <select id="adminDropdown" onchange="loadClass(this.value)"></select>
+        <input type="text" id="newTerm" placeholder="Word"><input type="text" id="newDef" placeholder="Definition"><input type="text" id="newImg" placeholder="Image URL"><button onclick="addWord()">Add Word</button>
         <div id="adminWordList"></div>
     </div>
 
@@ -90,7 +78,7 @@
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
         const ADMIN_PASS = "science123";
 
-        let data = JSON.parse(localStorage.getItem('science_v17_data')) || {};
+        let data = JSON.parse(localStorage.getItem('science_v18')) || {};
         let currentClass = "";
         let cardIdx = 0;
         let currentMode = 'list';
@@ -103,17 +91,24 @@
             try {
                 const response = await fetch(SHEET_CSV_URL);
                 const csvText = await response.text();
-                const rows = csvText.split('\n').slice(1);
+                // Split lines and clean up empty rows
+                const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
                 
+                if (rows.length === 0) {
+                    console.error("Sheet loaded but no data rows found.");
+                }
+
                 rows.forEach(row => {
-                    const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                    if (cols && cols.length >= 4) {
-                        const term = cols[0].replace(/"/g, '').trim();
-                        const def = cols[1].replace(/"/g, '').trim();
-                        const img = cols[2].replace(/"/g, '').trim();
-                        const list = cols[3].replace(/"/g, '').trim();
+                    // This regex splits by comma but ignores commas inside quotes
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    
+                    if (cols.length >= 2) {
+                        const term = (cols[0] || "").replace(/"/g, '').trim();
+                        const def = (cols[1] || "").replace(/"/g, '').trim();
+                        const img = (cols[2] || "").replace(/"/g, '').trim();
+                        let list = (cols[3] || "General Science").replace(/"/g, '').trim();
                         
-                        if (term && def && list) {
+                        if (term && def) {
                             if (!data[list]) data[list] = [];
                             if (!data[list].some(item => item.t === term)) {
                                 data[list].push({t: term, d: def, img: img});
@@ -131,45 +126,39 @@
         function initApp() {
             const keys = Object.keys(data);
             if (keys.length > 0) {
-                currentClass = keys[0];
+                currentClass = currentClass || keys[0];
                 renderClassOptions();
                 setStudyMode('list');
+            } else {
+                document.getElementById('fullListArea').innerHTML = "No vocabulary found. Please check your Google Sheet format.";
             }
         }
 
-        function protectedToggle() {
-            if (document.getElementById('adminView').classList.contains('hidden')) {
-                const pass = prompt("Enter Teacher Password:");
-                if (pass === ADMIN_PASS) toggleMainView();
-                else alert("Incorrect Password");
-            } else { toggleMainView(); }
+        function renderClassOptions() {
+            const keys = Object.keys(data);
+            const options = keys.map(k => `<option value="${k}" ${k===currentClass?'selected':''}>${k}</option>`).join('');
+            document.getElementById('classDropdown').innerHTML = options;
+            document.getElementById('adminDropdown').innerHTML = options;
         }
 
-        function toggleMainView() {
-            document.getElementById('studyView').classList.toggle('hidden');
-            document.getElementById('adminView').classList.toggle('hidden');
+        function loadClass(val) {
+            currentClass = val;
+            cardIdx = 0;
+            setStudyMode(currentMode);
             renderAdminList();
         }
 
         function setStudyMode(mode) {
             currentMode = mode;
-            // The fix: ensure IDs match exactly (tabList, tabFlash, tabMatch)
-            const tabs = ['tabList', 'tabFlash', 'tabMatch'];
-            tabs.forEach(t => {
-                const el = document.getElementById(t);
-                if(el) el.classList.remove('active');
-            });
-            
+            ['tabList', 'tabFlash', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
             const activeTab = document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1));
             if(activeTab) activeTab.classList.add('active');
 
-            ['listMode', 'flashMode', 'matchMode'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
+            ['listMode', 'flashMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById(mode + 'Mode').classList.remove('hidden');
             
             if (mode === 'list') renderFullList();
-            if (mode === 'flash') { cardIdx = 0; updateCard(); }
+            if (mode === 'flash') updateCard();
             if (mode === 'match') { matchesFound = 0; totalAttempts = 0; updateAccuracy(); renderMatching(); }
         }
 
@@ -187,7 +176,7 @@
             if (!list.length) return;
             document.getElementById('displayTerm').innerText = list[cardIdx].t;
             let defContent = `<div>${list[cardIdx].d}</div>`;
-            if (list[cardIdx].img && list[cardIdx].img.startsWith('http')) {
+            if (list[cardIdx].img && list[cardIdx].img.includes('http')) {
                 defContent += `<img src="${list[cardIdx].img}" class="card-img" onerror="this.style.display='none'">`;
             }
             document.getElementById('displayDef').innerHTML = defContent;
@@ -196,19 +185,15 @@
 
         function changeCard(dir) {
             const list = data[currentClass] || [];
+            if (!list.length) return;
             cardIdx = (cardIdx + dir + list.length) % list.length;
             updateCard();
-        }
-
-        function updateAccuracy() {
-            const acc = totalAttempts === 0 ? 0 : Math.round((matchesFound / totalAttempts) * 100);
-            document.getElementById('accuracyDisplay').innerText = `Accuracy: ${acc}%`;
         }
 
         function renderMatching() {
             const list = data[currentClass] || [];
             const container = document.getElementById('matchContainer');
-            if (list.length < 2) { container.innerHTML = "Not enough words."; return; }
+            if (list.length < 2) { container.innerHTML = "Need 2+ words."; return; }
             let words = list.map((item, i) => ({ text: item.t, id: i, type: 'word' }));
             let defs = list.map((item, i) => ({ text: item.d, id: i, type: 'def' }));
             words.sort(() => Math.random() - 0.5);
@@ -224,7 +209,7 @@
         function drop(e) {
             e.preventDefault();
             const target = e.target;
-            if (draggedItem.dataset.type === target.dataset.type) return; 
+            if (!draggedItem || draggedItem.dataset.type === target.dataset.type) return; 
             totalAttempts++;
             if (draggedItem.dataset.id === target.dataset.id) {
                 matchesFound++;
@@ -233,6 +218,24 @@
             }
             updateAccuracy();
         }
+        function updateAccuracy() {
+            const acc = totalAttempts === 0 ? 0 : Math.round((matchesFound / totalAttempts) * 100);
+            document.getElementById('accuracyDisplay').innerText = `Accuracy: ${acc}%`;
+        }
+
+        function protectedToggle() {
+            if (document.getElementById('adminView').classList.contains('hidden')) {
+                const pass = prompt("Enter Teacher Password:");
+                if (pass === ADMIN_PASS) {
+                    document.getElementById('studyView').classList.add('hidden');
+                    document.getElementById('adminView').classList.remove('hidden');
+                    renderAdminList();
+                } else { alert("Incorrect Password"); }
+            } else {
+                document.getElementById('adminView').classList.add('hidden');
+                document.getElementById('studyView').classList.remove('hidden');
+            }
+        }
 
         function addWord() {
             const t = document.getElementById('newTerm').value;
@@ -240,26 +243,19 @@
             const img = document.getElementById('newImg').value;
             if (t && d) {
                 data[currentClass].push({t, d, img});
-                localStorage.setItem('science_v17_data', JSON.stringify(data));
+                localStorage.setItem('science_v18', JSON.stringify(data));
                 renderAdminList();
+                document.getElementById('newTerm').value = "";
+                document.getElementById('newDef').value = "";
             }
         }
-
         function renderAdminList() {
             const list = data[currentClass] || [];
-            document.getElementById('adminWordList').innerHTML = list.map((item, i) => `<div style="padding:5px; border-bottom:1px solid #eee;">${item.t}</div>`).join('');
+            document.getElementById('adminWordList').innerHTML = list.map(item => `<div style="padding:5px; border-bottom:1px solid #eee;">${item.t}</div>`).join('');
         }
-
-        function renderClassOptions() {
-            const selects = document.querySelectorAll('.class-sync');
-            const options = Object.keys(data).map(c => `<option value="${c}" ${c===currentClass?'selected':''}>${c}</option>`).join('');
-            selects.forEach(s => s.innerHTML = options);
-        }
-
-        function loadClass(val) { currentClass = val; setStudyMode(currentMode); renderAdminList(); }
         function addClass() {
             const name = document.getElementById('newClassName').value.trim();
-            if (name && !data[name]) { data[name] = []; currentClass = name; localStorage.setItem('science_v17_data', JSON.stringify(data)); renderClassOptions(); renderAdminList(); }
+            if (name && !data[name]) { data[name] = []; currentClass = name; renderClassOptions(); renderAdminList(); }
         }
     </script>
 </body>
