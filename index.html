@@ -115,7 +115,10 @@
             </div>
 
             <div id="studyInterface" class="hidden">
-                <div class="breadcrumb" onclick="backToLists()">&larr; Back to Lists</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
+                    <div class="breadcrumb" onclick="backToLists()" style="margin-bottom: 0;">&larr; Back to Lists</div>
+                    <button onclick="backToUnits()" style="width: auto; padding: 5px 10px; font-size: 0.75rem; background: #e2e8f0; border: none; border-radius: 5px; cursor: pointer; color: #475569;">Return to Unit Selection</button>
+                </div>
                 <h3 id="activeListName" style="margin: 5px 0;"></h3>
                 
                 <div class="study-tabs">
@@ -220,6 +223,7 @@
         function selectUnit(u) {
             currentUnit = u;
             document.getElementById('unitSelection').classList.add('hidden');
+            document.getElementById('studyInterface').classList.add('hidden');
             document.getElementById('listSelection').classList.remove('hidden');
             document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => 
                 `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`
@@ -234,8 +238,15 @@
             setStudyMode('list');
         }
 
-        function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
-        function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
+        function backToUnits() { 
+            document.getElementById('listSelection').classList.add('hidden'); 
+            document.getElementById('studyInterface').classList.add('hidden');
+            document.getElementById('unitSelection').classList.remove('hidden'); 
+        }
+        function backToLists() { 
+            document.getElementById('studyInterface').classList.add('hidden'); 
+            document.getElementById('listSelection').classList.remove('hidden'); 
+        }
 
         function setStudyMode(mode) {
             currentMode = mode;
@@ -303,7 +314,7 @@
         let mCorrect = 0, mTotal = 0, mGoal = 0;
         function startMatch(list) {
             mCorrect = 0; mTotal = 0;
-            document.getElementById('matchStats').innerText = `Accuracy: 0%`; // RESET ACCURACY DISPLAY
+            document.getElementById('matchStats').innerText = `Accuracy: 0%`;
             const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5);
             mGoal = sub.length;
             document.getElementById('matchContent').classList.remove('hidden');
