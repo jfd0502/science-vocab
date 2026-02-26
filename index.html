@@ -8,6 +8,14 @@
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; position: relative; }
         
+        /* --- STUDENT LOGIN OVERLAY --- */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; color: white;
+        }
+        .login-box { background: white; color: var(--text); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px; }
+
         /* --- DRAMATIC LANDING PAGE --- */
         #landingPage {
             position: fixed;
@@ -39,28 +47,18 @@
             100% { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- POSITIONED MANAGER TOGGLE --- */
-        .mode-toggle { 
-            position: absolute; top: 15px; left: 15px;
-            background: #64748b; color: white; border: none; border-radius: 8px;
-            padding: 8px 14px; font-size: 0.75rem; font-weight: bold; cursor: pointer;
-            z-index: 100; opacity: 0.6; transition: opacity 0.3s;
-        }
+        .mode-toggle { position: absolute; top: 15px; left: 15px; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; font-weight: bold; cursor: pointer; z-index: 100; opacity: 0.6; transition: opacity 0.3s; }
         .mode-toggle:hover { opacity: 1; }
-
-        /* --- NAVIGATION BUTTONS --- */
         .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin: 10px 0; }
         .nav-btn { background: white; border: 2px solid #e2e8f0; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .nav-btn:hover { border-color: var(--primary); background: #eff6ff; }
         .breadcrumb { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; width: 100%; text-align: left; cursor: pointer; }
         .breadcrumb:hover { text-decoration: underline; }
 
-        /* --- MAIN APP STYLING --- */
         .app-container { padding: 60px 20px 20px 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; margin-bottom: 20px; }
         .hidden { display: none !important; }
         
-        /* Flashcards */
         .flashcard { height: 280px; perspective: 1000px; cursor: pointer; margin: 20px 0; width: 100%; }
         .inner { position: relative; width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; border: 2px solid #e2e8f0; border-radius: 15px; }
         .flipped .inner { transform: rotateY(180deg); }
@@ -68,7 +66,6 @@
         .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.1rem; overflow-y: auto; }
         .card-img { max-height: 120px; max-width: 100%; border-radius: 8px; margin-top: 10px; object-fit: contain; background: white; padding: 5px; }
 
-        /* Quiz & Match Styling */
         .quiz-option { background: white; border: 2px solid #e2e8f0; padding: 12px; margin: 8px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: left; }
         .quiz-option:hover { border-color: var(--primary); background: #eff6ff; }
         .correct { background: #dcfce7 !important; border-color: #22c55e !important; }
@@ -78,7 +75,6 @@
         .match-item { padding: 15px; background: white; border: 2px solid #cbd5e1; border-radius: 8px; cursor: grab; text-align: center; font-size: 0.9rem; user-select: none; transition: all 0.2s; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .match-img { max-height: 50px; max-width: 100%; margin-top: 8px; border-radius: 4px; pointer-events: none; }
         
-        /* Stats & History */
         .history-item { font-size: 0.85rem; padding: 5px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
         .study-tabs { display: flex; gap: 5px; margin-top: 15px; flex-wrap: wrap; }
         .study-tabs button { background: #e2e8f0; color: #475569; padding: 10px; font-size: 0.85rem; flex: 1 1 45%; border: none; border-radius: 8px; cursor: pointer; }
@@ -91,7 +87,16 @@
 </head>
 <body>
 
-    <div id="landingPage">
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2>Student Entry</h2>
+            <p>Please enter your full name to begin:</p>
+            <input type="text" id="studentNameInput" placeholder="Enter Name...">
+            <button class="main-btn" onclick="saveStudentName()">Continue</button>
+        </div>
+    </div>
+
+    <div id="landingPage" class="hidden">
         <h1 class="welcome-title">Welcome to Vocabulary Sojourn</h1>
         <button class="start-btn" onclick="enterApp()">Click Here to Start Your Journey to Vocabulary Mastery</button>
     </div>
@@ -120,6 +125,7 @@
                     <button onclick="backToUnits()" style="width: auto; padding: 5px 10px; font-size: 0.75rem; background: #e2e8f0; border: none; border-radius: 5px; cursor: pointer; color: #475569;">Return to Unit Selection</button>
                 </div>
                 <h3 id="activeListName" style="margin: 5px 0;"></h3>
+                <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b;"></div>
                 
                 <div class="study-tabs">
                     <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
@@ -175,12 +181,22 @@
 
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
+        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynuvfp1kcX7iLtR90ApNiIK9MMsldCbWilL8cU2FI4p6rTqF8cTJ_hiW4E51-WYyvReQ/exec"; // <--- PASTE SCRIPT URL HERE
         const ADMIN_PASS = "science123";
 
         let units = {};
-        let currentUnit = "", currentClass = "", cardIdx = 0, currentMode = 'list';
+        let currentUnit = "", currentClass = "", cardIdx = 0, currentMode = 'list', studentName = "";
         let performanceLog = [];
         let draggedItem = null;
+
+        function saveStudentName() {
+            const name = document.getElementById('studentNameInput').value.trim();
+            if (name.length < 2) return alert("Please enter a valid name.");
+            studentName = name;
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('landingPage').classList.remove('hidden');
+            document.getElementById('studentWelcome').innerText = "Student: " + studentName;
+        }
 
         function enterApp() {
             const lp = document.getElementById('landingPage');
@@ -309,6 +325,7 @@
             document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete</h3><p>Score: ${pct}%</p><button class="main-btn" onclick="setStudyMode('quiz')">Try Again</button>`;
             document.getElementById('quizEnd').classList.remove('hidden');
             logPerformance("Quiz", `${qScore}/${qPool.length} (${pct}%)`);
+            exportResult("Quiz", `${pct}%`);
         }
 
         let mCorrect = 0, mTotal = 0, mGoal = 0;
@@ -321,8 +338,6 @@
             document.getElementById('matchEnd').classList.add('hidden');
             let w = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random());
             let d = sub.map((x, i) => ({t: x.d, img: x.img, id: i, type: 'd'})).sort(() => 0.5 - Math.random());
-            
-            // Enabled ondrop and ondragover for BOTH columns to allow bidirectional dragging
             document.getElementById('matchContainer').innerHTML = `
                 <div class="match-col">${w.map(i => `<div class="match-item" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="w">${i.t}</div>`).join('')}</div>
                 <div class="match-col">${d.map(i => `<div class="match-item" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d">${i.t}${i.img ? `<img src="${i.img}" class="match-img">` : ''}</div>`).join('')}</div>`;
@@ -345,6 +360,18 @@
             document.getElementById('matchEnd').innerHTML = `<h3>Match Complete</h3><p>Accuracy: ${acc}%</p><button class="main-btn" onclick="setStudyMode('match')">Play Again</button>`;
             document.getElementById('matchEnd').classList.remove('hidden');
             logPerformance("Matching", `${acc}% Accuracy`);
+            exportResult("Matching", `${acc}% Accuracy`);
+        }
+
+        async function exportResult(mode, score) {
+            if (EXPORT_URL.includes("PASTE")) return;
+            try {
+                await fetch(EXPORT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ name: studentName, unit: currentClass, mode: mode, score: score })
+                });
+            } catch (e) { console.log("Export failed", e); }
         }
 
         function logPerformance(mode, score) {
