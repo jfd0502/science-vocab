@@ -321,9 +321,11 @@
             document.getElementById('matchEnd').classList.add('hidden');
             let w = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random());
             let d = sub.map((x, i) => ({t: x.d, img: x.img, id: i, type: 'd'})).sort(() => 0.5 - Math.random());
+            
+            // Enabled ondrop and ondragover for BOTH columns to allow bidirectional dragging
             document.getElementById('matchContainer').innerHTML = `
-                <div class="match-col">${w.map(i => `<div class="match-item" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w">${i.t}</div>`).join('')}</div>
-                <div class="match-col">${d.map(i => `<div class="match-item" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d">${i.t}${i.img ? `<img src="${i.img}" class="match-img">` : ''}</div>`).join('')}</div>`;
+                <div class="match-col">${w.map(i => `<div class="match-item" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="w">${i.t}</div>`).join('')}</div>
+                <div class="match-col">${d.map(i => `<div class="match-item" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d">${i.t}${i.img ? `<img src="${i.img}" class="match-img">` : ''}</div>`).join('')}</div>`;
         }
         function drag(e) { draggedItem = e.target; }
         function drop(e) {
