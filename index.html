@@ -112,7 +112,6 @@
         let cardIdx = 0;
         let currentMode = 'list';
         
-        // Performance Trackers
         let quizCorrect = 0, quizTotal = 0, quizLimit = 5;
         let matchCorrect = 0, matchTotal = 0, matchGoal = 0;
         let performanceLog = [];
@@ -137,8 +136,8 @@
                         }
                     }
                 });
-                document.getElementById('syncStatus').innerText = "? Master Sheet Connected";
-            } catch (e) { document.getElementById('syncStatus').innerText = "?? Offline Mode"; }
+                document.getElementById('syncStatus').innerText = "Master Sheet Connected";
+            } catch (e) { document.getElementById('syncStatus').innerText = "Offline Mode"; }
             initApp();
         }
 
@@ -168,7 +167,6 @@
             if (mode === 'match') startMatch();
         }
 
-        // --- QUIZ LOGIC ---
         function startQuiz() {
             quizCorrect = 0; quizTotal = 0;
             document.getElementById('quizContent').classList.remove('hidden');
@@ -204,13 +202,13 @@
         function endQuiz() {
             document.getElementById('quizContent').classList.add('hidden');
             const pct = Math.round((quizCorrect / quizTotal) * 100);
-            const msg = pct >= 80 ? "?? Well Done!" : "?? Keep Practicing!";
+            // Using Entity Codes for Sparkles (&#10024;) and Books (&#128218;)
+            const msg = pct >= 80 ? "&#10024; Well Done!" : "&#128218; Keep Practicing!";
             document.getElementById('quizEnd').innerHTML = `<h3>${msg}</h3><p>Final Score: ${pct}%</p><button onclick="startQuiz()">Try Again</button>`;
             document.getElementById('quizEnd').classList.remove('hidden');
             logPerformance("Quiz", `${quizCorrect}/${quizTotal} (${pct}%)`);
         }
 
-        // --- MATCH LOGIC ---
         function startMatch() {
             matchCorrect = 0; matchTotal = 0;
             document.getElementById('matchContent').classList.remove('hidden');
@@ -247,13 +245,13 @@
 
         function endMatch(acc) {
             document.getElementById('matchContent').classList.add('hidden');
-            const msg = acc >= 70 ? "?? Fast Learner!" : "?? Nice Effort!";
+            // Using Entity Codes for Fire (&#128293;) and Flexed Bicep (&#128170;)
+            const msg = acc >= 70 ? "&#128293; Fast Learner!" : "&#128170; Nice Effort!";
             document.getElementById('matchEnd').innerHTML = `<h3>${msg}</h3><p>Accuracy: ${acc}%</p><button onclick="startMatch()">Play Again</button>`;
             document.getElementById('matchEnd').classList.remove('hidden');
             logPerformance("Matching", `${acc}% Accuracy`);
         }
 
-        // --- HISTORY & UTILS ---
         function logPerformance(mode, score) {
             performanceLog.unshift({ mode, score, unit: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
             renderHistory();
