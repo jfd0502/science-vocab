@@ -8,7 +8,7 @@
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; position: relative; }
         
-        /* --- STUDENT LOGIN OVERLAY (Hidden by default) --- */
+        /* --- STUDENT LOGIN OVERLAY --- */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center;
@@ -181,7 +181,7 @@
 
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-        const EXPORT_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE"; 
+        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynuvfp1kcX7iLtR90ApNiIK9MMsldCbWilL8cU2FI4p6rTqF8cTJ_hiW4E51-WYyvReQ/exec"; 
         const ADMIN_PASS = "science123";
 
         let units = {};
@@ -189,10 +189,8 @@
         let performanceLog = [];
         let draggedItem = null;
 
-        // Sequence 1: Show Landing Page (Happens on load)
         window.onload = fetchTeacherData;
 
-        // Sequence 2: On clicking landing button, show name prompt
         function enterApp() {
             const lp = document.getElementById('landingPage');
             lp.style.opacity = '0';
@@ -202,7 +200,6 @@
             }, 800);
         }
 
-        // Sequence 3: On saving name, show main app
         function saveStudentName() {
             const name = document.getElementById('studentNameInput').value.trim();
             if (name.length < 2) return alert("Please enter a valid name.");
@@ -370,13 +367,22 @@
 
         async function exportResult(mode, score) {
             if (!EXPORT_URL || EXPORT_URL.includes("PASTE")) return;
+            const payload = JSON.stringify({ name: studentName, unit: currentClass, mode: mode, score: score });
+            
+            // Try fetch first, fallback to beacon for reliability
             try {
-                await fetch(EXPORT_URL, {
+                fetch(EXPORT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    body: JSON.stringify({ name: studentName, unit: currentClass, mode: mode, score: score })
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payload
                 });
-            } catch (e) { console.log("Export failed", e); }
+            } catch (e) {
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(EXPORT_URL, payload);
+                }
+            }
         }
 
         function logPerformance(mode, score) {
