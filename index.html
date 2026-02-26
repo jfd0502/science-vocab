@@ -109,13 +109,13 @@
             </div>
 
             <div id="listSelection" class="hidden">
-                <div class="breadcrumb" onclick="backToUnits()">? Back to Units</div>
+                <div class="breadcrumb" onclick="backToUnits()">&larr; Back to Units</div>
                 <label><strong>Step 2: Select Vocabulary List</strong></label>
                 <div id="listBtnGrid" class="nav-grid"></div>
             </div>
 
             <div id="studyInterface" class="hidden">
-                <div class="breadcrumb" onclick="backToLists()">? Back to Lists</div>
+                <div class="breadcrumb" onclick="backToLists()">&larr; Back to Lists</div>
                 <h3 id="activeListName" style="margin: 5px 0;"></h3>
                 
                 <div class="study-tabs">
@@ -303,6 +303,7 @@
         let mCorrect = 0, mTotal = 0, mGoal = 0;
         function startMatch(list) {
             mCorrect = 0; mTotal = 0;
+            document.getElementById('matchStats').innerText = `Accuracy: 0%`; // RESET ACCURACY DISPLAY
             const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5);
             mGoal = sub.length;
             document.getElementById('matchContent').classList.remove('hidden');
