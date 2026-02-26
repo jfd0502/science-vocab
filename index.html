@@ -18,21 +18,25 @@
         .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.1rem; overflow-y: auto; }
         .card-img { max-height: 120px; max-width: 100%; border-radius: 8px; margin-top: 10px; object-fit: contain; background: white; padding: 5px; }
 
+        /* Quiz Styling */
+        .quiz-option { background: white; border: 2px solid #e2e8f0; padding: 12px; margin: 8px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: left; }
+        .quiz-option:hover { border-color: var(--primary); background: #eff6ff; }
+        .correct { background: #dcfce7 !important; border-color: #22c55e !important; }
+        .incorrect { background: #fee2e2 !important; border-color: #ef4444 !important; }
+
         /* Match Mode */
         .match-container { display: flex; gap: 15px; margin-top: 10px; }
         .match-col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
         .match-item { padding: 15px; background: white; border: 2px solid #cbd5e1; border-radius: 8px; cursor: grab; text-align: center; font-size: 0.9rem; user-select: none; transition: all 0.2s; min-height: 60px; display: flex; align-items: center; justify-content: center; }
-        .match-item:hover { border-color: var(--primary); background: #f8fafc; }
-        #accuracyDisplay { text-align: right; font-weight: bold; margin-bottom: 5px; color: var(--primary); font-size: 1.1rem; }
-
+        
         /* UI */
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1rem; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         .mode-toggle { background: #64748b; margin-bottom: 20px; }
-        .study-tabs { display: flex; gap: 5px; margin-top: 15px; }
-        .study-tabs button { background: #e2e8f0; color: #475569; padding: 10px; font-size: 0.9rem; flex: 1; }
+        .study-tabs { display: flex; gap: 5px; margin-top: 15px; flex-wrap: wrap; }
+        .study-tabs button { background: #e2e8f0; color: #475569; padding: 10px; font-size: 0.85rem; flex: 1 1 45%; }
         .study-tabs button.active { background: var(--primary); color: white; }
-        #syncStatus { font-size: 0.85rem; color: #64748b; margin-bottom: 10px; text-align: center; font-style: italic; }
+        #syncStatus { font-size: 0.85rem; color: #64748b; margin-bottom: 10px; text-align: center; }
     </style>
 </head>
 <body>
@@ -49,18 +53,29 @@
         <div class="study-tabs">
             <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
             <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
+            <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
             <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
         </div>
 
+        <hr>
+
         <div id="listMode"><div id="fullListArea"></div></div>
+        
         <div id="flashMode" class="hidden">
             <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
                 <div class="inner"><div class="front" id="displayTerm"></div><div class="back" id="displayDef"></div></div>
             </div>
             <div style="display:flex; gap:10px;"><button onclick="changeCard(-1)">Previous</button><button onclick="changeCard(1)">Next</button></div>
         </div>
+
+        <div id="quizMode" class="hidden">
+            <div id="quizQuestion" style="font-weight:bold; font-size:1.2rem; margin-bottom:15px;"></div>
+            <div id="quizOptions"></div>
+            <button id="nextQuizBtn" class="hidden" onclick="renderQuiz()" style="margin-top:15px; background:var(--accent);">Next Question</button>
+        </div>
+
         <div id="matchMode" class="hidden">
-            <div id="accuracyDisplay">Accuracy: 0%</div>
+            <div id="accuracyDisplay" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
             <div class="match-container" id="matchContainer"></div>
         </div>
     </div>
@@ -70,7 +85,6 @@
         <input type="text" id="newClassName" placeholder="New List Name"><button onclick="addClass()">Create List</button>
         <hr>
         <select id="adminDropdown" onchange="loadClass(this.value)"></select>
-        <input type="text" id="newTerm" placeholder="Word"><input type="text" id="newDef" placeholder="Definition"><input type="text" id="newImg" placeholder="Image URL"><button onclick="addWord()">Add Word</button>
         <div id="adminWordList"></div>
     </div>
 
@@ -78,12 +92,11 @@
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
         const ADMIN_PASS = "science123";
 
-        let data = JSON.parse(localStorage.getItem('science_v18')) || {};
+        let data = {};
         let currentClass = "";
         let cardIdx = 0;
         let currentMode = 'list';
-        let matchesFound = 0;
-        let totalAttempts = 0;
+        let totalAttempts = 0, matchesFound = 0;
 
         window.onload = fetchTeacherData;
 
@@ -91,17 +104,10 @@
             try {
                 const response = await fetch(SHEET_CSV_URL);
                 const csvText = await response.text();
-                // Split lines and clean up empty rows
-                const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1);
+                const rows = csvText.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
                 
-                if (rows.length === 0) {
-                    console.error("Sheet loaded but no data rows found.");
-                }
-
                 rows.forEach(row => {
-                    // This regex splits by comma but ignores commas inside quotes
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    
                     if (cols.length >= 2) {
                         const term = (cols[0] || "").replace(/"/g, '').trim();
                         const def = (cols[1] || "").replace(/"/g, '').trim();
@@ -110,95 +116,96 @@
                         
                         if (term && def) {
                             if (!data[list]) data[list] = [];
-                            if (!data[list].some(item => item.t === term)) {
-                                data[list].push({t: term, d: def, img: img});
-                            }
+                            data[list].push({t: term, d: def, img: img});
                         }
                     }
                 });
                 document.getElementById('syncStatus').innerText = "? Master Sheet Connected";
-            } catch (e) {
-                document.getElementById('syncStatus').innerText = "?? Offline Mode";
-            }
+            } catch (e) { document.getElementById('syncStatus').innerText = "?? Offline Mode"; }
             initApp();
         }
 
         function initApp() {
             const keys = Object.keys(data);
             if (keys.length > 0) {
-                currentClass = currentClass || keys[0];
+                currentClass = keys[0];
                 renderClassOptions();
                 setStudyMode('list');
-            } else {
-                document.getElementById('fullListArea').innerHTML = "No vocabulary found. Please check your Google Sheet format.";
             }
         }
 
         function renderClassOptions() {
-            const keys = Object.keys(data);
-            const options = keys.map(k => `<option value="${k}" ${k===currentClass?'selected':''}>${k}</option>`).join('');
+            const options = Object.keys(data).map(k => `<option value="${k}">${k}</option>`).join('');
             document.getElementById('classDropdown').innerHTML = options;
             document.getElementById('adminDropdown').innerHTML = options;
         }
 
-        function loadClass(val) {
-            currentClass = val;
-            cardIdx = 0;
-            setStudyMode(currentMode);
-            renderAdminList();
-        }
+        function loadClass(val) { currentClass = val; cardIdx = 0; setStudyMode(currentMode); }
 
         function setStudyMode(mode) {
             currentMode = mode;
-            ['tabList', 'tabFlash', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
-            const activeTab = document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1));
-            if(activeTab) activeTab.classList.add('active');
+            ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
+            document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
 
-            ['listMode', 'flashMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById(mode + 'Mode').classList.remove('hidden');
             
             if (mode === 'list') renderFullList();
             if (mode === 'flash') updateCard();
-            if (mode === 'match') { matchesFound = 0; totalAttempts = 0; updateAccuracy(); renderMatching(); }
+            if (mode === 'quiz') renderQuiz();
+            if (mode === 'match') { matchesFound = 0; totalAttempts = 0; renderMatching(); }
         }
 
         function renderFullList() {
             const list = data[currentClass] || [];
             document.getElementById('fullListArea').innerHTML = list.map(item => `
-                <div style="padding:15px; border-bottom:1px solid #e2e8f0;">
-                    <strong style="color:var(--primary);">${item.t}</strong>: ${item.d}
-                </div>
+                <div style="padding:15px; border-bottom:1px solid #e2e8f0;"><strong>${item.t}</strong>: ${item.d}</div>
             `).join('');
         }
 
         function updateCard() {
             const list = data[currentClass] || [];
-            if (!list.length) return;
             document.getElementById('displayTerm').innerText = list[cardIdx].t;
-            let defContent = `<div>${list[cardIdx].d}</div>`;
-            if (list[cardIdx].img && list[cardIdx].img.includes('http')) {
-                defContent += `<img src="${list[cardIdx].img}" class="card-img" onerror="this.style.display='none'">`;
-            }
-            document.getElementById('displayDef').innerHTML = defContent;
+            let defHtml = `<div>${list[cardIdx].d}</div>`;
+            if (list[cardIdx].img.includes('http')) defHtml += `<img src="${list[cardIdx].img}" class="card-img">`;
+            document.getElementById('displayDef').innerHTML = defHtml;
             document.getElementById('cardContainer').classList.remove('flipped');
         }
 
         function changeCard(dir) {
-            const list = data[currentClass] || [];
-            if (!list.length) return;
+            const list = data[currentClass];
             cardIdx = (cardIdx + dir + list.length) % list.length;
             updateCard();
         }
 
+        function renderQuiz() {
+            const list = data[currentClass];
+            if (list.length < 4) { document.getElementById('quizQuestion').innerText = "Need 4 words for a quiz!"; return; }
+            document.getElementById('nextQuizBtn').classList.add('hidden');
+            
+            const correct = list[Math.floor(Math.random() * list.length)];
+            const distractors = list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3);
+            const options = [correct, ...distractors].sort(() => 0.5 - Math.random());
+
+            document.getElementById('quizQuestion').innerText = `What is the definition of: ${correct.t}?`;
+            document.getElementById('quizOptions').innerHTML = options.map(opt => `
+                <div class="quiz-option" onclick="checkQuiz(this, ${opt.t === correct.t})">${opt.d}</div>
+            `).join('');
+        }
+
+        function checkQuiz(el, isCorrect) {
+            if (document.getElementById('nextQuizBtn').classList.contains('hidden')) {
+                el.classList.add(isCorrect ? 'correct' : 'incorrect');
+                document.getElementById('nextQuizBtn').classList.remove('hidden');
+            }
+        }
+
         function renderMatching() {
-            const list = data[currentClass] || [];
-            const container = document.getElementById('matchContainer');
-            if (list.length < 2) { container.innerHTML = "Need 2+ words."; return; }
+            const list = data[currentClass].slice(0, 6);
             let words = list.map((item, i) => ({ text: item.t, id: i, type: 'word' }));
             let defs = list.map((item, i) => ({ text: item.d, id: i, type: 'def' }));
-            words.sort(() => Math.random() - 0.5);
-            defs.sort(() => Math.random() - 0.5);
-            container.innerHTML = `
+            words.sort(() => 0.5 - Math.random()); defs.sort(() => 0.5 - Math.random());
+            document.getElementById('matchContainer').innerHTML = `
                 <div class="match-col">${words.map(w => `<div class="match-item" draggable="true" ondragstart="drag(event)" data-id="${w.id}" data-type="word">${w.text}</div>`).join('')}</div>
                 <div class="match-col">${defs.map(d => `<div class="match-item" ondragover="allowDrop(event)" ondrop="drop(event)" data-id="${d.id}" data-type="def">${d.text}</div>`).join('')}</div>`;
         }
@@ -209,53 +216,31 @@
         function drop(e) {
             e.preventDefault();
             const target = e.target;
-            if (!draggedItem || draggedItem.dataset.type === target.dataset.type) return; 
+            if (!draggedItem || draggedItem.dataset.type === target.dataset.type) return;
             totalAttempts++;
             if (draggedItem.dataset.id === target.dataset.id) {
-                matchesFound++;
-                draggedItem.style.visibility = 'hidden';
-                target.style.visibility = 'hidden';
+                matchesFound++; draggedItem.style.visibility = 'hidden'; target.style.visibility = 'hidden';
             }
-            updateAccuracy();
-        }
-        function updateAccuracy() {
-            const acc = totalAttempts === 0 ? 0 : Math.round((matchesFound / totalAttempts) * 100);
+            const acc = Math.round((matchesFound / totalAttempts) * 100);
             document.getElementById('accuracyDisplay').innerText = `Accuracy: ${acc}%`;
         }
 
         function protectedToggle() {
             if (document.getElementById('adminView').classList.contains('hidden')) {
-                const pass = prompt("Enter Teacher Password:");
-                if (pass === ADMIN_PASS) {
+                if (prompt("Enter Password:") === ADMIN_PASS) {
                     document.getElementById('studyView').classList.add('hidden');
                     document.getElementById('adminView').classList.remove('hidden');
                     renderAdminList();
-                } else { alert("Incorrect Password"); }
+                }
             } else {
                 document.getElementById('adminView').classList.add('hidden');
                 document.getElementById('studyView').classList.remove('hidden');
             }
         }
 
-        function addWord() {
-            const t = document.getElementById('newTerm').value;
-            const d = document.getElementById('newDef').value;
-            const img = document.getElementById('newImg').value;
-            if (t && d) {
-                data[currentClass].push({t, d, img});
-                localStorage.setItem('science_v18', JSON.stringify(data));
-                renderAdminList();
-                document.getElementById('newTerm').value = "";
-                document.getElementById('newDef').value = "";
-            }
-        }
         function renderAdminList() {
             const list = data[currentClass] || [];
-            document.getElementById('adminWordList').innerHTML = list.map(item => `<div style="padding:5px; border-bottom:1px solid #eee;">${item.t}</div>`).join('');
-        }
-        function addClass() {
-            const name = document.getElementById('newClassName').value.trim();
-            if (name && !data[name]) { data[name] = []; currentClass = name; renderClassOptions(); renderAdminList(); }
+            document.getElementById('adminWordList').innerHTML = "<h4>Words in this Unit:</h4>" + list.map(i => `<div>${i.t}</div>`).join('');
         }
     </script>
 </body>
