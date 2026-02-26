@@ -114,12 +114,15 @@
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
         const ADMIN_PASS = "science123";
 
-        let data = JSON.parse(localStorage.getItem('science_v22')) || {};
+        let data = JSON.parse(localStorage.getItem('science_v23')) || {};
         let currentClass = "";
         let cardIdx = 0;
         let currentMode = 'list';
         
+        // Quiz State
         let quizCorrect = 0, quizTotal = 0, quizLimit = 5;
+        let quizPool = []; 
+
         let matchCorrect = 0, matchTotal = 0, matchGoal = 0;
         let performanceLog = [];
 
@@ -181,21 +184,31 @@
             if (mode === 'match') startMatch();
         }
 
+        // --- NEW NO-REPEAT QUIZ LOGIC ---
         function startQuiz() {
             quizCorrect = 0; quizTotal = 0;
+            const fullList = data[currentClass];
+            // Shuffle and slice to limit or total list size
+            quizPool = [...fullList].sort(() => 0.5 - Math.random());
+            let actualLimit = Math.min(5, fullList.length);
+            quizPool = quizPool.slice(0, actualLimit);
+            quizLimit = actualLimit;
+
             document.getElementById('quizContent').classList.remove('hidden');
             document.getElementById('quizEnd').classList.add('hidden');
             renderQuiz();
         }
 
         function renderQuiz() {
-            const list = data[currentClass];
             if (quizTotal >= quizLimit) { endQuiz(); return; }
             document.getElementById('quizStats').innerText = `Score: ${quizCorrect}/${quizTotal}`;
             document.getElementById('nextQuizBtn').classList.add('hidden');
-            const correct = list[Math.floor(Math.random() * list.length)];
-            const distractors = list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3);
+            
+            // Pick next word from the pool (No repeats!)
+            const correct = quizPool[quizTotal];
+            const distractors = data[currentClass].filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3);
             const options = [correct, ...distractors].sort(() => 0.5 - Math.random());
+
             document.getElementById('quizQuestion').innerText = `What is the definition of: ${correct.t}?`;
             document.getElementById('quizOptions').innerHTML = options.map(opt => `<div class="quiz-option" onclick="checkQuiz(this, ${opt.t === correct.t})">${opt.d}</div>`).join('');
         }
@@ -291,7 +304,6 @@
             updateCard();
         }
 
-        // --- MANAGER TOOLS ---
         function addWord() {
             const t = document.getElementById('newTerm').value;
             const d = document.getElementById('newDef').value;
@@ -299,7 +311,7 @@
             if (t && d) {
                 if (!data[currentClass]) data[currentClass] = [];
                 data[currentClass].push({t, d, img});
-                localStorage.setItem('science_v22', JSON.stringify(data));
+                localStorage.setItem('science_v23', JSON.stringify(data));
                 renderAdminList();
                 document.getElementById('newTerm').value = "";
                 document.getElementById('newDef').value = "";
@@ -311,7 +323,7 @@
             if (name && !data[name]) {
                 data[name] = [];
                 currentClass = name;
-                localStorage.setItem('science_v22', JSON.stringify(data));
+                localStorage.setItem('science_v23', JSON.stringify(data));
                 renderClassOptions();
                 renderAdminList();
                 document.getElementById('newClassName').value = "";
