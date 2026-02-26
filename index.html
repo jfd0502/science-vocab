@@ -52,7 +52,6 @@
         .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin: 10px 0; }
         .nav-btn { background: white; border: 2px solid #e2e8f0; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .nav-btn:hover { border-color: var(--primary); background: #eff6ff; }
-        .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .breadcrumb { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; width: 100%; text-align: left; cursor: pointer; }
         .breadcrumb:hover { text-decoration: underline; }
 
@@ -79,7 +78,8 @@
         .match-item { padding: 15px; background: white; border: 2px solid #cbd5e1; border-radius: 8px; cursor: grab; text-align: center; font-size: 0.9rem; user-select: none; transition: all 0.2s; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .match-img { max-height: 50px; max-width: 100%; margin-top: 8px; border-radius: 4px; pointer-events: none; }
         
-        /* Tabs & End Screens */
+        /* Stats & History */
+        .history-item { font-size: 0.85rem; padding: 5px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
         .study-tabs { display: flex; gap: 5px; margin-top: 15px; flex-wrap: wrap; }
         .study-tabs button { background: #e2e8f0; color: #475569; padding: 10px; font-size: 0.85rem; flex: 1 1 45%; border: none; border-radius: 8px; cursor: pointer; }
         .study-tabs button.active { background: var(--primary); color: white; }
@@ -103,7 +103,6 @@
         <div id="syncStatus">Syncing with Teacher's Sheet...</div>
         
         <div id="studyView" class="panel">
-            
             <div id="unitSelection">
                 <label><strong>Step 1: Select Unit of Study</strong></label>
                 <div id="unitBtnGrid" class="nav-grid"></div>
@@ -126,6 +125,7 @@
                     <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
                 </div>
                 <hr>
+
                 <div id="listMode">
                     <div id="fullListArea"></div>
                     <div id="historyArea" style="margin-top:20px; background:#f8fafc; padding:15px; border-radius:8px;">
@@ -133,12 +133,14 @@
                         <div id="historyLog">No attempts yet.</div>
                     </div>
                 </div>
+
                 <div id="flashMode" class="hidden">
                     <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
                         <div class="inner"><div class="front" id="displayTerm"></div><div class="back" id="displayDef"></div></div>
                     </div>
                     <div style="display:flex; gap:10px;"><button class="main-btn" onclick="changeCard(-1)">Previous</button><button class="main-btn" onclick="changeCard(1)">Next</button></div>
                 </div>
+
                 <div id="quizMode" class="hidden">
                     <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary);">Score: 0/0</div>
                     <div id="quizContent">
@@ -148,6 +150,7 @@
                     </div>
                     <div id="quizEnd" class="hidden end-screen"></div>
                 </div>
+
                 <div id="matchMode" class="hidden">
                     <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
                     <div id="matchContent"><div class="match-container" id="matchContainer"></div></div>
@@ -158,7 +161,6 @@
 
         <div id="adminView" class="panel hidden">
             <h3>Manager Mode</h3>
-            <p style="font-size:0.8rem; color:gray;">Add new items here. Note: Column E logic is managed via Google Sheets.</p>
             <select id="adminDropdown" onchange="loadClass(this.value)"></select>
             <input type="text" id="newTerm" placeholder="Word">
             <input type="text" id="newDef" placeholder="Definition">
@@ -172,13 +174,10 @@
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
         const ADMIN_PASS = "science123";
 
-        let rawData = [];
-        let units = {}; // Organized by Unit of Study -> List Name
-        let currentUnit = "";
-        let currentClass = "";
-        let cardIdx = 0;
-        let currentMode = 'list';
+        let units = {};
+        let currentUnit = "", currentClass = "", cardIdx = 0, currentMode = 'list';
         let performanceLog = [];
+        let draggedItem = null;
 
         function enterApp() {
             const lp = document.getElementById('landingPage');
@@ -193,8 +192,7 @@
                 const response = await fetch(SHEET_CSV_URL);
                 const csvText = await response.text();
                 const rows = csvText.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
-                
-                units = {}; // Reset
+                units = {};
                 rows.forEach(row => {
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     if (cols.length >= 2) {
@@ -203,10 +201,8 @@
                         const img = (cols[2] || "").replace(/"/g, '').trim();
                         const listName = (cols[3] || "General Science").replace(/"/g, '').trim();
                         const unitName = (cols[4] || "Uncategorized").replace(/"/g, '').trim();
-
                         if (!units[unitName]) units[unitName] = {};
                         if (!units[unitName][listName]) units[unitName][listName] = [];
-                        
                         units[unitName][listName].push({t: term, d: def, img: img});
                     }
                 });
@@ -216,8 +212,7 @@
         }
 
         function renderUnitSelection() {
-            const unitGrid = document.getElementById('unitBtnGrid');
-            unitGrid.innerHTML = Object.keys(units).map(u => 
+            document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => 
                 `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`
             ).join('');
         }
@@ -226,9 +221,7 @@
             currentUnit = u;
             document.getElementById('unitSelection').classList.add('hidden');
             document.getElementById('listSelection').classList.remove('hidden');
-            
-            const listGrid = document.getElementById('listBtnGrid');
-            listGrid.innerHTML = Object.keys(units[u]).map(l => 
+            document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => 
                 `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`
             ).join('');
         }
@@ -241,26 +234,18 @@
             setStudyMode('list');
         }
 
-        function backToUnits() {
-            document.getElementById('listSelection').classList.add('hidden');
-            document.getElementById('unitSelection').classList.remove('hidden');
-        }
-
-        function backToLists() {
-            document.getElementById('studyInterface').classList.add('hidden');
-            document.getElementById('listSelection').classList.remove('hidden');
-        }
+        function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
+        function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
 
         function setStudyMode(mode) {
             currentMode = mode;
             ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
             document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-            
             ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById(mode + 'Mode').classList.remove('hidden');
             
             const list = units[currentUnit][currentClass];
-            if (mode === 'list') renderFullList(list);
+            if (mode === 'list') { renderFullList(list); renderHistory(); }
             if (mode === 'flash') { cardIdx = 0; updateCard(list); }
             if (mode === 'quiz') startQuiz(list);
             if (mode === 'match') startMatch(list);
@@ -284,19 +269,18 @@
             updateCard(list);
         }
 
-        // Quiz and Match Logic (Simplified for brevity, maintained from previous versions)
-        let quizPool = []; let qIdx = 0; let qScore = 0;
+        let qPool = []; let qIdx = 0; let qScore = 0;
         function startQuiz(list) {
             qScore = 0; qIdx = 0;
-            quizPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5);
+            qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5);
             document.getElementById('quizContent').classList.remove('hidden');
             document.getElementById('quizEnd').classList.add('hidden');
             renderQuiz();
         }
         function renderQuiz() {
-            if (qIdx >= quizPool.length) { endQuiz(); return; }
+            if (qIdx >= qPool.length) { endQuiz(); return; }
             const list = units[currentUnit][currentClass];
-            const correct = quizPool[qIdx];
+            const correct = qPool[qIdx];
             const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random());
             document.getElementById('quizQuestion').innerText = `Definition for: ${correct.t}`;
             document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="quiz-option" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join('');
@@ -310,19 +294,54 @@
         }
         function endQuiz() {
             document.getElementById('quizContent').classList.add('hidden');
-            document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete</h3><p>Score: ${qScore}/${quizPool.length}</p><button class="main-btn" onclick="setStudyMode('quiz')">Try Again</button>`;
+            const pct = Math.round((qScore/qPool.length)*100);
+            document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete</h3><p>Score: ${pct}%</p><button class="main-btn" onclick="setStudyMode('quiz')">Try Again</button>`;
             document.getElementById('quizEnd').classList.remove('hidden');
+            logPerformance("Quiz", `${qScore}/${qPool.length} (${pct}%)`);
         }
 
+        let mCorrect = 0, mTotal = 0, mGoal = 0;
         function startMatch(list) {
+            mCorrect = 0; mTotal = 0;
             const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5);
+            mGoal = sub.length;
+            document.getElementById('matchContent').classList.remove('hidden');
+            document.getElementById('matchEnd').classList.add('hidden');
             let w = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random());
             let d = sub.map((x, i) => ({t: x.d, img: x.img, id: i, type: 'd'})).sort(() => 0.5 - Math.random());
             document.getElementById('matchContainer').innerHTML = `
-                <div class="match-col">${w.map(i => `<div class="match-item" draggable="true" ondragstart="window.draggedId=${i.id}">${i.t}</div>`).join('')}</div>
-                <div class="match-col">${d.map(i => `<div class="match-item" ondragover="event.preventDefault()" ondrop="checkMatch(${i.id})">${i.t}${i.img ? `<img src="${i.img}" class="match-img">` : ''}</div>`).join('')}</div>`;
+                <div class="match-col">${w.map(i => `<div class="match-item" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w">${i.t}</div>`).join('')}</div>
+                <div class="match-col">${d.map(i => `<div class="match-item" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d">${i.t}${i.img ? `<img src="${i.img}" class="match-img">` : ''}</div>`).join('')}</div>`;
         }
-        function checkMatch(id) { if(window.draggedId === id) event.target.closest('.match-item').style.visibility = 'hidden'; }
+        function drag(e) { draggedItem = e.target; }
+        function drop(e) {
+            e.preventDefault();
+            const target = e.target.closest('.match-item');
+            if (!draggedItem || !target || draggedItem.dataset.type === target.dataset.type) return;
+            mTotal++;
+            if (draggedItem.dataset.id === target.dataset.id) {
+                mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.visibility = 'hidden';
+            }
+            const acc = Math.round((mCorrect / mTotal) * 100);
+            document.getElementById('matchStats').innerText = `Accuracy: ${acc}%`;
+            if (mCorrect === mGoal) endMatch(acc);
+        }
+        function endMatch(acc) {
+            document.getElementById('matchContent').classList.add('hidden');
+            document.getElementById('matchEnd').innerHTML = `<h3>Match Complete</h3><p>Accuracy: ${acc}%</p><button class="main-btn" onclick="setStudyMode('match')">Play Again</button>`;
+            document.getElementById('matchEnd').classList.remove('hidden');
+            logPerformance("Matching", `${acc}% Accuracy`);
+        }
+
+        function logPerformance(mode, score) {
+            performanceLog.unshift({ mode, score, unit: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+            if(currentMode === 'list') renderHistory();
+        }
+        function renderHistory() {
+            document.getElementById('historyLog').innerHTML = performanceLog.length ? performanceLog.map(h => `
+                <div class="history-item"><span><strong>${h.mode}</strong> (${h.unit})</span><span>${h.score} <small>${h.time}</small></span></div>
+            `).join('') : "No attempts yet.";
+        }
 
         function protectedToggle() {
             if (prompt("Password:") === ADMIN_PASS) {
