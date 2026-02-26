@@ -29,6 +29,10 @@
         .match-col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
         .match-item { padding: 15px; background: white; border: 2px solid #cbd5e1; border-radius: 8px; cursor: grab; text-align: center; font-size: 0.9rem; user-select: none; transition: all 0.2s; min-height: 60px; display: flex; align-items: center; justify-content: center; }
         
+        /* Stats & History */
+        .history-item { font-size: 0.85rem; padding: 5px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .end-screen { text-align: center; padding: 20px; }
+
         /* UI */
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 1rem; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
@@ -59,7 +63,13 @@
 
         <hr>
 
-        <div id="listMode"><div id="fullListArea"></div></div>
+        <div id="listMode">
+            <div id="fullListArea"></div>
+            <div id="historyArea" style="margin-top:20px; background:#f8fafc; padding:15px; border-radius:8px;">
+                <h4 style="margin:0 0 10px 0;">Your Session Performance:</h4>
+                <div id="historyLog">No attempts yet.</div>
+            </div>
+        </div>
         
         <div id="flashMode" class="hidden">
             <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
@@ -69,21 +79,26 @@
         </div>
 
         <div id="quizMode" class="hidden">
-            <div id="quizQuestion" style="font-weight:bold; font-size:1.2rem; margin-bottom:15px;"></div>
-            <div id="quizOptions"></div>
-            <button id="nextQuizBtn" class="hidden" onclick="renderQuiz()" style="margin-top:15px; background:var(--accent);">Next Question</button>
+            <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom:10px;">Score: 0/0</div>
+            <div id="quizContent">
+                <div id="quizQuestion" style="font-weight:bold; font-size:1.2rem; margin-bottom:15px;"></div>
+                <div id="quizOptions"></div>
+                <button id="nextQuizBtn" class="hidden" onclick="renderQuiz()" style="margin-top:15px; background:var(--accent);">Next Question</button>
+            </div>
+            <div id="quizEnd" class="hidden end-screen"></div>
         </div>
 
         <div id="matchMode" class="hidden">
-            <div id="accuracyDisplay" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
-            <div class="match-container" id="matchContainer"></div>
+            <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom:5px;">Accuracy: 0%</div>
+            <div id="matchContent">
+                <div class="match-container" id="matchContainer"></div>
+            </div>
+            <div id="matchEnd" class="hidden end-screen"></div>
         </div>
     </div>
 
     <div id="adminView" class="panel hidden">
         <h3>Manager Mode</h3>
-        <input type="text" id="newClassName" placeholder="New List Name"><button onclick="addClass()">Create List</button>
-        <hr>
         <select id="adminDropdown" onchange="loadClass(this.value)"></select>
         <div id="adminWordList"></div>
     </div>
@@ -96,7 +111,11 @@
         let currentClass = "";
         let cardIdx = 0;
         let currentMode = 'list';
-        let totalAttempts = 0, matchesFound = 0;
+        
+        // Performance Trackers
+        let quizCorrect = 0, quizTotal = 0, quizLimit = 5;
+        let matchCorrect = 0, matchTotal = 0, matchGoal = 0;
+        let performanceLog = [];
 
         window.onload = fetchTeacherData;
 
@@ -105,7 +124,6 @@
                 const response = await fetch(SHEET_CSV_URL);
                 const csvText = await response.text();
                 const rows = csvText.split(/\r?\n/).filter(r => r.trim() !== "").slice(1);
-                
                 rows.forEach(row => {
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     if (cols.length >= 2) {
@@ -113,7 +131,6 @@
                         const def = (cols[1] || "").replace(/"/g, '').trim();
                         const img = (cols[2] || "").replace(/"/g, '').trim();
                         let list = (cols[3] || "General Science").replace(/"/g, '').trim();
-                        
                         if (term && def) {
                             if (!data[list]) data[list] = [];
                             data[list].push({t: term, d: def, img: img});
@@ -127,11 +144,7 @@
 
         function initApp() {
             const keys = Object.keys(data);
-            if (keys.length > 0) {
-                currentClass = keys[0];
-                renderClassOptions();
-                setStudyMode('list');
-            }
+            if (keys.length > 0) { currentClass = keys[0]; renderClassOptions(); setStudyMode('list'); }
         }
 
         function renderClassOptions() {
@@ -146,41 +159,27 @@
             currentMode = mode;
             ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
             document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-
             ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById(mode + 'Mode').classList.remove('hidden');
             
             if (mode === 'list') renderFullList();
             if (mode === 'flash') updateCard();
-            if (mode === 'quiz') renderQuiz();
-            if (mode === 'match') { matchesFound = 0; totalAttempts = 0; renderMatching(); }
+            if (mode === 'quiz') startQuiz();
+            if (mode === 'match') startMatch();
         }
 
-        function renderFullList() {
-            const list = data[currentClass] || [];
-            document.getElementById('fullListArea').innerHTML = list.map(item => `
-                <div style="padding:15px; border-bottom:1px solid #e2e8f0;"><strong>${item.t}</strong>: ${item.d}</div>
-            `).join('');
-        }
-
-        function updateCard() {
-            const list = data[currentClass] || [];
-            document.getElementById('displayTerm').innerText = list[cardIdx].t;
-            let defHtml = `<div>${list[cardIdx].d}</div>`;
-            if (list[cardIdx].img.includes('http')) defHtml += `<img src="${list[cardIdx].img}" class="card-img">`;
-            document.getElementById('displayDef').innerHTML = defHtml;
-            document.getElementById('cardContainer').classList.remove('flipped');
-        }
-
-        function changeCard(dir) {
-            const list = data[currentClass];
-            cardIdx = (cardIdx + dir + list.length) % list.length;
-            updateCard();
+        // --- QUIZ LOGIC ---
+        function startQuiz() {
+            quizCorrect = 0; quizTotal = 0;
+            document.getElementById('quizContent').classList.remove('hidden');
+            document.getElementById('quizEnd').classList.add('hidden');
+            renderQuiz();
         }
 
         function renderQuiz() {
             const list = data[currentClass];
-            if (list.length < 4) { document.getElementById('quizQuestion').innerText = "Need 4 words for a quiz!"; return; }
+            if (quizTotal >= quizLimit) { endQuiz(); return; }
+            document.getElementById('quizStats').innerText = `Score: ${quizCorrect}/${quizTotal}`;
             document.getElementById('nextQuizBtn').classList.add('hidden');
             
             const correct = list[Math.floor(Math.random() * list.length)];
@@ -194,14 +193,34 @@
         }
 
         function checkQuiz(el, isCorrect) {
-            if (document.getElementById('nextQuizBtn').classList.contains('hidden')) {
-                el.classList.add(isCorrect ? 'correct' : 'incorrect');
-                document.getElementById('nextQuizBtn').classList.remove('hidden');
-            }
+            if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return;
+            quizTotal++;
+            if (isCorrect) { quizCorrect++; el.classList.add('correct'); }
+            else { el.classList.add('incorrect'); }
+            document.getElementById('quizStats').innerText = `Score: ${quizCorrect}/${quizTotal}`;
+            document.getElementById('nextQuizBtn').classList.remove('hidden');
+        }
+
+        function endQuiz() {
+            document.getElementById('quizContent').classList.add('hidden');
+            const pct = Math.round((quizCorrect / quizTotal) * 100);
+            const msg = pct >= 80 ? "?? Well Done!" : "?? Keep Practicing!";
+            document.getElementById('quizEnd').innerHTML = `<h3>${msg}</h3><p>Final Score: ${pct}%</p><button onclick="startQuiz()">Try Again</button>`;
+            document.getElementById('quizEnd').classList.remove('hidden');
+            logPerformance("Quiz", `${quizCorrect}/${quizTotal} (${pct}%)`);
+        }
+
+        // --- MATCH LOGIC ---
+        function startMatch() {
+            matchCorrect = 0; matchTotal = 0;
+            document.getElementById('matchContent').classList.remove('hidden');
+            document.getElementById('matchEnd').classList.add('hidden');
+            renderMatching();
         }
 
         function renderMatching() {
-            const list = data[currentClass].slice(0, 6);
+            const list = data[currentClass].sort(() => 0.5 - Math.random()).slice(0, 5);
+            matchGoal = list.length;
             let words = list.map((item, i) => ({ text: item.t, id: i, type: 'word' }));
             let defs = list.map((item, i) => ({ text: item.d, id: i, type: 'def' }));
             words.sort(() => 0.5 - Math.random()); defs.sort(() => 0.5 - Math.random());
@@ -217,12 +236,59 @@
             e.preventDefault();
             const target = e.target;
             if (!draggedItem || draggedItem.dataset.type === target.dataset.type) return;
-            totalAttempts++;
+            matchTotal++;
             if (draggedItem.dataset.id === target.dataset.id) {
-                matchesFound++; draggedItem.style.visibility = 'hidden'; target.style.visibility = 'hidden';
+                matchCorrect++; draggedItem.style.visibility = 'hidden'; target.style.visibility = 'hidden';
             }
-            const acc = Math.round((matchesFound / totalAttempts) * 100);
-            document.getElementById('accuracyDisplay').innerText = `Accuracy: ${acc}%`;
+            const acc = Math.round((matchCorrect / matchTotal) * 100);
+            document.getElementById('matchStats').innerText = `Accuracy: ${acc}%`;
+            if (matchCorrect === matchGoal) endMatch(acc);
+        }
+
+        function endMatch(acc) {
+            document.getElementById('matchContent').classList.add('hidden');
+            const msg = acc >= 70 ? "?? Fast Learner!" : "?? Nice Effort!";
+            document.getElementById('matchEnd').innerHTML = `<h3>${msg}</h3><p>Accuracy: ${acc}%</p><button onclick="startMatch()">Play Again</button>`;
+            document.getElementById('matchEnd').classList.remove('hidden');
+            logPerformance("Matching", `${acc}% Accuracy`);
+        }
+
+        // --- HISTORY & UTILS ---
+        function logPerformance(mode, score) {
+            performanceLog.unshift({ mode, score, unit: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
+            renderHistory();
+        }
+
+        function renderHistory() {
+            document.getElementById('historyLog').innerHTML = performanceLog.map(h => `
+                <div class="history-item">
+                    <span><strong>${h.mode}</strong> (${h.unit})</span>
+                    <span>${h.score} <small style="color:#64748b; margin-left:5px;">${h.time}</small></span>
+                </div>
+            `).join('');
+        }
+
+        function renderFullList() {
+            const list = data[currentClass] || [];
+            document.getElementById('fullListArea').innerHTML = list.map(item => `
+                <div style="padding:15px; border-bottom:1px solid #e2e8f0;"><strong>${item.t}</strong>: ${item.d}</div>
+            `).join('');
+            renderHistory();
+        }
+
+        function updateCard() {
+            const list = data[currentClass];
+            document.getElementById('displayTerm').innerText = list[cardIdx].t;
+            let defHtml = `<div>${list[cardIdx].d}</div>`;
+            if (list[cardIdx].img.includes('http')) defHtml += `<img src="${list[cardIdx].img}" class="card-img">`;
+            document.getElementById('displayDef').innerHTML = defHtml;
+            document.getElementById('cardContainer').classList.remove('flipped');
+        }
+
+        function changeCard(dir) {
+            const list = data[currentClass];
+            cardIdx = (cardIdx + dir + list.length) % list.length;
+            updateCard();
         }
 
         function protectedToggle() {
@@ -230,17 +296,11 @@
                 if (prompt("Enter Password:") === ADMIN_PASS) {
                     document.getElementById('studyView').classList.add('hidden');
                     document.getElementById('adminView').classList.remove('hidden');
-                    renderAdminList();
                 }
             } else {
                 document.getElementById('adminView').classList.add('hidden');
                 document.getElementById('studyView').classList.remove('hidden');
             }
-        }
-
-        function renderAdminList() {
-            const list = data[currentClass] || [];
-            document.getElementById('adminWordList').innerHTML = "<h4>Words in this Unit:</h4>" + list.map(i => `<div>${i.t}</div>`).join('');
         }
     </script>
 </body>
