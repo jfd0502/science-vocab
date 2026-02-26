@@ -99,15 +99,22 @@
 
     <div id="adminView" class="panel hidden">
         <h3>Manager Mode</h3>
+        <input type="text" id="newClassName" placeholder="New List Name">
+        <button onclick="addClass()" style="background: var(--accent);">Create List</button>
+        <hr>
         <select id="adminDropdown" onchange="loadClass(this.value)"></select>
-        <div id="adminWordList"></div>
+        <input type="text" id="newTerm" placeholder="Word">
+        <input type="text" id="newDef" placeholder="Definition">
+        <input type="text" id="newImg" placeholder="Image URL (Optional)">
+        <button onclick="addWord()">Add Word</button>
+        <div id="adminWordList" style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px;"></div>
     </div>
 
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
         const ADMIN_PASS = "science123";
 
-        let data = {};
+        let data = JSON.parse(localStorage.getItem('science_v22')) || {};
         let currentClass = "";
         let cardIdx = 0;
         let currentMode = 'list';
@@ -132,7 +139,9 @@
                         let list = (cols[3] || "General Science").replace(/"/g, '').trim();
                         if (term && def) {
                             if (!data[list]) data[list] = [];
-                            data[list].push({t: term, d: def, img: img});
+                            if (!data[list].some(item => item.t === term)) {
+                                data[list].push({t: term, d: def, img: img});
+                            }
                         }
                     }
                 });
@@ -143,24 +152,29 @@
 
         function initApp() {
             const keys = Object.keys(data);
-            if (keys.length > 0) { currentClass = keys[0]; renderClassOptions(); setStudyMode('list'); }
+            if (keys.length > 0) { 
+                currentClass = currentClass || keys[0]; 
+                renderClassOptions(); 
+                setStudyMode('list'); 
+            }
         }
 
         function renderClassOptions() {
-            const options = Object.keys(data).map(k => `<option value="${k}">${k}</option>`).join('');
+            const keys = Object.keys(data);
+            const options = keys.map(k => `<option value="${k}" ${k===currentClass?'selected':''}>${k}</option>`).join('');
             document.getElementById('classDropdown').innerHTML = options;
             document.getElementById('adminDropdown').innerHTML = options;
         }
 
-        function loadClass(val) { currentClass = val; cardIdx = 0; setStudyMode(currentMode); }
+        function loadClass(val) { currentClass = val; cardIdx = 0; setStudyMode(currentMode); renderAdminList(); }
 
         function setStudyMode(mode) {
             currentMode = mode;
             ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
-            document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            const tabEl = document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1));
+            if(tabEl) tabEl.classList.add('active');
             ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById(mode + 'Mode').classList.remove('hidden');
-            
             if (mode === 'list') renderFullList();
             if (mode === 'flash') updateCard();
             if (mode === 'quiz') startQuiz();
@@ -179,15 +193,11 @@
             if (quizTotal >= quizLimit) { endQuiz(); return; }
             document.getElementById('quizStats').innerText = `Score: ${quizCorrect}/${quizTotal}`;
             document.getElementById('nextQuizBtn').classList.add('hidden');
-            
             const correct = list[Math.floor(Math.random() * list.length)];
             const distractors = list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3);
             const options = [correct, ...distractors].sort(() => 0.5 - Math.random());
-
             document.getElementById('quizQuestion').innerText = `What is the definition of: ${correct.t}?`;
-            document.getElementById('quizOptions').innerHTML = options.map(opt => `
-                <div class="quiz-option" onclick="checkQuiz(this, ${opt.t === correct.t})">${opt.d}</div>
-            `).join('');
+            document.getElementById('quizOptions').innerHTML = options.map(opt => `<div class="quiz-option" onclick="checkQuiz(this, ${opt.t === correct.t})">${opt.d}</div>`).join('');
         }
 
         function checkQuiz(el, isCorrect) {
@@ -202,7 +212,6 @@
         function endQuiz() {
             document.getElementById('quizContent').classList.add('hidden');
             const pct = Math.round((quizCorrect / quizTotal) * 100);
-            // Using Entity Codes for Sparkles (&#10024;) and Books (&#128218;)
             const msg = pct >= 80 ? "&#10024; Well Done!" : "&#128218; Keep Practicing!";
             document.getElementById('quizEnd').innerHTML = `<h3>${msg}</h3><p>Final Score: ${pct}%</p><button onclick="startQuiz()">Try Again</button>`;
             document.getElementById('quizEnd').classList.remove('hidden');
@@ -245,7 +254,6 @@
 
         function endMatch(acc) {
             document.getElementById('matchContent').classList.add('hidden');
-            // Using Entity Codes for Fire (&#128293;) and Flexed Bicep (&#128170;)
             const msg = acc >= 70 ? "&#128293; Fast Learner!" : "&#128170; Nice Effort!";
             document.getElementById('matchEnd').innerHTML = `<h3>${msg}</h3><p>Accuracy: ${acc}%</p><button onclick="startMatch()">Play Again</button>`;
             document.getElementById('matchEnd').classList.remove('hidden');
@@ -259,26 +267,20 @@
 
         function renderHistory() {
             document.getElementById('historyLog').innerHTML = performanceLog.map(h => `
-                <div class="history-item">
-                    <span><strong>${h.mode}</strong> (${h.unit})</span>
-                    <span>${h.score} <small style="color:#64748b; margin-left:5px;">${h.time}</small></span>
-                </div>
+                <div class="history-item"><span><strong>${h.mode}</strong> (${h.unit})</span><span>${h.score} <small>${h.time}</small></span></div>
             `).join('');
         }
 
         function renderFullList() {
             const list = data[currentClass] || [];
-            document.getElementById('fullListArea').innerHTML = list.map(item => `
-                <div style="padding:15px; border-bottom:1px solid #e2e8f0;"><strong>${item.t}</strong>: ${item.d}</div>
-            `).join('');
-            renderHistory();
+            document.getElementById('fullListArea').innerHTML = list.map(item => `<div style="padding:15px; border-bottom:1px solid #e2e8f0;"><strong>${item.t}</strong>: ${item.d}</div>`).join('');
         }
 
         function updateCard() {
             const list = data[currentClass];
             document.getElementById('displayTerm').innerText = list[cardIdx].t;
             let defHtml = `<div>${list[cardIdx].d}</div>`;
-            if (list[cardIdx].img.includes('http')) defHtml += `<img src="${list[cardIdx].img}" class="card-img">`;
+            if (list[cardIdx].img && list[cardIdx].img.includes('http')) defHtml += `<img src="${list[cardIdx].img}" class="card-img">`;
             document.getElementById('displayDef').innerHTML = defHtml;
             document.getElementById('cardContainer').classList.remove('flipped');
         }
@@ -289,11 +291,43 @@
             updateCard();
         }
 
+        // --- MANAGER TOOLS ---
+        function addWord() {
+            const t = document.getElementById('newTerm').value;
+            const d = document.getElementById('newDef').value;
+            const img = document.getElementById('newImg').value;
+            if (t && d) {
+                if (!data[currentClass]) data[currentClass] = [];
+                data[currentClass].push({t, d, img});
+                localStorage.setItem('science_v22', JSON.stringify(data));
+                renderAdminList();
+                document.getElementById('newTerm').value = "";
+                document.getElementById('newDef').value = "";
+                document.getElementById('newImg').value = "";
+            }
+        }
+        function addClass() {
+            const name = document.getElementById('newClassName').value.trim();
+            if (name && !data[name]) {
+                data[name] = [];
+                currentClass = name;
+                localStorage.setItem('science_v22', JSON.stringify(data));
+                renderClassOptions();
+                renderAdminList();
+                document.getElementById('newClassName').value = "";
+            }
+        }
+        function renderAdminList() {
+            const list = data[currentClass] || [];
+            document.getElementById('adminWordList').innerHTML = "<h4>Words in this Unit:</h4>" + list.map(i => `<div style="font-size:0.9rem; padding:3px 0;">&bull; ${i.t}</div>`).join('');
+        }
+
         function protectedToggle() {
             if (document.getElementById('adminView').classList.contains('hidden')) {
                 if (prompt("Enter Password:") === ADMIN_PASS) {
                     document.getElementById('studyView').classList.add('hidden');
                     document.getElementById('adminView').classList.remove('hidden');
+                    renderAdminList();
                 }
             } else {
                 document.getElementById('adminView').classList.add('hidden');
