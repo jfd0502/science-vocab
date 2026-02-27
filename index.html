@@ -8,18 +8,19 @@
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; --danger: #dc2626; }
         body { font-family: 'Segoe UI', sans-serif; background: rgb(10, 15, 28); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; position: relative; overflow-x: hidden; }
         
-        /* FIX: Ensure the app container is above the background canvas */
+        /* Fixed visibility states */
         .app-container { position: relative; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; padding: 60px 20px 20px 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; }
-        .mode-toggle { position: absolute; top: 15px; left: 15px; z-index: 100; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; opacity: 0; pointer-events: none; }
+        .mode-toggle { position: absolute; top: 15px; left: 15px; z-index: 100; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+        
+        /* Make visible when active */
+        .visible { opacity: 1 !important; pointer-events: auto !important; }
         
         #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        
         #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
-        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; color: white; animation: reveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards; text-shadow: 0 0 25px rgba(37, 99, 235, 1), 0 2px 10px rgba(0,0,0,1); }
-        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 0.8s; max-width: 80%; text-shadow: 0 2px 10px rgba(0,0,0,1); text-align: center; }
-        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.6); transition: transform 0.3s, background 0.3s; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 1.4s; z-index: 10000; }
         
-        @keyframes reveal { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; color: white; text-shadow: 0 0 25px rgba(37, 99, 235, 1), 0 2px 10px rgba(0,0,0,1); }
+        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; max-width: 80%; text-shadow: 0 2px 10px rgba(0,0,0,1); text-align: center; }
+        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.6); transition: transform 0.3s; z-index: 10000; }
         
         #loaderOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 200000; color: white; font-weight: bold; }
         .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
@@ -62,9 +63,9 @@
         </div>
     </div>
 
-    <button class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
+    <button id="managerBtn" class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
 
-    <div class="app-container">
+    <div id="mainApp" class="app-container">
         <div id="syncStatus" style="font-size: 0.75rem; color: #94a3b8; text-align:center; margin-bottom:10px;">Connecting...</div>
         
         <div id="studyView" class="panel">
@@ -144,8 +145,6 @@
 
         function enterApp() { 
             document.getElementById('landingPage').style.opacity = '0'; 
-            const container = document.querySelector('.app-container'); const toggle = document.querySelector('.mode-toggle');
-            container.style.opacity = '1'; container.style.pointerEvents = 'auto'; toggle.style.opacity = '0.6'; toggle.style.pointerEvents = 'auto';
             setTimeout(() => { 
                 document.getElementById('landingPage').classList.add('hidden'); 
                 document.getElementById('loginOverlay').classList.remove('hidden'); 
@@ -156,6 +155,8 @@
             studentName = document.getElementById('studentNameInput').value; 
             if(studentName.trim()){ 
                 document.getElementById('loginOverlay').classList.add('hidden'); 
+                document.getElementById('mainApp').classList.add('visible');
+                document.getElementById('managerBtn').classList.add('visible');
                 document.getElementById('studentWelcome').innerText = "Student: " + studentName; 
             } 
         }
