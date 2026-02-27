@@ -88,11 +88,11 @@
                 <div id="unitBtnGrid" class="nav-grid"></div>
             </div>
             <div id="listSelection" class="hidden">
-                <div class="breadcrumb" onclick="backToUnits()">&larr; Back to Units</div>
+                <div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()">&larr; Back to Units</div>
                 <div id="listBtnGrid" class="nav-grid"></div>
             </div>
             <div id="studyInterface" class="hidden">
-                <div class="breadcrumb" onclick="backToLists()">&larr; Back to Lists</div>
+                <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()">&larr; Back to Lists</div>
                 <h3 id="activeListName" style="margin:5px 0;"></h3>
                 <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;"></div>
                 <div class="study-tabs">
@@ -117,19 +117,16 @@
         <div id="adminView" class="panel hidden">
             <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Manager</div>
             <h3 id="adminHeader">Manager Mode</h3>
-            
             <div id="adminUnitSelection">
                 <label><strong>Select Unit to Manage</strong></label>
                 <div id="adminUnitGrid" class="nav-grid"></div>
             </div>
-
             <div id="adminListSelection" class="hidden">
-                <div class="breadcrumb" onclick="resetAdminView()">&larr; Back to Units</div>
+                <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()">&larr; Back to Units</div>
                 <div id="adminListGrid" class="nav-grid"></div>
             </div>
-
             <div id="adminEditArea" class="hidden">
-                <div class="breadcrumb" onclick="backToAdminLists()">&larr; Back to Lists</div>
+                <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()">&larr; Back to Lists</div>
                 <div id="addWordForm">
                     <h4 style="margin-bottom:10px;">+ Add New Word</h4>
                     <input type="text" id="newT" placeholder="New Term">
@@ -196,7 +193,6 @@
                 const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0).slice(1); 
                 units = {}; 
                 let allTerms = [];
-                
                 rows.forEach(row => {
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                     if (cols.length >= 5) {
@@ -207,7 +203,6 @@
                         allTerms.push(term);
                     }
                 });
-
                 if(allTerms.length > 0) vocabWords = [...new Set(allTerms)];
                 renderUnitSelection(); 
                 renderAdminUnitSelection();
@@ -217,19 +212,32 @@
             }
         }
 
-        // --- Student View Navigation ---
+        // --- Student View Navigation (Updated for Dynamic Back Buttons) ---
         function renderUnitSelection() { 
             const grid = document.getElementById('unitBtnGrid');
             const unitKeys = Object.keys(units);
             if (unitKeys.length === 0) { grid.innerHTML = "<div style='grid-column: span 2;'>No data found.</div>"; return; }
             grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
         }
-        function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
-        function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; setStudyMode('list'); }
+        function selectUnit(u) { 
+            currentUnit = u; 
+            document.getElementById('unitSelection').classList.add('hidden'); 
+            document.getElementById('listSelection').classList.remove('hidden'); 
+            document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); 
+        }
+        function selectList(l) { 
+            currentClass = l; 
+            document.getElementById('listSelection').classList.add('hidden'); 
+            document.getElementById('studyInterface').classList.remove('hidden'); 
+            document.getElementById('activeListName').innerText = l; 
+            // Update back button with unit name
+            document.getElementById('backToListsBtn').innerHTML = `&larr; Back to ${currentUnit}`;
+            setStudyMode('list'); 
+        }
         function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
         function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
 
-        // --- Manager Mode Navigation ---
+        // --- Manager Mode Navigation (Updated for Dynamic Back Buttons) ---
         function renderAdminUnitSelection() {
             const grid = document.getElementById('adminUnitGrid');
             const unitKeys = Object.keys(units);
@@ -245,6 +253,8 @@
             adminSelectedList = l;
             document.getElementById('adminListSelection').classList.add('hidden');
             document.getElementById('adminEditArea').classList.remove('hidden');
+            // Update back button with unit name in Manager Mode
+            document.getElementById('adminBackToLists').innerHTML = `&larr; Back to ${adminSelectedUnit} Lists`;
             renderAdminWordList();
         }
         function resetAdminView() {
@@ -276,11 +286,9 @@
                 </div>`).join('');
         }
 
-        // --- Data Functions ---
         async function submitNewWord() {
             const btn = document.getElementById('addWordBtn');
-            const u = adminSelectedUnit;
-            const l = adminSelectedList;
+            const u = adminSelectedUnit; const l = adminSelectedList;
             btn.classList.add('loading'); btn.disabled = true;
             const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value });
             try {
@@ -288,8 +296,7 @@
                 alert("Added! Syncing...");
                 document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
                 await new Promise(r => setTimeout(r, 1500)); 
-                await fetchTeacherData(); 
-                renderAdminWordList();
+                await fetchTeacherData(); renderAdminWordList();
             } finally { btn.classList.remove('loading'); btn.disabled = false; }
         }
 
@@ -298,8 +305,7 @@
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
             alert("Update request sent!");
             await new Promise(r => setTimeout(r, 1200));
-            await fetchTeacherData();
-            renderAdminWordList();
+            await fetchTeacherData(); renderAdminWordList();
         }
 
         async function deleteWord(u, l, idx) {
@@ -311,12 +317,10 @@
                 await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
                 alert("Deleted! Syncing...");
                 await new Promise(r => setTimeout(r, 1500)); 
-                await fetchTeacherData();
-                renderAdminWordList();
+                await fetchTeacherData(); renderAdminWordList();
             } finally { if(btn) { btn.classList.remove('loading'); btn.disabled = false; } }
         }
 
-        // --- UI & Study Modes ---
         function setStudyMode(mode) {
             ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
             document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
@@ -357,8 +361,7 @@
                     document.getElementById('adminView').classList.remove('hidden'); 
                     document.getElementById('loginOverlay').classList.add('hidden'); 
                     const container = document.querySelector('.app-container');
-                    container.style.opacity = '1';
-                    container.style.pointerEvents = 'auto';
+                    container.style.opacity = '1'; container.style.pointerEvents = 'auto';
                     resetAdminView();
                 } 
             } else { 
@@ -367,9 +370,7 @@
                     document.getElementById('loginOverlay').classList.remove('hidden');
                     document.querySelector('.app-container').style.opacity = '0';
                     document.querySelector('.app-container').style.pointerEvents = 'none';
-                } else {
-                    document.getElementById('studyView').classList.remove('hidden'); 
-                }
+                } else { document.getElementById('studyView').classList.remove('hidden'); }
             } 
         }
 
