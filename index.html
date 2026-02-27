@@ -8,23 +8,22 @@
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; --danger: #dc2626; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; position: relative; overflow-x: hidden; }
         
-        /* MATRIX BACKGROUND */
-        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        /* MATRIX BACKGROUND - Moved to front of the background stack */
+        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
 
-        /* UPDATED SPLASH PAGE - Opacity set to 1 to hide content behind */
-        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgb(15, 23, 42); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: white; text-align: center; transition: opacity 0.8s ease; }
+        /* SPLASH PAGE - Background is semi-transparent to show matrix, but z-index covers app content */
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: white; text-align: center; transition: opacity 0.8s ease; }
         
-        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; animation: reveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards; position: relative; z-index: 10; text-shadow: 0 0 20px rgba(37, 99, 235, 0.5); }
+        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; animation: reveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards; position: relative; z-index: 10; text-shadow: 0 0 20px rgba(37, 99, 235, 0.8); }
         
-        /* Static Definition */
-        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 0.8s; max-width: 80%; z-index: 10; font-weight: 500; }
+        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 0.8s; max-width: 80%; z-index: 10; font-weight: 500; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         
-        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4); transition: transform 0.3s, background 0.3s; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 1.4s; z-index: 10; }
+        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.6); transition: transform 0.3s, background 0.3s; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 1.4s; z-index: 10; }
         .start-btn:hover { transform: scale(1.05); background: #1d4ed8; }
 
         @keyframes reveal { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 
-        /* APP STYLES REMAIN UNCHANGED */
+        /* INTERIOR APP STYLES */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 10000; color: white; }
         .login-box { background: white; color: var(--text); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px; }
         .mode-toggle { position: absolute; top: 15px; left: 15px; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; z-index: 101; opacity: 0.6; }
@@ -117,9 +116,9 @@
 
         let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null;
         let sessionHistory = [];
-        let vocabWords = ["Knowledge", "Journey", "Learning", "Sojourn", "Vocabulary"]; 
+        let vocabWords = ["Sojourn", "Voyage", "Lexicon", "Knowledge", "Linguistics"]; 
 
-        // MATRIX LOGIC - Updated visibility
+        // MATRIX LOGIC
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         let columns = [];
@@ -127,27 +126,27 @@
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            columns = Array(Math.floor(canvas.width / 25)).fill(0);
+            columns = Array(Math.floor(canvas.width / 30)).fill(0);
         }
 
         function drawMatrix() {
-            ctx.fillStyle = "rgba(15, 23, 42, 0.15)"; 
+            ctx.fillStyle = "rgba(15, 23, 42, 0.2)"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#60a5fa"; // Brighter blue for visibility
+            ctx.fillStyle = "#60a5fa"; 
             ctx.font = "bold 16px monospace";
 
             columns.forEach((y, i) => {
                 const word = vocabWords[Math.floor(Math.random() * vocabWords.length)];
-                ctx.fillText(word, i * 30, y);
-                if (y > canvas.height && Math.random() > 0.98) columns[i] = 0;
-                else columns[i] = y + 25;
+                ctx.fillText(word, i * 40, y);
+                if (y > canvas.height && Math.random() > 0.975) columns[i] = 0;
+                else columns[i] = y + 20;
             });
         }
 
         window.onload = () => {
             fetchTeacherData();
             resizeCanvas();
-            setInterval(drawMatrix, 60);
+            setInterval(drawMatrix, 50);
         };
         window.onresize = resizeCanvas;
 
@@ -156,6 +155,8 @@
             setTimeout(() => { 
                 document.getElementById('landingPage').classList.add('hidden'); 
                 document.getElementById('loginOverlay').classList.remove('hidden'); 
+                // Stop the matrix to save CPU after entry
+                canvas.style.display = 'none';
             }, 800); 
         }
 
@@ -169,7 +170,6 @@
                 units = {};
                 let tempWords = [];
                 rows.forEach(row => {
-                    const cols = row.split(/,(?=(?:?(?:[^"]*"){2})*[^"]*$)/); // Fixed regex
                     const splitCols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     if (splitCols.length >= 2) {
                         const t = splitCols[0].replace(/"/g, ''), d = splitCols[1].replace(/"/g, ''), i = splitCols[2].replace(/"/g, ''), l = splitCols[3].replace(/"/g, ''), u = splitCols[4].replace(/"/g, '');
