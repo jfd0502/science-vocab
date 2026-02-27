@@ -116,7 +116,51 @@
 
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-        const EXPORT_URL = "PASTE_YOUR_NEW_DEPLOYMENT_URL_HERE"; 
+        const EXPORT_URL = "function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Sheet1"); // Make sure your vocab tab is named exactly Sheet1
+  var data = JSON.parse(e.postData.contents);
+  
+  // 1. SAVE RESULTS
+  if (data.action === "saveResult") {
+    var resSheet = ss.getSheetByName("Results") || ss.insertSheet("Results");
+    if (resSheet.getLastRow() === 0) {
+      resSheet.appendRow(["Timestamp", "Student Name", "Unit/List", "Mode", "Score"]);
+    }
+    resSheet.appendRow([new Date(), data.name, data.unit, data.mode, data.score]);
+    return ContentService.createTextOutput("Result Saved").setMimeType(ContentService.MimeType.TEXT);
+  }
+
+  // 2. UPDATE WORD
+  if (data.action === "updateWord") {
+    var rows = sheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+      if (rows[i][0] == data.oldTerm && rows[i][3] == data.list && rows[i][4] == data.unit) {
+        sheet.getRange(i + 1, 1, 1, 3).setValues([[data.newTerm, data.newDef, data.newImg]]);
+        return ContentService.createTextOutput("Word Updated").setMimeType(ContentService.MimeType.TEXT);
+      }
+    }
+  }
+
+  // 3. ADD WORD
+  if (data.action === "addWord") {
+    sheet.appendRow([data.term, data.def, data.img, data.list, data.unit]);
+    return ContentService.createTextOutput("Word Added").setMimeType(ContentService.MimeType.TEXT);
+  }
+
+  // 4. DELETE WORD
+  if (data.action === "deleteWord") {
+    var rows = sheet.getDataRange().getValues();
+    for (var i = rows.length - 1; i >= 1; i--) {
+      if (rows[i][0] == data.term && rows[i][3] == data.list && rows[i][4] == data.unit) {
+        sheet.deleteRow(i + 1);
+        return ContentService.createTextOutput("Word Deleted").setMimeType(ContentService.MimeType.TEXT);
+      }
+    }
+  }
+  
+  return ContentService.createTextOutput("Action not recognized").setMimeType(ContentService.MimeType.TEXT);
+}"; 
         const ADMIN_PASS = "science123";
 
         let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
