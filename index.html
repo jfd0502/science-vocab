@@ -8,32 +8,32 @@
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; --danger: #dc2626; }
         body { font-family: 'Segoe UI', sans-serif; background: rgb(10, 15, 28); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; position: relative; overflow-x: hidden; }
         
-        /* Fixed visibility states */
-        .app-container { position: relative; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; padding: 60px 20px 20px 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; }
-        .mode-toggle { position: absolute; top: 15px; left: 15px; z-index: 100; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
-        
-        /* Make visible when active */
-        .visible { opacity: 1 !important; pointer-events: auto !important; }
+        /* App Layout */
+        .app-container { position: relative; z-index: 10; padding: 60px 20px 20px 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; }
+        .mode-toggle { position: absolute; top: 15px; left: 15px; z-index: 100; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; }
         
         #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgb(10, 15, 28); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; color: white; text-shadow: 0 0 25px rgba(37, 99, 235, 1), 0 2px 10px rgba(0,0,0,1); }
-        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; max-width: 80%; text-shadow: 0 2px 10px rgba(0,0,0,1); text-align: center; }
-        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.6); transition: transform 0.3s; z-index: 10000; }
+        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; color: white; text-shadow: 0 0 25px rgba(37, 99, 235, 1); }
+        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; text-align: center; max-width: 80%; }
+        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; }
         
-        #loaderOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 200000; color: white; font-weight: bold; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        #loaderOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 200000; color: white; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 50000; color: white; }
         .login-box { background: white; color: var(--text); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px; }
         
         .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin: 10px 0; }
-        .nav-btn { background: white; border: 2px solid #e2e8f0; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .nav-btn { background: white; border: 2px solid #e2e8f0; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .nav-btn:hover { background: #f8fafc; }
         .breadcrumb { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; cursor: pointer; text-align: left; width: 100%; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+        
         .hidden { display: none !important; }
+        
         input, select, .main-btn { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; }
         .main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         .delete-btn { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 5px; }
@@ -63,9 +63,9 @@
         </div>
     </div>
 
-    <button id="managerBtn" class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
+    <button id="managerBtn" class="mode-toggle hidden" onclick="protectedToggle()">Manager Mode</button>
 
-    <div id="mainApp" class="app-container">
+    <div id="mainApp" class="app-container hidden">
         <div id="syncStatus" style="font-size: 0.75rem; color: #94a3b8; text-align:center; margin-bottom:10px;">Connecting...</div>
         
         <div id="studyView" class="panel">
@@ -144,19 +144,16 @@
         }
 
         function enterApp() { 
-            document.getElementById('landingPage').style.opacity = '0'; 
-            setTimeout(() => { 
-                document.getElementById('landingPage').classList.add('hidden'); 
-                document.getElementById('loginOverlay').classList.remove('hidden'); 
-            }, 800); 
+            document.getElementById('landingPage').classList.add('hidden'); 
+            document.getElementById('loginOverlay').classList.remove('hidden'); 
         }
 
         function saveStudentName() { 
             studentName = document.getElementById('studentNameInput').value; 
             if(studentName.trim()){ 
                 document.getElementById('loginOverlay').classList.add('hidden'); 
-                document.getElementById('mainApp').classList.add('visible');
-                document.getElementById('managerBtn').classList.add('visible');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('managerBtn').classList.remove('hidden');
                 document.getElementById('studentWelcome').innerText = "Student: " + studentName; 
             } 
         }
