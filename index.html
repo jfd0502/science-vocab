@@ -7,33 +7,37 @@
     <style>
         :root { --primary: #2563eb; --bg: #f1f5f9; --text: #0f172a; --accent: #16a34a; --danger: #dc2626; }
         body { font-family: 'Segoe UI', sans-serif; background: rgb(10, 15, 28); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; position: relative; overflow-x: hidden; }
-        
-        /* App Layout */
-        .app-container { position: relative; z-index: 10; padding: 60px 20px 20px 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; }
-        .mode-toggle { position: absolute; top: 15px; left: 15px; z-index: 100; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; }
-        
-        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgb(10, 15, 28); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
-        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; color: white; text-shadow: 0 0 25px rgba(37, 99, 235, 1); }
-        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; text-align: center; max-width: 80%; }
-        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; }
-        
-        #loaderOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 200000; color: white; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 50000; color: white; }
+        .app-container, .mode-toggle { z-index: 1; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
+        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; color: white; animation: reveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards; text-shadow: 0 0 25px rgba(37, 99, 235, 1), 0 2px 10px rgba(0,0,0,1); }
+        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 0.8s; max-width: 80%; text-shadow: 0 2px 10px rgba(0,0,0,1); text-align: center; }
+        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.6); transition: transform 0.3s, background 0.3s; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 1.4s; }
+        .start-btn:hover { transform: scale(1.05); background: #1d4ed8; }
+        @keyframes reveal { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 20000; color: white; }
         .login-box { background: white; color: var(--text); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px; }
-        
+        .mode-toggle { position: absolute; top: 15px; left: 15px; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; }
         .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin: 10px 0; }
-        .nav-btn { background: white; border: 2px solid #e2e8f0; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        .nav-btn:hover { background: #f8fafc; }
+        .nav-btn { background: white; border: 2px solid #e2e8f0; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .breadcrumb { font-size: 0.9rem; color: #64748b; margin-bottom: 10px; cursor: pointer; text-align: left; width: 100%; }
+        .app-container { padding: 60px 20px 20px 20px; width: 100%; max-width: 600px; display: flex; flex-direction: column; position: relative; }
         .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; width: 100%; box-sizing: border-box; }
-        
         .hidden { display: none !important; }
-        
+        .study-tabs { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .study-tabs button { flex: 1; padding: 10px; font-size: 0.85rem; border: none; border-radius: 8px; cursor: pointer; background: #e2e8f0; }
+        .study-tabs button.active { background: var(--primary); color: white; }
+        .flashcard { height: 280px; perspective: 1000px; cursor: pointer; margin: 20px 0; }
+        .inner { position: relative; width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; border: 2px solid #e2e8f0; border-radius: 15px; }
+        .flipped .inner { transform: rotateY(180deg); }
+        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.4rem; padding: 20px; text-align: center; box-sizing: border-box; border-radius: 13px; background: white; }
+        .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.1rem; overflow-y: auto; }
+        .quiz-option { background: white; border: 2px solid #e2e8f0; padding: 12px; margin: 8px 0; border-radius: 8px; cursor: pointer; text-align: left; }
+        .correct { background: #dcfce7 !important; border-color: #22c55e !important; }
+        .incorrect { background: #fee2e2 !important; border-color: #ef4444 !important; }
+        .match-container { display: flex; gap: 15px; margin-top: 10px; }
+        .match-col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .match-item { padding: 10px; background: white; border: 2px solid #cbd5e1; border-radius: 8px; cursor: grab; text-align: center; min-height: 80px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
         input, select, .main-btn { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; }
         .main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
         .delete-btn { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 5px; }
@@ -41,11 +45,6 @@
     </style>
 </head>
 <body>
-
-    <div id="loaderOverlay">
-        <div class="spinner"></div>
-        <div>Syncing with Cloud...</div>
-    </div>
 
     <canvas id="matrixCanvas"></canvas>
 
@@ -63,11 +62,10 @@
         </div>
     </div>
 
-    <button id="managerBtn" class="mode-toggle hidden" onclick="protectedToggle()">Manager Mode</button>
+    <button class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
 
-    <div id="mainApp" class="app-container hidden">
+    <div class="app-container">
         <div id="syncStatus" style="font-size: 0.75rem; color: #94a3b8; text-align:center; margin-bottom:10px;">Connecting...</div>
-        
         <div id="studyView" class="panel">
             <div id="unitSelection">
                 <label><strong>Select Unit</strong></label>
@@ -81,7 +79,22 @@
                 <div class="breadcrumb" onclick="backToLists()">&larr; Back to Lists</div>
                 <h3 id="activeListName" style="margin:5px 0;"></h3>
                 <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b; margin-bottom: 10px;"></div>
-                <div id="fullListArea"></div>
+                <div class="study-tabs">
+                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
+                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
+                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
+                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
+                </div>
+                <div id="listMode">
+                    <div id="fullListArea"></div>
+                    <div id="historyLogArea" style="margin-top:20px; background:#f8fafc; padding:15px; border-radius:8px;">
+                        <h4 style="margin:0 0 10px 0;">Session Performance:</h4>
+                        <div id="historyEntries">No attempts yet.</div>
+                    </div>
+                </div>
+                <div id="flashMode" class="hidden"><div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')"><div class="inner"><div class="front" id="displayTerm"></div><div class="back" id="displayDef"></div></div></div><div style="display:flex; gap:10px;"><button class="main-btn" onclick="changeCard(-1)">Prev</button><button class="main-btn" onclick="changeCard(1)">Next</button></div></div>
+                <div id="quizMode" class="hidden"><div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary);">Score: 0/0</div><div id="quizContent"><div id="quizQuestion" style="font-weight:bold; margin-bottom:15px;"></div><div id="quizOptions"></div><button id="nextQuizBtn" class="hidden main-btn" onclick="renderQuiz()">Next Question</button></div><div id="quizEnd" class="hidden" style="text-align:center;"></div></div>
+                <div id="matchMode" class="hidden"><div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div><div id="matchContainer" class="match-container"></div><div id="matchEnd" class="hidden" style="text-align:center;"></div></div>
             </div>
         </div>
 
@@ -103,110 +116,133 @@
 
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-        const EXPORT_URL = "https://script.google.com/macros/s/AKfycby0uL9qB0Ea7O7Yn_K38B7k8W2F-Iq1z-L6oG6rR_G5v8M1z-L6oG6rR_G5v8M1z-L6/exec"; 
+        
+        // --- PASTE ONLY YOUR WEB APP URL (LINK) BELOW ---
+        const EXPORT_URL = "PASTE_YOUR_WEB_APP_URL_HERE"; 
+        // ------------------------------------------------
+        
         const ADMIN_PASS = "science123";
 
-        let units = {}, currentUnit = "", currentClass = "", studentName = "";
-        let vocabWords = ["Sojourn", "Voyage", "Discovery"]; 
+        let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
+        let vocabWords = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
 
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         let columns = [];
+
         function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; columns = Array(Math.floor(canvas.width / 20)).fill(0); }
         function drawMatrix() { ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#3b82f6"; ctx.font = "bold 15px monospace"; columns.forEach((y, i) => { const word = vocabWords[Math.floor(Math.random() * vocabWords.length)]; ctx.fillText(word, i * 25, y); if (y > canvas.height && Math.random() > 0.95) columns[i] = 0; else columns[i] = y + 25; }); }
         window.onload = () => { fetchTeacherData(); resizeCanvas(); setInterval(drawMatrix, 50); };
 
-        function showSpinner(show) { document.getElementById('loaderOverlay').style.display = show ? 'flex' : 'none'; }
+        function enterApp() { 
+            document.getElementById('landingPage').style.opacity = '0'; canvas.style.opacity = '0';
+            const container = document.querySelector('.app-container'); const toggle = document.querySelector('.mode-toggle');
+            container.style.opacity = '1'; container.style.pointerEvents = 'auto'; toggle.style.opacity = '0.6'; toggle.style.pointerEvents = 'auto';
+            setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); canvas.classList.add('hidden'); document.getElementById('loginOverlay').classList.remove('hidden'); }, 800); 
+        }
+
+        function saveStudentName() { studentName = document.getElementById('studentNameInput').value; if(studentName.trim()){ document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Student: " + studentName; } else { alert("Please enter your name."); } }
 
         async function fetchTeacherData() {
             try {
-                const response = await fetch(SHEET_CSV_URL + '?cb=' + new Date().getTime()); 
-                const csvText = await response.text();
-                const rows = csvText.split(/\r?\n/).slice(1); 
-                units = {}; 
+                const response = await fetch(SHEET_CSV_URL + '?cb=' + Date.now()); const csvText = await response.text();
+                const rows = csvText.split(/\r?\n/).slice(1); units = {}; 
                 rows.forEach(row => {
                     const splitCols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     if (splitCols.length >= 2) {
-                        const t = splitCols[0].replace(/"/g, ''), d = splitCols[1].replace(/"/g, ''), i = (splitCols[2]||'').replace(/"/g, ''), l = (splitCols[3]||'').replace(/"/g, ''), u = (splitCols[4]||'').replace(/"/g, '');
+                        const t = splitCols[0].replace(/"/g, ''), d = splitCols[1].replace(/"/g, ''), i = splitCols[2].replace(/"/g, ''), l = splitCols[3].replace(/"/g, ''), u = splitCols[4].replace(/"/g, '');
                         if (!units[u]) units[u] = {}; if (!units[u][l]) units[u][l] = []; units[u][l].push({t, d, img: i});
                     }
                 });
                 renderUnitSelection(); populateAdminDropdown(); document.getElementById('syncStatus').innerText = "Sync Active";
-            } catch (e) { document.getElementById('syncStatus').innerText = "Sync Error"; }
-        }
-
-        async function refreshDataOnly() {
-            showSpinner(true);
-            await fetchTeacherData();
-            const val = document.getElementById('adminDropdown').value;
-            if (val) renderAdminList(val); 
-            showSpinner(false);
-        }
-
-        function enterApp() { 
-            document.getElementById('landingPage').classList.add('hidden'); 
-            document.getElementById('loginOverlay').classList.remove('hidden'); 
-        }
-
-        function saveStudentName() { 
-            studentName = document.getElementById('studentNameInput').value; 
-            if(studentName.trim()){ 
-                document.getElementById('loginOverlay').classList.add('hidden'); 
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('managerBtn').classList.remove('hidden');
-                document.getElementById('studentWelcome').innerText = "Student: " + studentName; 
-            } 
+                return true;
+            } catch (e) { document.getElementById('syncStatus').innerText = "Sync Error"; return false; }
         }
 
         function renderUnitSelection() { document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); }
         function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
-        function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; renderFullList(units[currentUnit][l]); }
-        function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div style="padding:10px; border-bottom:1px solid #eee;"><strong>${i.t}</strong>: ${i.d}</div>`).join(''); }
+        function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; setStudyMode('list'); }
         function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
         function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
 
-        function populateAdminDropdown() { 
-            const dropdown = document.getElementById('adminDropdown');
-            const currentVal = dropdown.value;
-            dropdown.innerHTML = '<option value="">-- Select List --</option>'; 
-            Object.keys(units).forEach(u => Object.keys(units[u]).forEach(l => { dropdown.innerHTML += `<option value="${u}|${l}">${u} - ${l}</option>`; }));
-            dropdown.value = currentVal;
+        function setStudyMode(mode) {
+            ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
+            document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden'));
+            document.getElementById(mode + 'Mode').classList.remove('hidden');
+            const list = units[currentUnit][currentClass];
+            if (mode === 'list') { renderFullList(list); updateHistoryUI(); }
+            if (mode === 'flash') { cardIdx = 0; updateCard(list); }
+            if (mode === 'quiz') startQuiz(list);
+            if (mode === 'match') startMatch(list);
         }
 
+        function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div style="padding:10px; border-bottom:1px solid #eee;"><strong>${i.t}</strong>: ${i.d}</div>`).join(''); }
+        function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
+        function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div class="history-item"><span><strong>${h.mode}</strong> (${h.list})</span><span>${h.score} <small>${h.time}</small></span></div>`).join(''); }
+        
+        async function exportResult(mode, score) { 
+            if (EXPORT_URL && !EXPORT_URL.includes("PASTE")) { 
+                const payload = JSON.stringify({ action: "saveResult", name: studentName, unit: currentClass, mode: mode, score: score }); 
+                fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+            } 
+        }
+
+        function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayTerm').innerText = card.t; document.getElementById('displayDef').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
+        function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
+        function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Score: 0/0`; renderQuiz(); }
+        function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `What is: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="quiz-option" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
+        function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.classList.add('correct'); } else { el.classList.add('incorrect'); } qIdx++; document.getElementById('quizStats').innerText = `Score: ${qScore}/${qIdx}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
+        function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); exportResult("Quiz", pct); }
+        function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div class="match-col">${words.map(i => `<div class="match-item" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w">${i.t}</div>`).join('')}</div><div class="match-col">${defs.map(i => `<div class="match-item" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d">${i.t}</div>`).join('')}</div>`; }
+        function drag(e) { draggedItem = e.target; }
+        function drop(e) { const target = e.target.closest('.match-item'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.visibility = 'hidden'; } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Match Accuracy: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Again</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", acc); exportResult("Match", acc); } }
+
+        function populateAdminDropdown() { const dropdown = document.getElementById('adminDropdown'); const currentVal = dropdown.value; dropdown.innerHTML = '<option value="">-- Select List --</option>'; Object.keys(units).forEach(u => Object.keys(units[u]).forEach(l => { dropdown.innerHTML += `<option value="${u}|${l}">${u} - ${l}</option>`; })); dropdown.value = currentVal; }
         function renderAdminList(val) { 
             if (!val) { document.getElementById('addWordForm').classList.add('hidden'); document.getElementById('adminWordList').innerHTML = ''; return; }
             const [u, l] = val.split('|');
             document.getElementById('addWordForm').classList.remove('hidden');
-            document.getElementById('adminWordList').innerHTML = (units[u][l] || []).map((item, idx) => `
+            document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `
                 <div class="edit-row">
-                    <input type="text" id="t-${idx}" value="${item.t}">
-                    <input type="text" id="d-${idx}" value="${item.d}">
+                    <label>Term:</label> <input type="text" id="t-${idx}" value="${item.t}">
+                    <label>Def:</label> <input type="text" id="d-${idx}" value="${item.d}">
+                    <label>Img:</label> <input type="text" id="i-${idx}" value="${item.img || ''}">
                     <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="main-btn" style="background:var(--accent); margin:0;" onclick="saveEdit('${u}','${l}',${idx})">Update</button>
+                        <button class="main-btn" style="background:var(--accent); margin:0;" onclick="saveEdit('${u}','${l}',${idx})">Update Word</button>
                         <button class="delete-btn" onclick="deleteWord('${u}','${l}',${idx})">Delete</button>
                     </div>
                 </div>`).join('');
         }
 
         async function submitNewWord() {
-            const [u, l] = document.getElementById('adminDropdown').value.split('|');
-            const payload = { action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value };
-            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            const dropdown = document.getElementById('adminDropdown');
+            const [u, l] = dropdown.value.split('|');
+            const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value });
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
             document.getElementById('newT').value = ""; document.getElementById('newD').value = "";
-            refreshDataOnly();
+            await fetchTeacherData(); 
+            renderAdminList(dropdown.value);
+            alert("Sent to sheet!");
         }
 
         async function saveEdit(u, l, idx) {
-            const payload = { action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: "" };
-            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            refreshDataOnly();
+            const dropdown = document.getElementById('adminDropdown');
+            const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value });
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
+            await fetchTeacherData();
+            renderAdminList(dropdown.value);
+            alert("Update request sent!");
         }
 
         async function deleteWord(u, l, idx) {
-            if(!confirm("Delete?")) return;
-            const payload = { action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t };
-            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            refreshDataOnly();
+            if(!confirm("Delete this word?")) return;
+            const dropdown = document.getElementById('adminDropdown');
+            const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t });
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
+            await fetchTeacherData();
+            renderAdminList(dropdown.value);
+            alert("Delete request sent!");
         }
 
         function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); } } else { document.getElementById('adminView').classList.add('hidden'); document.getElementById('studyView').classList.remove('hidden'); } }
