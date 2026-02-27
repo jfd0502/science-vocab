@@ -115,13 +115,12 @@
     </div>
 
     <script>
-        // Use your CSV URL
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbz4NCpFXddw3MkKjGyDq-aXdv_YkpxfH-1FNkaON4-Hk88aClxHwBDMmKGl5QxpNPiibA/exec"; 
+        const EXPORT_URL = "PASTE_YOUR_WEB_APP_URL_HERE"; 
         const ADMIN_PASS = "science123";
 
         let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
-        let vocabWords = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
+        let vocabWords = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; // Defaults until load
 
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
@@ -142,31 +141,28 @@
 
         async function fetchTeacherData() {
             try {
-                // cache-busting ensures we get the latest sheet data
                 const response = await fetch(`${SHEET_CSV_URL}&cachebust=${Date.now()}`); 
                 const csvText = await response.text();
-                
-                // Clean CSV data: Split by lines, then filter out empty rows
                 const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0).slice(1); 
                 units = {}; 
+                let allTerms = [];
                 
                 rows.forEach(row => {
-                    // Regex handles commas inside quotes (standard CSV behavior)
                     const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                    
                     if (cols.length >= 5) {
                         const [term, def, img, listName, unitName] = cols;
                         if (!units[unitName]) units[unitName] = {}; 
                         if (!units[unitName][listName]) units[unitName][listName] = []; 
                         units[unitName][listName].push({t: term, d: def, img: img});
+                        allTerms.push(term);
                     }
                 });
 
+                if(allTerms.length > 0) vocabWords = [...new Set(allTerms)]; // Update Matrix words
                 renderUnitSelection(); 
                 populateAdminDropdown(); 
                 document.getElementById('syncStatus').innerText = "Sync Active";
             } catch (e) { 
-                console.error(e);
                 document.getElementById('syncStatus').innerText = "Sync Error"; 
             }
         }
@@ -174,10 +170,7 @@
         function renderUnitSelection() { 
             const grid = document.getElementById('unitBtnGrid');
             const unitKeys = Object.keys(units);
-            if (unitKeys.length === 0) {
-                grid.innerHTML = "<div style='grid-column: span 2;'>No data found in sheet. Check column order (Term, Def, Img, List, Unit).</div>";
-                return;
-            }
+            if (unitKeys.length === 0) { grid.innerHTML = "<div style='grid-column: span 2;'>No data found.</div>"; return; }
             grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
         }
 
