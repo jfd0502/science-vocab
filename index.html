@@ -45,7 +45,6 @@
         .delete-btn:disabled { background: #fca5a5; cursor: not-allowed; }
         .edit-row { background: #f8fafc; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; }
 
-        /* Spinner Animation */
         .spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading .spinner { display: inline-block; }
@@ -271,16 +270,24 @@
         async function submitNewWord() {
             const btn = document.getElementById('addWordBtn');
             const dropdown = document.getElementById('adminDropdown');
+            if(!dropdown.value) return;
             const [u, l] = dropdown.value.split('|');
+            const term = document.getElementById('newT').value;
+            const def = document.getElementById('newD').value;
+            const img = document.getElementById('newI').value;
+
             btn.classList.add('loading'); btn.disabled = true;
-            const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value });
+            const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: term, def: def, img: img });
+            
             try {
                 await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-                await new Promise(r => setTimeout(r, 1000)); 
-                document.getElementById('newT').value = ""; document.getElementById('newD').value = "";
+                alert("Added to sheet! Refreshing list...");
+                // Clear inputs
+                document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
+                // Wait for sheet to update then re-fetch and re-render
+                await new Promise(r => setTimeout(r, 1500)); 
                 await fetchTeacherData(); 
                 renderAdminList(dropdown.value);
-                alert("Word Added!");
             } finally { btn.classList.remove('loading'); btn.disabled = false; }
         }
 
@@ -289,7 +296,7 @@
             const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value });
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
             alert("Update request sent!");
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 1200));
             await fetchTeacherData();
             renderAdminList(dropdown.value);
         }
@@ -303,14 +310,11 @@
             const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t });
             try {
                 await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-                alert("Deleted from sheet!");
-                // Artificial delay to wait for sheet update before refreshing UI
-                await new Promise(r => setTimeout(r, 1200)); 
+                alert("Deleted! Syncing...");
+                await new Promise(r => setTimeout(r, 1500)); 
                 await fetchTeacherData();
                 renderAdminList(dropdown.value);
-            } finally {
-                if(btn) { btn.classList.remove('loading'); btn.disabled = false; }
-            }
+            } finally { if(btn) { btn.classList.remove('loading'); btn.disabled = false; } }
         }
 
         function protectedToggle() { 
