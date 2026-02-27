@@ -116,55 +116,15 @@
 
     <script>
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-        const EXPORT_URL = "function doPost(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Sheet1"); // Make sure your vocab tab is named exactly Sheet1
-  var data = JSON.parse(e.postData.contents);
-  
-  // 1. SAVE RESULTS
-  if (data.action === "saveResult") {
-    var resSheet = ss.getSheetByName("Results") || ss.insertSheet("Results");
-    if (resSheet.getLastRow() === 0) {
-      resSheet.appendRow(["Timestamp", "Student Name", "Unit/List", "Mode", "Score"]);
-    }
-    resSheet.appendRow([new Date(), data.name, data.unit, data.mode, data.score]);
-    return ContentService.createTextOutput("Result Saved").setMimeType(ContentService.MimeType.TEXT);
-  }
-
-  // 2. UPDATE WORD
-  if (data.action === "updateWord") {
-    var rows = sheet.getDataRange().getValues();
-    for (var i = 1; i < rows.length; i++) {
-      if (rows[i][0] == data.oldTerm && rows[i][3] == data.list && rows[i][4] == data.unit) {
-        sheet.getRange(i + 1, 1, 1, 3).setValues([[data.newTerm, data.newDef, data.newImg]]);
-        return ContentService.createTextOutput("Word Updated").setMimeType(ContentService.MimeType.TEXT);
-      }
-    }
-  }
-
-  // 3. ADD WORD
-  if (data.action === "addWord") {
-    sheet.appendRow([data.term, data.def, data.img, data.list, data.unit]);
-    return ContentService.createTextOutput("Word Added").setMimeType(ContentService.MimeType.TEXT);
-  }
-
-  // 4. DELETE WORD
-  if (data.action === "deleteWord") {
-    var rows = sheet.getDataRange().getValues();
-    for (var i = rows.length - 1; i >= 1; i--) {
-      if (rows[i][0] == data.term && rows[i][3] == data.list && rows[i][4] == data.unit) {
-        sheet.deleteRow(i + 1);
-        return ContentService.createTextOutput("Word Deleted").setMimeType(ContentService.MimeType.TEXT);
-      }
-    }
-  }
-  
-  return ContentService.createTextOutput("Action not recognized").setMimeType(ContentService.MimeType.TEXT);
-}"; 
+        
+        // --- PASTE ONLY YOUR WEB APP URL (LINK) BELOW ---
+        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxpaopRbFObDJBq-h6M4ZaNeTMw2xMxvXrIgAZismz_aPi2cdpIGYM4_nLK4_XzFvzjLg/exec"; 
+        // ------------------------------------------------
+        
         const ADMIN_PASS = "science123";
 
         let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
-        let vocabWords = ["Sojourn", "Voyage"]; 
+        let vocabWords = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
 
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
@@ -181,7 +141,7 @@
             setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); canvas.classList.add('hidden'); document.getElementById('loginOverlay').classList.remove('hidden'); }, 800); 
         }
 
-        function saveStudentName() { studentName = document.getElementById('studentNameInput').value; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Student: " + studentName; }
+        function saveStudentName() { studentName = document.getElementById('studentNameInput').value; if(studentName.trim()){ document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Student: " + studentName; } else { alert("Please enter your name."); } }
 
         async function fetchTeacherData() {
             try {
@@ -227,7 +187,6 @@
             } 
         }
 
-        /* STUDY TOOLS LOGIC */
         function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayTerm').innerText = card.t; document.getElementById('displayDef').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
         function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
         function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Score: 0/0`; renderQuiz(); }
@@ -238,9 +197,7 @@
         function drag(e) { draggedItem = e.target; }
         function drop(e) { const target = e.target.closest('.match-item'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.visibility = 'hidden'; } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Match Accuracy: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Again</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", acc); exportResult("Match", acc); } }
 
-        /* MANAGER MODE TOOLS - VARIABLE FIX */
         function populateAdminDropdown() { const dropdown = document.getElementById('adminDropdown'); dropdown.innerHTML = '<option value="">-- Select List --</option>'; Object.keys(units).forEach(u => Object.keys(units[u]).forEach(l => { dropdown.innerHTML += `<option value="${u}|${l}">${u} - ${l}</option>`; })); }
-        
         function renderAdminList(val) { 
             if (!val) { document.getElementById('addWordForm').classList.add('hidden'); document.getElementById('adminWordList').innerHTML = ''; return; }
             const [u, l] = val.split('|');
@@ -259,45 +216,22 @@
 
         async function submitNewWord() {
             const [u, l] = document.getElementById('adminDropdown').value.split('|');
-            // Action names must match Apps Script: term, def, img, list, unit
-            const payload = JSON.stringify({ 
-                action: "addWord", 
-                unit: u, 
-                list: l, 
-                term: document.getElementById('newT').value, 
-                def: document.getElementById('newD').value, 
-                img: document.getElementById('newI').value 
-            });
+            const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value });
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-            alert("Added! Reloading..."); location.reload();
+            alert("Sent to sheet!"); location.reload();
         }
 
         async function saveEdit(u, l, idx) {
-            // Action names must match Apps Script: oldTerm, newTerm, newDef, newImg, list, unit
-            const payload = JSON.stringify({ 
-                action: "updateWord", 
-                unit: u, 
-                list: l, 
-                oldTerm: units[u][l][idx].t, 
-                newTerm: document.getElementById(`t-${idx}`).value, 
-                newDef: document.getElementById(`d-${idx}`).value, 
-                newImg: document.getElementById(`i-${idx}`).value 
-            });
+            const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value });
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-            alert("Update Success!"); location.reload();
+            alert("Update request sent!"); location.reload();
         }
 
         async function deleteWord(u, l, idx) {
             if(!confirm("Delete this word?")) return;
-            // Action names must match Apps Script: term, list, unit
-            const payload = JSON.stringify({ 
-                action: "deleteWord", 
-                unit: u, 
-                list: l, 
-                term: units[u][l][idx].t 
-            });
+            const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t });
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-            alert("Deleted!"); location.reload();
+            alert("Delete request sent!"); location.reload();
         }
 
         function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); } } else { document.getElementById('adminView').classList.add('hidden'); document.getElementById('studyView').classList.remove('hidden'); } }
