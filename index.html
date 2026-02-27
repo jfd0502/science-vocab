@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,7 +16,9 @@
         .start-btn:hover { transform: scale(1.05); background: #1d4ed8; }
         @keyframes reveal { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 20000; color: white; }
-        .login-box { background: white; color: var(--text); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px; }
+        .login-box { background: white; color: var(--text); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px; position: relative; }
+        .teacher-login-btn { position: absolute; top: -50px; left: 0; background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; transition: background 0.3s; }
+        .teacher-login-btn:hover { background: rgba(255,255,255,0.25); }
         .mode-toggle { position: absolute; top: 15px; left: 15px; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; }
         .nav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin: 10px 0; }
         .nav-btn { background: white; border: 2px solid #e2e8f0; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
@@ -34,7 +36,6 @@
         .front { font-size: 1.6rem; font-weight: bold; }
         .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.1rem; overflow-y: auto; }
         
-        /* Image Styling */
         .vocab-img { max-width: 100%; max-height: 120px; border-radius: 8px; margin-bottom: 15px; object-fit: contain; }
         .list-img { width: 60px; height: 60px; border-radius: 4px; object-fit: cover; margin-right: 15px; }
         .list-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
@@ -69,6 +70,7 @@
 
     <div id="loginOverlay" class="hidden">
         <div class="login-box">
+            <button class="teacher-login-btn" onclick="protectedToggle()">Teacher Login</button>
             <h2>Student Entry</h2>
             <input type="text" id="studentNameInput" placeholder="Enter Full Name...">
             <button class="main-btn" onclick="saveStudentName()">Continue</button>
@@ -245,16 +247,6 @@
             document.getElementById('cardContainer').classList.remove('flipped'); 
         }
 
-        function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
-        function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div class="history-item"><span><strong>${h.mode}</strong> (${h.list})</span><span>${h.score} <small>${h.time}</small></span></div>`).join(''); }
-        
-        async function exportResult(mode, score) { 
-            if (EXPORT_URL && !EXPORT_URL.includes("PASTE")) { 
-                const payload = { action: "saveResult", name: studentName, unit: currentClass, mode: mode, score: score }; 
-                fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(err => console.log("Export Note: Triggered."));
-            } 
-        }
-
         function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
         function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Score: 0/0`; renderQuiz(); }
         function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `What is: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="quiz-option" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
@@ -340,14 +332,27 @@
                 if (prompt("Password:") === ADMIN_PASS) { 
                     document.getElementById('studyView').classList.add('hidden'); 
                     document.getElementById('adminView').classList.remove('hidden'); 
-                    document.querySelector('.app-container').style.opacity = '1';
-                    document.querySelector('.app-container').style.pointerEvents = 'auto';
+                    document.getElementById('loginOverlay').classList.add('hidden'); 
+                    const container = document.querySelector('.app-container');
+                    container.style.opacity = '1';
+                    container.style.pointerEvents = 'auto';
                 } 
             } else { 
                 document.getElementById('adminView').classList.add('hidden'); 
-                document.getElementById('studyView').classList.remove('hidden'); 
+                // If exiting manager before student logged in, go back to login screen
+                if (!studentName) {
+                    document.getElementById('loginOverlay').classList.remove('hidden');
+                    document.querySelector('.app-container').style.opacity = '0';
+                    document.querySelector('.app-container').style.pointerEvents = 'none';
+                } else {
+                    document.getElementById('studyView').classList.remove('hidden'); 
+                }
             } 
         }
+
+        function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
+        function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div class="history-item"><span><strong>${h.mode}</strong> (${h.list})</span><span>${h.score} <small>${h.time}</small></span></div>`).join(''); }
+        async function exportResult(mode, score) { if (EXPORT_URL && !EXPORT_URL.includes("PASTE")) { const payload = { action: "saveResult", name: studentName, unit: currentClass, mode: mode, score: score }; fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(err => console.log("Export Note: Triggered.")); } }
     </script>
 </body>
 </html>
