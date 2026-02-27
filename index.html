@@ -115,12 +115,9 @@
     </div>
 
     <script>
+        // Use your CSV URL
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-        
-        // --- PASTE ONLY YOUR WEB APP URL (LINK) BELOW ---
         const EXPORT_URL = "https://script.google.com/macros/s/AKfycbz4NCpFXddw3MkKjGyDq-aXdv_YkpxfH-1FNkaON4-Hk88aClxHwBDMmKGl5QxpNPiibA/exec"; 
-        // ------------------------------------------------
-        
         const ADMIN_PASS = "science123";
 
         let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -145,21 +142,45 @@
 
         async function fetchTeacherData() {
             try {
-                const response = await fetch(SHEET_CSV_URL + '?cb=' + Date.now()); const csvText = await response.text();
-                const rows = csvText.split(/\r?\n/).slice(1); units = {}; 
+                // cache-busting ensures we get the latest sheet data
+                const response = await fetch(`${SHEET_CSV_URL}&cachebust=${Date.now()}`); 
+                const csvText = await response.text();
+                
+                // Clean CSV data: Split by lines, then filter out empty rows
+                const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0).slice(1); 
+                units = {}; 
+                
                 rows.forEach(row => {
-                    const splitCols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if (splitCols.length >= 2) {
-                        const t = splitCols[0].replace(/"/g, ''), d = splitCols[1].replace(/"/g, ''), i = splitCols[2].replace(/"/g, ''), l = splitCols[3].replace(/"/g, ''), u = splitCols[4].replace(/"/g, '');
-                        if (!units[u]) units[u] = {}; if (!units[u][l]) units[u][l] = []; units[u][l].push({t, d, img: i});
+                    // Regex handles commas inside quotes (standard CSV behavior)
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+                    
+                    if (cols.length >= 5) {
+                        const [term, def, img, listName, unitName] = cols;
+                        if (!units[unitName]) units[unitName] = {}; 
+                        if (!units[unitName][listName]) units[unitName][listName] = []; 
+                        units[unitName][listName].push({t: term, d: def, img: img});
                     }
                 });
-                renderUnitSelection(); populateAdminDropdown(); document.getElementById('syncStatus').innerText = "Sync Active";
-                return true;
-            } catch (e) { document.getElementById('syncStatus').innerText = "Sync Error"; return false; }
+
+                renderUnitSelection(); 
+                populateAdminDropdown(); 
+                document.getElementById('syncStatus').innerText = "Sync Active";
+            } catch (e) { 
+                console.error(e);
+                document.getElementById('syncStatus').innerText = "Sync Error"; 
+            }
         }
 
-        function renderUnitSelection() { document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); }
+        function renderUnitSelection() { 
+            const grid = document.getElementById('unitBtnGrid');
+            const unitKeys = Object.keys(units);
+            if (unitKeys.length === 0) {
+                grid.innerHTML = "<div style='grid-column: span 2;'>No data found in sheet. Check column order (Term, Def, Img, List, Unit).</div>";
+                return;
+            }
+            grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
+        }
+
         function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
         function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; setStudyMode('list'); }
         function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
@@ -198,7 +219,16 @@
         function drag(e) { draggedItem = e.target; }
         function drop(e) { const target = e.target.closest('.match-item'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.visibility = 'hidden'; } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Match Accuracy: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Again</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", acc); exportResult("Match", acc); } }
 
-        function populateAdminDropdown() { const dropdown = document.getElementById('adminDropdown'); const currentVal = dropdown.value; dropdown.innerHTML = '<option value="">-- Select List --</option>'; Object.keys(units).forEach(u => Object.keys(units[u]).forEach(l => { dropdown.innerHTML += `<option value="${u}|${l}">${u} - ${l}</option>`; })); dropdown.value = currentVal; }
+        function populateAdminDropdown() { 
+            const dropdown = document.getElementById('adminDropdown'); 
+            const currentVal = dropdown.value; 
+            dropdown.innerHTML = '<option value="">-- Select List --</option>'; 
+            Object.keys(units).forEach(u => Object.keys(units[u]).forEach(l => { 
+                dropdown.innerHTML += `<option value="${u}|${l}">${u} - ${l}</option>`; 
+            })); 
+            dropdown.value = currentVal; 
+        }
+
         function renderAdminList(val) { 
             if (!val) { document.getElementById('addWordForm').classList.add('hidden'); document.getElementById('adminWordList').innerHTML = ''; return; }
             const [u, l] = val.split('|');
@@ -245,7 +275,17 @@
             alert("Delete request sent!");
         }
 
-        function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); } } else { document.getElementById('adminView').classList.add('hidden'); document.getElementById('studyView').classList.remove('hidden'); } }
+        function protectedToggle() { 
+            if (document.getElementById('adminView').classList.contains('hidden')) { 
+                if (prompt("Password:") === ADMIN_PASS) { 
+                    document.getElementById('studyView').classList.add('hidden'); 
+                    document.getElementById('adminView').classList.remove('hidden'); 
+                } 
+            } else { 
+                document.getElementById('adminView').classList.add('hidden'); 
+                document.getElementById('studyView').classList.remove('hidden'); 
+            } 
+        }
     </script>
 </body>
 </html>
