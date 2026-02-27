@@ -130,7 +130,6 @@
         function drawMatrix() { ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#3b82f6"; ctx.font = "bold 15px monospace"; columns.forEach((y, i) => { const word = vocabWords[Math.floor(Math.random() * vocabWords.length)]; ctx.fillText(word, i * 25, y); if (y > canvas.height && Math.random() > 0.95) columns[i] = 0; else columns[i] = y + 25; }); }
         window.onload = () => { fetchTeacherData(); resizeCanvas(); setInterval(drawMatrix, 50); };
 
-        // STEP 1: Just show the login overlay, not the app container
         function enterApp() { 
             document.getElementById('landingPage').style.opacity = '0'; 
             canvas.style.opacity = '0';
@@ -141,14 +140,11 @@
             }, 800); 
         }
 
-        // STEP 2: Only show the app container AFTER the name is saved
         function saveStudentName() { 
             studentName = document.getElementById('studentNameInput').value; 
             if(studentName.trim()){ 
                 document.getElementById('loginOverlay').classList.add('hidden'); 
                 document.getElementById('studentWelcome').innerText = "Student: " + studentName;
-                
-                // Now reveal the main app and unit selection
                 const container = document.querySelector('.app-container');
                 const toggle = document.querySelector('.mode-toggle');
                 container.style.opacity = '1'; 
@@ -218,8 +214,12 @@
         
         async function exportResult(mode, score) { 
             if (EXPORT_URL && !EXPORT_URL.includes("PASTE")) { 
-                const payload = JSON.stringify({ action: "saveResult", name: studentName, unit: currentClass, mode: mode, score: score }); 
-                fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+                const payload = { action: "saveResult", name: studentName, unit: currentClass, mode: mode, score: score }; 
+                console.log("Exporting Result:", payload);
+                fetch(EXPORT_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload) 
+                }).catch(err => console.log("Export Note: Fetch triggered. If using Apps Script, check your Executions log."));
             } 
         }
 
@@ -294,7 +294,6 @@
                 if (prompt("Password:") === ADMIN_PASS) { 
                     document.getElementById('studyView').classList.add('hidden'); 
                     document.getElementById('adminView').classList.remove('hidden'); 
-                    // Hide main container while in Admin Mode if user hasn't "logged in" as student yet
                     document.querySelector('.app-container').style.opacity = '1';
                     document.querySelector('.app-container').style.pointerEvents = 'auto';
                 } 
