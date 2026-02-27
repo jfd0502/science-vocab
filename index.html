@@ -11,22 +11,18 @@
         /* MATRIX BACKGROUND */
         #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
-        /* UPDATED SPLASH PAGE */
-        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: white; text-align: center; transition: opacity 0.8s ease; }
+        /* UPDATED SPLASH PAGE - Opacity set to 1 to hide content behind */
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgb(15, 23, 42); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: white; text-align: center; transition: opacity 0.8s ease; }
         
-        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 0; animation: reveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards; position: relative; z-index: 10; text-shadow: 0 0 20px rgba(37, 99, 235, 0.5); }
+        .welcome-title { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 20px; animation: reveal 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards; position: relative; z-index: 10; text-shadow: 0 0 20px rgba(37, 99, 235, 0.5); }
         
-        .svg-container { width: 150px; height: 80px; margin-left: 120px; margin-top: -20px; overflow: visible; z-index: 10; }
-        .drawing-line { fill: none; stroke: #3b82f6; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 300; stroke-dashoffset: 300; animation: drawLine 1s ease forwards; animation-delay: 1.2s; }
-
-        .sojourn-def { font-style: italic; font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 30px; opacity: 0; animation: fadeInUp 0.8s ease forwards; animation-delay: 2.2s; max-width: 80%; z-index: 10; }
+        /* Static Definition */
+        .sojourn-def { font-style: italic; font-size: 1.2rem; color: #f8fafc; margin-bottom: 40px; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 0.8s; max-width: 80%; z-index: 10; font-weight: 500; }
         
-        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4); transition: transform 0.3s, background 0.3s; opacity: 0; animation: fadeInUp 1s ease forwards; animation-delay: 2.8s; z-index: 10; }
+        .start-btn { background: var(--primary); color: white; border: none; padding: 18px 36px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4); transition: transform 0.3s, background 0.3s; opacity: 0; animation: reveal 1s ease forwards; animation-delay: 1.4s; z-index: 10; }
         .start-btn:hover { transform: scale(1.05); background: #1d4ed8; }
 
-        @keyframes drawLine { to { stroke-dashoffset: 0; } }
-        @keyframes reveal { 0% { opacity: 0; transform: translateY(30px); filter: blur(10px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
-        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes reveal { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 
         /* APP STYLES REMAIN UNCHANGED */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 10000; color: white; }
@@ -64,9 +60,6 @@
 
     <div id="landingPage">
         <h1 class="welcome-title">Vocabulary Sojourn</h1>
-        <svg class="svg-container" viewBox="0 0 200 100">
-            <path class="drawing-line" d="M 50,80 L 180,10" />
-        </svg>
         <div class="sojourn-def">so-journ (n): a temporary stay in a place.</div>
         <button class="start-btn" onclick="enterApp()">Click Here to Start Your Journey</button>
     </div>
@@ -124,9 +117,9 @@
 
         let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null;
         let sessionHistory = [];
-        let vocabWords = ["Knowledge", "Journey", "Learning", "Sojourn", "Vocabulary"]; // Fallback words
+        let vocabWords = ["Knowledge", "Journey", "Learning", "Sojourn", "Vocabulary"]; 
 
-        // MATRIX LOGIC
+        // MATRIX LOGIC - Updated visibility
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         let columns = [];
@@ -134,19 +127,19 @@
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            columns = Array(Math.floor(canvas.width / 20)).fill(0);
+            columns = Array(Math.floor(canvas.width / 25)).fill(0);
         }
 
         function drawMatrix() {
-            ctx.fillStyle = "rgba(15, 23, 42, 0.1)"; // Fade effect
+            ctx.fillStyle = "rgba(15, 23, 42, 0.15)"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#3b82f6"; // Matrix word color
-            ctx.font = "14px monospace";
+            ctx.fillStyle = "#60a5fa"; // Brighter blue for visibility
+            ctx.font = "bold 16px monospace";
 
             columns.forEach((y, i) => {
                 const word = vocabWords[Math.floor(Math.random() * vocabWords.length)];
-                ctx.fillText(word, i * 25, y);
-                if (y > canvas.height && Math.random() > 0.975) columns[i] = 0;
+                ctx.fillText(word, i * 30, y);
+                if (y > canvas.height && Math.random() > 0.98) columns[i] = 0;
                 else columns[i] = y + 25;
             });
         }
@@ -154,11 +147,18 @@
         window.onload = () => {
             fetchTeacherData();
             resizeCanvas();
-            setInterval(drawMatrix, 50);
+            setInterval(drawMatrix, 60);
         };
         window.onresize = resizeCanvas;
 
-        function enterApp() { document.getElementById('landingPage').style.opacity = '0'; setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); document.getElementById('loginOverlay').classList.remove('hidden'); }, 800); }
+        function enterApp() { 
+            document.getElementById('landingPage').style.opacity = '0'; 
+            setTimeout(() => { 
+                document.getElementById('landingPage').classList.add('hidden'); 
+                document.getElementById('loginOverlay').classList.remove('hidden'); 
+            }, 800); 
+        }
+
         function saveStudentName() { studentName = document.getElementById('studentNameInput').value; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Student: " + studentName; }
 
         async function fetchTeacherData() {
@@ -169,9 +169,10 @@
                 units = {};
                 let tempWords = [];
                 rows.forEach(row => {
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if (cols.length >= 2) {
-                        const t = cols[0].replace(/"/g, ''), d = cols[1].replace(/"/g, ''), i = cols[2].replace(/"/g, ''), l = cols[3].replace(/"/g, ''), u = cols[4].replace(/"/g, '');
+                    const cols = row.split(/,(?=(?:?(?:[^"]*"){2})*[^"]*$)/); // Fixed regex
+                    const splitCols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if (splitCols.length >= 2) {
+                        const t = splitCols[0].replace(/"/g, ''), d = splitCols[1].replace(/"/g, ''), i = splitCols[2].replace(/"/g, ''), l = splitCols[3].replace(/"/g, ''), u = splitCols[4].replace(/"/g, '');
                         if (!units[u]) units[u] = {};
                         if (!units[u][l]) units[u][l] = [];
                         units[u][l].push({t, d, img: i});
