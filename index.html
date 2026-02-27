@@ -41,7 +41,8 @@
         input, select, .main-btn { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; }
         .main-btn { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .main-btn:disabled { background: #94a3b8; cursor: not-allowed; }
-        .delete-btn { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 5px; }
+        .delete-btn { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .delete-btn:disabled { background: #fca5a5; cursor: not-allowed; }
         .edit-row { background: #f8fafc; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; }
 
         /* Spinner Animation */
@@ -224,11 +225,7 @@
         async function exportResult(mode, score) { 
             if (EXPORT_URL && !EXPORT_URL.includes("PASTE")) { 
                 const payload = { action: "saveResult", name: studentName, unit: currentClass, mode: mode, score: score }; 
-                console.log("Exporting Result:", payload);
-                fetch(EXPORT_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload) 
-                }).catch(err => console.log("Export Note: Fetch triggered. If using Apps Script, check your Executions log."));
+                fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(err => console.log("Export Note: Triggered."));
             } 
         }
 
@@ -263,7 +260,10 @@
                     <label>Img:</label> <input type="text" id="i-${idx}" value="${item.img || ''}">
                     <div style="display:flex; gap:10px; margin-top:10px;">
                         <button class="main-btn" style="background:var(--accent); margin:0;" onclick="saveEdit('${u}','${l}',${idx})">Update Word</button>
-                        <button class="delete-btn" onclick="deleteWord('${u}','${l}',${idx})">Delete</button>
+                        <button class="delete-btn" id="delBtn-${idx}" onclick="deleteWord('${u}','${l}',${idx})">
+                            <span class="spinner"></span>
+                            <span class="btn-text">Delete</span>
+                        </button>
                     </div>
                 </div>`).join('');
         }
@@ -272,46 +272,45 @@
             const btn = document.getElementById('addWordBtn');
             const dropdown = document.getElementById('adminDropdown');
             const [u, l] = dropdown.value.split('|');
-            
-            // Start loading state
-            btn.classList.add('loading');
-            btn.disabled = true;
-
+            btn.classList.add('loading'); btn.disabled = true;
             const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value });
-            
             try {
                 await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-                document.getElementById('newT').value = ""; 
-                document.getElementById('newD').value = "";
+                await new Promise(r => setTimeout(r, 1000)); 
+                document.getElementById('newT').value = ""; document.getElementById('newD').value = "";
                 await fetchTeacherData(); 
                 renderAdminList(dropdown.value);
-                alert("Sent to sheet!");
-            } catch (err) {
-                alert("Error sending to sheet. Please try again.");
-            } finally {
-                // End loading state
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
+                alert("Word Added!");
+            } finally { btn.classList.remove('loading'); btn.disabled = false; }
         }
 
         async function saveEdit(u, l, idx) {
             const dropdown = document.getElementById('adminDropdown');
             const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value });
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
+            alert("Update request sent!");
+            await new Promise(r => setTimeout(r, 1000));
             await fetchTeacherData();
             renderAdminList(dropdown.value);
-            alert("Update request sent!");
         }
 
         async function deleteWord(u, l, idx) {
             if(!confirm("Delete this word?")) return;
+            const btn = document.getElementById(`delBtn-${idx}`);
             const dropdown = document.getElementById('adminDropdown');
+            btn.classList.add('loading'); btn.disabled = true;
+            
             const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t });
-            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-            await fetchTeacherData();
-            renderAdminList(dropdown.value);
-            alert("Delete request sent!");
+            try {
+                await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
+                alert("Deleted from sheet!");
+                // Artificial delay to wait for sheet update before refreshing UI
+                await new Promise(r => setTimeout(r, 1200)); 
+                await fetchTeacherData();
+                renderAdminList(dropdown.value);
+            } finally {
+                if(btn) { btn.classList.remove('loading'); btn.disabled = false; }
+            }
         }
 
         function protectedToggle() { 
