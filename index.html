@@ -102,7 +102,6 @@
             <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Manager</div>
             <h3>Manager Mode (Live Edit)</h3>
             <select id="adminDropdown" onchange="renderAdminList(this.value)"></select>
-            
             <div id="addWordForm" class="hidden">
                 <h4 style="margin-bottom:10px;">+ Add New Word</h4>
                 <input type="text" id="newT" placeholder="New Term">
@@ -111,7 +110,6 @@
                 <button class="main-btn" onclick="submitNewWord()">Add Word to Sheet</button>
                 <hr style="margin: 20px 0;">
             </div>
-
             <div id="adminWordList"></div>
         </div>
     </div>
@@ -177,7 +175,13 @@
         function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div style="padding:10px; border-bottom:1px solid #eee;"><strong>${i.t}</strong>: ${i.d}</div>`).join(''); }
         function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
         function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div class="history-item"><span><strong>${h.mode}</strong> (${h.list})</span><span>${h.score} <small>${h.time}</small></span></div>`).join(''); }
-        async function exportResult(mode, score) { if (EXPORT_URL && !EXPORT_URL.includes("PASTE")) { const payload = JSON.stringify({ action: "saveResult", name: studentName, unit: currentClass, mode: mode, score: score }); fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); } }
+        
+        async function exportResult(mode, score) { 
+            if (EXPORT_URL && !EXPORT_URL.includes("PASTE")) { 
+                const payload = JSON.stringify({ action: "saveResult", name: studentName, unit: currentClass, mode: mode, score: score }); 
+                fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+            } 
+        }
 
         /* STUDY TOOLS LOGIC */
         function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayTerm').innerText = card.t; document.getElementById('displayDef').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
@@ -190,7 +194,7 @@
         function drag(e) { draggedItem = e.target; }
         function drop(e) { const target = e.target.closest('.match-item'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.visibility = 'hidden'; } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Match Accuracy: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Again</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", acc); exportResult("Match", acc); } }
 
-        /* MANAGER MODE TOOLS RESTORED */
+        /* MANAGER MODE TOOLS - VARIABLE FIX */
         function populateAdminDropdown() { const dropdown = document.getElementById('adminDropdown'); dropdown.innerHTML = '<option value="">-- Select List --</option>'; Object.keys(units).forEach(u => Object.keys(units[u]).forEach(l => { dropdown.innerHTML += `<option value="${u}|${l}">${u} - ${l}</option>`; })); }
         
         function renderAdminList(val) { 
@@ -211,22 +215,45 @@
 
         async function submitNewWord() {
             const [u, l] = document.getElementById('adminDropdown').value.split('|');
-            const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value });
+            // Action names must match Apps Script: term, def, img, list, unit
+            const payload = JSON.stringify({ 
+                action: "addWord", 
+                unit: u, 
+                list: l, 
+                term: document.getElementById('newT').value, 
+                def: document.getElementById('newD').value, 
+                img: document.getElementById('newI').value 
+            });
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-            alert("Sent to sheet!"); location.reload();
+            alert("Added! Reloading..."); location.reload();
         }
 
         async function saveEdit(u, l, idx) {
-            const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value });
+            // Action names must match Apps Script: oldTerm, newTerm, newDef, newImg, list, unit
+            const payload = JSON.stringify({ 
+                action: "updateWord", 
+                unit: u, 
+                list: l, 
+                oldTerm: units[u][l][idx].t, 
+                newTerm: document.getElementById(`t-${idx}`).value, 
+                newDef: document.getElementById(`d-${idx}`).value, 
+                newImg: document.getElementById(`i-${idx}`).value 
+            });
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-            alert("Update request sent!");
+            alert("Update Success!"); location.reload();
         }
 
         async function deleteWord(u, l, idx) {
             if(!confirm("Delete this word?")) return;
-            const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t });
+            // Action names must match Apps Script: term, list, unit
+            const payload = JSON.stringify({ 
+                action: "deleteWord", 
+                unit: u, 
+                list: l, 
+                term: units[u][l][idx].t 
+            });
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-            alert("Delete request sent!"); location.reload();
+            alert("Deleted!"); location.reload();
         }
 
         function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); } } else { document.getElementById('adminView').classList.add('hidden'); document.getElementById('studyView').classList.remove('hidden'); } }
