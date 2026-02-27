@@ -16,7 +16,7 @@
             position: fixed; 
             top: 0; left: 0; 
             width: 100%; height: 100%; 
-            background: rgb(15, 23, 42); /* Solid color, no transparency */
+            background: rgb(15, 23, 42); 
             z-index: 9998; 
             display: flex; 
             flex-direction: column; 
@@ -31,7 +31,7 @@
             top: 0; left: 0; 
             width: 100%; height: 100%; 
             z-index: 9999; 
-            pointer-events: none; /* Allows clicks to pass through to the button */
+            pointer-events: none; 
         }
 
         /* 4. THE FRONT-MOST LAYER (Text and Button) */
@@ -61,7 +61,7 @@
 
         @keyframes reveal { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 
-        /* INTERIOR APP STYLES - Unchanged logic, standard z-index */
+        /* INTERIOR APP STYLES */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); display: flex; align-items: center; justify-content: center; z-index: 20000; color: white; }
         .login-box { background: white; color: var(--text); padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px; }
         .mode-toggle { position: absolute; top: 15px; left: 15px; background: #64748b; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.75rem; cursor: pointer; opacity: 0.6; }
@@ -156,7 +156,7 @@
         let sessionHistory = [];
         let vocabWords = ["Sojourn", "Voyage", "Lexicon", "Knowledge", "Linguistics"]; 
 
-        // MATRIX LOGIC
+        // UPDATED MATRIX LOGIC FOR HIGH DENSITY
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         let columns = [];
@@ -164,20 +164,24 @@
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            columns = Array(Math.floor(canvas.width / 40)).fill(0);
+            // Increased density: reduced column width from 40 to 20
+            columns = Array(Math.floor(canvas.width / 20)).fill(0);
         }
 
         function drawMatrix() {
-            // Background of animation is transparent to show the LandingPage solid background
+            // Clearing with high alpha for sharp look on solid background
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#60a5fa"; 
-            ctx.font = "bold 16px monospace";
+            ctx.font = "bold 15px monospace";
 
             columns.forEach((y, i) => {
                 const word = vocabWords[Math.floor(Math.random() * vocabWords.length)];
-                ctx.fillText(word, i * 40, y);
-                if (y > canvas.height && Math.random() > 0.975) columns[i] = 0;
-                else columns[i] = y + 20;
+                // Drawing text at increased horizontal frequency
+                ctx.fillText(word, i * 25, y);
+                
+                // Increased spawn probability (0.95 vs 0.975) for faster cycling
+                if (y > canvas.height && Math.random() > 0.95) columns[i] = 0;
+                else columns[i] = y + 25;
             });
         }
 
@@ -189,7 +193,6 @@
         window.onresize = resizeCanvas;
 
         function enterApp() { 
-            // Fades out everything on the landing layer stack
             document.getElementById('landingPage').style.opacity = '0'; 
             canvas.style.opacity = '0';
             setTimeout(() => { 
@@ -225,7 +228,6 @@
             } catch (e) { document.getElementById('syncStatus').innerText = "Sync Error"; }
         }
 
-        // NAVIGATION & MODES
         function renderUnitSelection() { document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); }
         function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
         function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; setStudyMode('list'); }
@@ -260,7 +262,6 @@
         function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
         function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div class="history-item"><span><strong>${h.mode}</strong> (${h.list})</span><span>${h.score} <small>${h.time}</small></span></div>`).join(''); }
 
-        // ADMIN FUNCTIONS
         function populateAdminDropdown() { const dropdown = document.getElementById('adminDropdown'); dropdown.innerHTML = '<option value="">-- Select List --</option>'; Object.keys(units).forEach(u => Object.keys(units[u]).forEach(l => dropdown.innerHTML += `<option value="${u}|${l}">${u} - ${l}</option>`)); }
         function renderAdminList(val) { if (!val) { document.getElementById('addWordForm').classList.add('hidden'); return; } document.getElementById('addWordForm').classList.remove('hidden'); const [u, l] = val.split('|'); document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="edit-row"><input type="text" id="t-${idx}" value="${item.t}"><input type="text" id="d-${idx}" value="${item.d}"><input type="text" id="i-${idx}" value="${item.img}"><div style="display:flex; gap:5px;"><button class="delete-btn" style="width:100px; border-radius:8px;" onclick="deleteWord('${u}','${l}',${idx})">Delete</button><button class="main-btn" style="background:var(--accent); margin:0;" onclick="saveEdit('${u}','${l}',${idx})">Update</button></div></div>`).join(''); }
         async function submitNewWord() { const [u, l] = document.getElementById('adminDropdown').value.split('|'); const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); location.reload(); }
