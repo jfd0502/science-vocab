@@ -8,88 +8,89 @@
         :root { 
             --primary: #6366f1; 
             --primary-hover: #4f46e5;
-            --bg: #0b0f1a; 
+            --bg: #0f172a; 
             --text: #f8fafc; 
             --accent: #10b981; 
             --danger: #ef4444; 
-            --glass: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
+
+        /* --- AURA BLOBS ADDITION --- */
+        .aura-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; overflow: hidden; pointer-events: none;
+            filter: blur(100px); opacity: 0.4;
+        }
+        .blob { position: absolute; border-radius: 50%; animation: float 15s infinite alternate; }
+        .b1 { width: 40vw; height: 40vw; background: #6366f1; top: -10%; left: -10%; }
+        .b2 { width: 35vw; height: 35vw; background: #a855f7; bottom: -5%; right: -5%; animation-delay: -2s; }
+        @keyframes float { 
+            0% { transform: translate(0,0) scale(1); } 
+            100% { transform: translate(50px, 50px) scale(1.1); } 
+        }
+        /* --- END AURA BLOBS --- */
         
         body { 
             font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-            background-color: var(--bg);
+            background: radial-gradient(circle at top left, #1e293b, #0f172a); 
             color: var(--text); 
             padding: 0; margin: 0; 
             display: flex; flex-direction: column; align-items: center; 
             min-height: 100vh; position: relative; overflow-x: hidden; 
         }
 
-        /* --- AURA BACKGROUND ELEMENTS --- */
-        .aura-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1; overflow: hidden; pointer-events: none;
-            filter: blur(80px); opacity: 0.6;
-        }
-        .blob {
-            position: absolute; border-radius: 50%;
-            animation: float 20s infinite alternate;
-        }
-        .blob-1 { width: 400px; height: 400px; background: #4f46e5; top: -10%; left: -10%; }
-        .blob-2 { width: 500px; height: 500px; background: #7c3aed; bottom: -10%; right: -10%; animation-delay: -5s; }
-        .blob-3 { width: 300px; height: 300px; background: #10b981; top: 40%; right: 10%; animation-delay: -10s; }
-
-        @keyframes float {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(100px, 50px) scale(1.1); }
+        .app-container { 
+            padding: 80px 20px 40px 20px; 
+            width: 100%; max-width: 650px; 
+            display: flex; flex-direction: column; 
+            position: relative; z-index: 10;
+            opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
         }
 
-        /* --- REFINED GLASSMorphism --- */
         .panel { 
             background: var(--glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             padding: 30px; 
-            border-radius: 28px; 
+            border-radius: 24px; 
             border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             margin-bottom: 25px; width: 100%; box-sizing: border-box; 
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        /* --- NAVIGATION & BUTTONS --- */
         .nav-btn { 
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--glass);
             border: 1px solid var(--glass-border);
             color: white;
-            padding: 20px; border-radius: 18px; 
+            padding: 20px; border-radius: 16px; 
             cursor: pointer; font-weight: 600; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 1rem;
         }
         .nav-btn:hover { 
             background: var(--primary); 
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3);
-            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
         }
 
         .main-btn { 
             background: linear-gradient(135deg, var(--primary), #a855f7); 
             color: white; border: none; font-weight: 700; cursor: pointer; 
-            padding: 16px; border-radius: 14px;
+            padding: 14px; border-radius: 12px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-            text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
-        .main-btn:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5); }
 
-        /* Rest of your existing functionality styles */
-        .app-container { padding: 80px 20px 40px 20px; width: 100%; max-width: 650px; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; z-index: 10; }
-        .study-tabs { display: flex; gap: 10px; margin-bottom: 25px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 14px; }
-        .study-tabs button { flex: 1; padding: 12px; font-size: 0.8rem; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; background: transparent; color: #94a3b8; transition: 0.3s; }
-        .study-tabs button.active { background: white; color: var(--bg); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
+        .study-tabs button { 
+            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
+            border-radius: 10px; cursor: pointer; font-weight: 600;
+            background: var(--glass); color: #94a3b8; transition: 0.3s;
+        }
+        .study-tabs button.active { background: white; color: var(--bg); }
 
+        /* Card Fix for Mac/Safari */
         .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
         .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; -webkit-transform-style: preserve-3d; border-radius: 24px; }
         .flipped .inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
@@ -97,32 +98,32 @@
         .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); -webkit-transform: rotateY(0deg); }
         .back { background: var(--primary); color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); font-size: 1.25rem; }
 
-        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); }
-        .breadcrumb { font-size: 0.75rem; color: var(--primary); cursor: pointer; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 2px; font-weight: bold; }
+        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; }
+        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
         .hidden { display: none !important; }
-        input { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--primary); background: rgba(0,0,0,0.5); }
+        input { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; }
+        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .breadcrumb { font-size: 0.85rem; color: #94a3b8; cursor: pointer; text-transform: uppercase; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="aura-container">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
+    <div class="aura-bg">
+        <div class="blob b1"></div>
+        <div class="blob b2"></div>
     </div>
 
     <canvas id="matrixCanvas"></canvas>
 
     <div id="landingPage">
-        <h1 style="font-size: clamp(2rem, 8vw, 4rem); color: white; font-weight: 900; letter-spacing: -2px; margin-bottom: 30px;">VOCABULARY SOJOURN</h1>
-        <button class="main-btn" onclick="enterApp()" style="padding: 20px 50px; border-radius: 100px; font-size: 1.1rem;">Begin Journey</button>
+        <h1 style="font-size: 3rem; color: white; font-weight: 900;">VOCABULARY SOJOURN</h1>
+        <button class="main-btn" onclick="enterApp()" style="padding: 20px 40px; border-radius: 50px;">BEGIN JOURNEY</button>
     </div>
 
-    <div id="loginOverlay" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; z-index:10000; background: rgba(11, 15, 26, 0.95);">
+    <div id="loginOverlay" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; z-index:10000; background: var(--bg);">
         <div class="panel" style="max-width: 400px; text-align: center;">
-            <h2 style="margin-top: 0;">Identity Required</h2>
+            <h2>Identify Yourself</h2>
             <input type="text" id="studentNameInput" placeholder="Enter Full Name..." style="width: 100%;">
             <button class="main-btn" onclick="saveStudentName()" style="width: 100%; margin-top: 15px;">Access System</button>
         </div>
@@ -131,18 +132,18 @@
     <div class="app-container">
         <div id="studyView" class="panel">
             <div id="unitSelection">
-                <h2 style="margin-top:0;">Select Unit</h2>
-                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
+                <h2>Select Unit</h2>
+                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             </div>
             
             <div id="listSelection" class="hidden">
-                <div class="breadcrumb" onclick="backToUnits()">&larr; Back to Units</div>
-                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
+                <div class="breadcrumb" onclick="backToUnits()">&larr; Units</div>
+                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             </div>
 
             <div id="studyInterface" class="hidden">
-                <div class="breadcrumb" onclick="backToLists()">&larr; Back to Lists</div>
-                <h3 id="activeListName" style="color: var(--primary); margin: 5px 0 20px 0;"></h3>
+                <div class="breadcrumb" onclick="backToLists()">&larr; Lists</div>
+                <h3 id="activeListName" style="color: var(--primary);"></h3>
                 
                 <div class="study-tabs">
                     <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
@@ -153,6 +154,7 @@
 
                 <div id="listMode">
                     <div id="fullListArea"></div>
+                    <div id="historyEntries" style="margin-top: 20px; font-size: 0.8rem; opacity: 0.7;"></div>
                 </div>
 
                 <div id="flashMode" class="hidden">
@@ -160,23 +162,23 @@
                         <div class="inner"><div class="front" id="displayFront"></div><div class="back" id="displayBack"></div></div>
                     </div>
                     <div style="display:flex; gap:15px;">
-                        <button class="main-btn" onclick="changeCard(-1)" style="flex:1; background: rgba(255,255,255,0.05);">Prev</button>
+                        <button class="main-btn" onclick="changeCard(-1)" style="flex:1;">Prev</button>
                         <button class="main-btn" onclick="changeCard(1)" style="flex:1;">Next</button>
                     </div>
                 </div>
 
                 <div id="quizMode" class="hidden">
-                    <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                    <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
                     <div id="quizContent">
-                        <div id="quizQuestion" style="font-size: 1.1rem; margin-bottom: 20px; line-height: 1.4;"></div>
+                        <div id="quizQuestion" style="margin: 20px 0;"></div>
                         <div id="quizOptions"></div>
-                        <button id="nextQuizBtn" class="hidden main-btn" style="width:100%; margin-top: 15px;" onclick="renderQuiz()">Continue</button>
+                        <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
                     </div>
                     <div id="quizEnd" class="hidden"></div>
                 </div>
 
                 <div id="matchMode" class="hidden">
-                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
                     <div id="matchContainer"></div>
                     <div id="matchEnd" class="hidden"></div>
                 </div>
@@ -185,31 +187,47 @@
     </div>
 
     <script>
-        // Use your deployment URL here
+        // REPLACE THE URL BELOW WITH YOUR NEW DEPLOYMENT URL
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
         const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwM5H4eTdwBJ4co0XTN_YYXaQRrtSCH5UGmJUALvg7xR-6sAaNBYnah_MAtGY0fdQovIQ/exec"; 
 
-        let units = {}, currentUnit = "", currentClass = "", studentName = "", cardIdx = 0, draggedItem = null;
+        let units = {}, currentUnit = "", currentClass = "", studentName = "", cardIdx = 0;
         let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
 
-        // Matrix Logic
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-        let columns = [];
-        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; columns = Array(Math.floor(canvas.width / 20)).fill(0); }
-        function drawMatrix() { ctx.fillStyle = "rgba(11, 15, 26, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#4f46e5"; ctx.font = "15px monospace"; columns.forEach((y, i) => { const text = String.fromCharCode(Math.random() * 128); ctx.fillText(text, i * 20, y); if (y > canvas.height && Math.random() > 0.975) columns[i] = 0; else columns[i] = y + 20; }); }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        setInterval(drawMatrix, 50);
-
-        function enterApp() { 
-            document.getElementById('landingPage').style.opacity = '0'; 
-            setTimeout(() => { 
-                document.getElementById('landingPage').classList.add('hidden'); 
-                document.getElementById('loginOverlay').classList.remove('hidden'); 
-            }, 500); 
+        async function fetchTeacherData() {
+            const response = await fetch(`${SHEET_CSV_URL}&cb=${Date.now()}`); 
+            const csvText = await response.text();
+            const rows = csvText.split(/\r?\n/).filter(r => r.trim()).slice(1);
+            units = {};
+            rows.forEach(row => {
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+                if (cols.length >= 5) {
+                    const [term, def, img, listName, unitName] = cols;
+                    if (!units[unitName]) units[unitName] = {};
+                    if (!units[unitName][listName]) units[unitName][listName] = [];
+                    units[unitName][listName].push({t: term, d: def, img: img});
+                }
+            });
+            renderUnitSelection();
         }
 
+        async function syncSessionToSheet(mode, score) {
+            console.log(`Attempting to sync: ${studentName}, ${mode}, ${score}`);
+            const payload = JSON.stringify({
+                action: "recordSession",
+                student: studentName,
+                unit: currentUnit,
+                list: currentClass,
+                mode: mode,
+                score: score
+            });
+            try {
+                await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
+                console.log("Sync signal sent to Google.");
+            } catch (e) { console.error("Sync Error:", e); }
+        }
+
+        function enterApp() { document.getElementById('landingPage').classList.add('hidden'); document.getElementById('loginOverlay').classList.remove('hidden'); }
         function saveStudentName() { 
             studentName = document.getElementById('studentNameInput').value;
             if(studentName.trim()) {
@@ -218,30 +236,6 @@
                 document.querySelector('.app-container').style.pointerEvents = 'auto';
                 fetchTeacherData();
             }
-        }
-
-        async function fetchTeacherData() {
-            try {
-                const response = await fetch(`${SHEET_CSV_URL}&cb=${Date.now()}`); 
-                const csvText = await response.text();
-                const rows = csvText.split(/\r?\n/).filter(r => r.trim()).slice(1);
-                units = {};
-                rows.forEach(row => {
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                    if (cols.length >= 5) {
-                        const [term, def, img, listName, unitName] = cols;
-                        if (!units[unitName]) units[unitName] = {};
-                        if (!units[unitName][listName]) units[unitName][listName] = [];
-                        units[unitName][listName].push({t: term, d: def, img: img});
-                    }
-                });
-                renderUnitSelection();
-            } catch (e) { console.error("Load Error", e); }
-        }
-
-        async function syncSessionToSheet(mode, score) {
-            const payload = JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score });
-            try { fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); } catch (e) { console.error("Sync Error", e); }
         }
 
         function renderUnitSelection() { document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); }
@@ -262,7 +256,7 @@
             if (mode === 'match') startMatch(list);
         }
 
-        function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div style="padding:15px; background:rgba(255,255,255,0.02); margin-bottom:10px; border-radius:12px; border:1px solid var(--glass-border);"><strong>${i.t}</strong>: ${i.d}</div>`).join(''); }
+        function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item"><strong>${i.t}</strong>: ${i.d}</div>`).join(''); }
         function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = card.t; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
         function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
 
@@ -271,39 +265,33 @@
             if (qIdx >= qPool.length) { 
                 const pct = Math.round((qScore/qPool.length)*100) + "%";
                 document.getElementById('quizContent').classList.add('hidden');
-                document.getElementById('quizEnd').innerHTML = `<h3>Quiz Result: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Try Again</button>`;
+                document.getElementById('quizEnd').innerHTML = `<h3>Final Score: ${pct}</h3>`;
                 document.getElementById('quizEnd').classList.remove('hidden');
                 syncSessionToSheet("Quiz", pct);
                 return;
             }
             const correct = qPool[qIdx];
-            document.getElementById('quizQuestion').innerText = `Select the term for: "${correct.d}"`;
-            document.getElementById('quizOptions').innerHTML = [correct, ...units[currentUnit][currentClass].filter(i=>i.t!=correct.t).slice(0,2)].sort(()=>0.5-Math.random()).map(o => `<button class="nav-btn" style="width:100%; margin-bottom:8px; text-align:left; padding:15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.t}</button>`).join('');
+            document.getElementById('quizQuestion').innerText = `Def: ${correct.d}`;
+            document.getElementById('quizOptions').innerHTML = [correct, ...units[currentUnit][currentClass].filter(i=>i.t!=correct.t).slice(0,2)].sort(()=>0.5-Math.random()).map(o => `<button class="nav-btn" style="width:100%; margin-bottom:5px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.t}</button>`).join('');
             document.getElementById('nextQuizBtn').classList.add('hidden');
         }
-        function checkQuiz(el, correct) { if(!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if(correct) qScore++; el.style.background = correct ? 'var(--accent)' : 'var(--danger)'; qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
+        function checkQuiz(el, correct) { if(correct) qScore++; el.style.background = correct ? 'var(--accent)' : 'var(--danger)'; qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
 
         function startMatch(list) {
             mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length;
-            document.getElementById('matchStats').innerText = "Accuracy: 0%";
             let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random());
             let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random());
-            document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                <div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="event.dataTransfer.setData('text', ''); draggedItem=event.target" data-id="${i.id}" data-type="w" style="padding:10px; font-size:0.9rem; margin-bottom:8px;">${i.t}</div>`).join('')}</div>
-                <div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="dropMatch(event)" data-id="${i.id}" data-type="d" style="padding:10px; font-size:0.8rem; border-style:dashed; margin-bottom:8px;">${i.t}</div>`).join('')}</div>
+            document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="e=>{draggedItem=e.target}" data-id="${i.id}" data-type="w">${i.t}</div>`).join('')}</div>
+                <div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="dropMatch(event)" data-id="${i.id}" data-type="d">${i.t}</div>`).join('')}</div>
             </div>`;
         }
         function dropMatch(e) {
-            const target = e.target.closest('.nav-btn'); mTotal++;
-            if(target.dataset.id === draggedItem.dataset.id && target.dataset.type !== draggedItem.dataset.type) { 
-                mCorrect++; target.style.opacity = '0.2'; draggedItem.style.visibility = 'hidden'; 
-            }
+            mTotal++; const target = e.target.closest('.nav-btn');
+            if(target.dataset.id === draggedItem.dataset.id) { mCorrect++; target.style.opacity = '0.3'; }
             const acc = Math.round((mCorrect/mTotal)*100) + "%";
             document.getElementById('matchStats').innerText = `Accuracy: ${acc}`;
-            if(mCorrect === mGoal) { 
-                syncSessionToSheet("Matching", acc);
-                document.getElementById('matchContainer').innerHTML = `<h3>Match Result: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Try Again</button>`;
-            }
+            if(mCorrect === mGoal) syncSessionToSheet("Matching", acc);
         }
     </script>
 </body>
