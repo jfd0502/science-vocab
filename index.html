@@ -1,298 +1,280 @@
-<!DOCTYPE html>
+let's return to this build for a second: <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary Sojourn</title>
-    <style>
-        :root { 
-            --primary: #6366f1; 
-            --primary-hover: #4f46e5;
-            --bg: #0f172a; 
-            --text: #f8fafc; 
-            --accent: #10b981; 
-            --danger: #ef4444; 
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Sojourn</title>
+    <style>
+        :root { 
+            --primary: #6366f1; 
+            --primary-hover: #4f46e5;
+            --bg: #0f172a; 
+            --text: #f8fafc; 
+            --accent: #10b981; 
+            --danger: #ef4444; 
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            background: radial-gradient(circle at top left, #1e293b, #0f172a); 
+            color: var(--text); 
+            padding: 0; margin: 0; 
+            display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; position: relative; overflow-x: hidden; 
+        }
 
-        /* --- AURA BLOBS ADDITION --- */
-        .aura-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1; overflow: hidden; pointer-events: none;
-            filter: blur(100px); opacity: 0.4;
-        }
-        .blob { position: absolute; border-radius: 50%; animation: float 15s infinite alternate; }
-        .b1 { width: 40vw; height: 40vw; background: #6366f1; top: -10%; left: -10%; }
-        .b2 { width: 35vw; height: 35vw; background: #a855f7; bottom: -5%; right: -5%; animation-delay: -2s; }
-        @keyframes float { 
-            0% { transform: translate(0,0) scale(1); } 
-            100% { transform: translate(50px, 50px) scale(1.1); } 
-        }
-        /* --- END AURA BLOBS --- */
-        
-        body { 
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-            background: radial-gradient(circle at top left, #1e293b, #0f172a); 
-            color: var(--text); 
-            padding: 0; margin: 0; 
-            display: flex; flex-direction: column; align-items: center; 
-            min-height: 100vh; position: relative; overflow-x: hidden; 
-        }
+        .app-container { 
+            padding: 80px 20px 40px 20px; 
+            width: 100%; max-width: 650px; 
+            display: flex; flex-direction: column; 
+            position: relative; z-index: 10;
+            opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
+        }
 
-        .app-container { 
-            padding: 80px 20px 40px 20px; 
-            width: 100%; max-width: 650px; 
-            display: flex; flex-direction: column; 
-            position: relative; z-index: 10;
-            opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
-        }
+        .panel { 
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 30px; 
+            border-radius: 24px; 
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 25px; width: 100%; box-sizing: border-box; 
+        }
 
-        .panel { 
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 30px; 
-            border-radius: 24px; 
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            margin-bottom: 25px; width: 100%; box-sizing: border-box; 
-        }
+        .nav-btn { 
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 20px; border-radius: 16px; 
+            cursor: pointer; font-weight: 600; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
+        }
+        .nav-btn:hover { 
+            background: var(--primary); 
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
 
-        .nav-btn { 
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            color: white;
-            padding: 20px; border-radius: 16px; 
-            cursor: pointer; font-weight: 600; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 1rem;
-        }
-        .nav-btn:hover { 
-            background: var(--primary); 
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-        }
+        .main-btn { 
+            background: linear-gradient(135deg, var(--primary), #a855f7); 
+            color: white; border: none; font-weight: 700; cursor: pointer; 
+            padding: 14px; border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
 
-        .main-btn { 
-            background: linear-gradient(135deg, var(--primary), #a855f7); 
-            color: white; border: none; font-weight: 700; cursor: pointer; 
-            padding: 14px; border-radius: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
+        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
+        .study-tabs button { 
+            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
+            border-radius: 10px; cursor: pointer; font-weight: 600;
+            background: var(--glass); color: #94a3b8; transition: 0.3s;
+        }
+        .study-tabs button.active { background: white; color: var(--bg); }
 
-        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
-        .study-tabs button { 
-            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
-            border-radius: 10px; cursor: pointer; font-weight: 600;
-            background: var(--glass); color: #94a3b8; transition: 0.3s;
-        }
-        .study-tabs button.active { background: white; color: var(--bg); }
+        /* Card Fix for Mac/Safari */
+        .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
+        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; -webkit-transform-style: preserve-3d; border-radius: 24px; }
+        .flipped .inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
+        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
+        .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); -webkit-transform: rotateY(0deg); }
+        .back { background: var(--primary); color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); font-size: 1.25rem; }
 
-        /* Card Fix for Mac/Safari */
-        .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
-        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; -webkit-transform-style: preserve-3d; border-radius: 24px; }
-        .flipped .inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
-        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
-        .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); -webkit-transform: rotateY(0deg); }
-        .back { background: var(--primary); color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); font-size: 1.25rem; }
-
-        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; }
-        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
-        .hidden { display: none !important; }
-        input { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; }
-        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .breadcrumb { font-size: 0.85rem; color: #94a3b8; cursor: pointer; text-transform: uppercase; margin-bottom: 15px; }
-    </style>
+        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; }
+        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
+        .hidden { display: none !important; }
+        input { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; }
+        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .breadcrumb { font-size: 0.85rem; color: #94a3b8; cursor: pointer; text-transform: uppercase; margin-bottom: 15px; }
+    </style>
 </head>
 <body>
 
-    <div class="aura-bg">
-        <div class="blob b1"></div>
-        <div class="blob b2"></div>
-    </div>
+    <canvas id="matrixCanvas"></canvas>
 
-    <canvas id="matrixCanvas"></canvas>
+    <div id="landingPage">
+        <h1 style="font-size: 3rem; color: white; font-weight: 900;">VOCABULARY SOJOURN</h1>
+        <button class="main-btn" onclick="enterApp()" style="padding: 20px 40px; border-radius: 50px;">BEGIN JOURNEY</button>
+    </div>
 
-    <div id="landingPage">
-        <h1 style="font-size: 3rem; color: white; font-weight: 900;">VOCABULARY SOJOURN</h1>
-        <button class="main-btn" onclick="enterApp()" style="padding: 20px 40px; border-radius: 50px;">BEGIN JOURNEY</button>
-    </div>
+    <div id="loginOverlay" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; z-index:10000; background: var(--bg);">
+        <div class="panel" style="max-width: 400px; text-align: center;">
+            <h2>Identify Yourself</h2>
+            <input type="text" id="studentNameInput" placeholder="Enter Full Name..." style="width: 100%;">
+            <button class="main-btn" onclick="saveStudentName()" style="width: 100%; margin-top: 15px;">Access System</button>
+        </div>
+    </div>
 
-    <div id="loginOverlay" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; z-index:10000; background: var(--bg);">
-        <div class="panel" style="max-width: 400px; text-align: center;">
-            <h2>Identify Yourself</h2>
-            <input type="text" id="studentNameInput" placeholder="Enter Full Name..." style="width: 100%;">
-            <button class="main-btn" onclick="saveStudentName()" style="width: 100%; margin-top: 15px;">Access System</button>
-        </div>
-    </div>
+    <div class="app-container">
+        <div id="studyView" class="panel">
+            <div id="unitSelection">
+                <h2>Select Unit</h2>
+                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            </div>
+            
+            <div id="listSelection" class="hidden">
+                <div class="breadcrumb" onclick="backToUnits()">&larr; Units</div>
+                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            </div>
 
-    <div class="app-container">
-        <div id="studyView" class="panel">
-            <div id="unitSelection">
-                <h2>Select Unit</h2>
-                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            </div>
-            
-            <div id="listSelection" class="hidden">
-                <div class="breadcrumb" onclick="backToUnits()">&larr; Units</div>
-                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            </div>
+            <div id="studyInterface" class="hidden">
+                <div class="breadcrumb" onclick="backToLists()">&larr; Lists</div>
+                <h3 id="activeListName" style="color: var(--primary);"></h3>
+                
+                <div class="study-tabs">
+                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
+                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
+                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
+                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
+                </div>
 
-            <div id="studyInterface" class="hidden">
-                <div class="breadcrumb" onclick="backToLists()">&larr; Lists</div>
-                <h3 id="activeListName" style="color: var(--primary);"></h3>
-                
-                <div class="study-tabs">
-                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
-                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
-                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
-                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
-                </div>
+                <div id="listMode">
+                    <div id="fullListArea"></div>
+                    <div id="historyEntries" style="margin-top: 20px; font-size: 0.8rem; opacity: 0.7;"></div>
+                </div>
 
-                <div id="listMode">
-                    <div id="fullListArea"></div>
-                    <div id="historyEntries" style="margin-top: 20px; font-size: 0.8rem; opacity: 0.7;"></div>
-                </div>
+                <div id="flashMode" class="hidden">
+                    <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
+                        <div class="inner"><div class="front" id="displayFront"></div><div class="back" id="displayBack"></div></div>
+                    </div>
+                    <div style="display:flex; gap:15px;">
+                        <button class="main-btn" onclick="changeCard(-1)" style="flex:1;">Prev</button>
+                        <button class="main-btn" onclick="changeCard(1)" style="flex:1;">Next</button>
+                    </div>
+                </div>
 
-                <div id="flashMode" class="hidden">
-                    <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
-                        <div class="inner"><div class="front" id="displayFront"></div><div class="back" id="displayBack"></div></div>
-                    </div>
-                    <div style="display:flex; gap:15px;">
-                        <button class="main-btn" onclick="changeCard(-1)" style="flex:1;">Prev</button>
-                        <button class="main-btn" onclick="changeCard(1)" style="flex:1;">Next</button>
-                    </div>
-                </div>
+                <div id="quizMode" class="hidden">
+                    <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
+                    <div id="quizContent">
+                        <div id="quizQuestion" style="margin: 20px 0;"></div>
+                        <div id="quizOptions"></div>
+                        <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
+                    </div>
+                    <div id="quizEnd" class="hidden"></div>
+                </div>
 
-                <div id="quizMode" class="hidden">
-                    <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
-                    <div id="quizContent">
-                        <div id="quizQuestion" style="margin: 20px 0;"></div>
-                        <div id="quizOptions"></div>
-                        <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
-                    </div>
-                    <div id="quizEnd" class="hidden"></div>
-                </div>
+                <div id="matchMode" class="hidden">
+                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
+                    <div id="matchContainer"></div>
+                    <div id="matchEnd" class="hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <div id="matchMode" class="hidden">
-                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
-                    <div id="matchContainer"></div>
-                    <div id="matchEnd" class="hidden"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>
+        // REPLACE THE URL BELOW WITH YOUR NEW DEPLOYMENT URL
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
+        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwM5H4eTdwBJ4co0XTN_YYXaQRrtSCH5UGmJUALvg7xR-6sAaNBYnah_MAtGY0fdQovIQ/exec"; 
 
-    <script>
-        // REPLACE THE URL BELOW WITH YOUR NEW DEPLOYMENT URL
-        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwM5H4eTdwBJ4co0XTN_YYXaQRrtSCH5UGmJUALvg7xR-6sAaNBYnah_MAtGY0fdQovIQ/exec"; 
+        let units = {}, currentUnit = "", currentClass = "", studentName = "", cardIdx = 0;
+        let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
 
-        let units = {}, currentUnit = "", currentClass = "", studentName = "", cardIdx = 0;
-        let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
+        async function fetchTeacherData() {
+            const response = await fetch(`${SHEET_CSV_URL}&cb=${Date.now()}`); 
+            const csvText = await response.text();
+            const rows = csvText.split(/\r?\n/).filter(r => r.trim()).slice(1);
+            units = {};
+            rows.forEach(row => {
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+                if (cols.length >= 5) {
+                    const [term, def, img, listName, unitName] = cols;
+                    if (!units[unitName]) units[unitName] = {};
+                    if (!units[unitName][listName]) units[unitName][listName] = [];
+                    units[unitName][listName].push({t: term, d: def, img: img});
+                }
+            });
+            renderUnitSelection();
+        }
 
-        async function fetchTeacherData() {
-            const response = await fetch(`${SHEET_CSV_URL}&cb=${Date.now()}`); 
-            const csvText = await response.text();
-            const rows = csvText.split(/\r?\n/).filter(r => r.trim()).slice(1);
-            units = {};
-            rows.forEach(row => {
-                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                if (cols.length >= 5) {
-                    const [term, def, img, listName, unitName] = cols;
-                    if (!units[unitName]) units[unitName] = {};
-                    if (!units[unitName][listName]) units[unitName][listName] = [];
-                    units[unitName][listName].push({t: term, d: def, img: img});
-                }
-            });
-            renderUnitSelection();
-        }
+        async function syncSessionToSheet(mode, score) {
+            console.log(`Attempting to sync: ${studentName}, ${mode}, ${score}`);
+            const payload = JSON.stringify({
+                action: "recordSession",
+                student: studentName,
+                unit: currentUnit,
+                list: currentClass,
+                mode: mode,
+                score: score
+            });
+            try {
+                await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
+                console.log("Sync signal sent to Google.");
+            } catch (e) { console.error("Sync Error:", e); }
+        }
 
-        async function syncSessionToSheet(mode, score) {
-            console.log(`Attempting to sync: ${studentName}, ${mode}, ${score}`);
-            const payload = JSON.stringify({
-                action: "recordSession",
-                student: studentName,
-                unit: currentUnit,
-                list: currentClass,
-                mode: mode,
-                score: score
-            });
-            try {
-                await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload });
-                console.log("Sync signal sent to Google.");
-            } catch (e) { console.error("Sync Error:", e); }
-        }
+        function enterApp() { document.getElementById('landingPage').classList.add('hidden'); document.getElementById('loginOverlay').classList.remove('hidden'); }
+        function saveStudentName() { 
+            studentName = document.getElementById('studentNameInput').value;
+            if(studentName.trim()) {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.querySelector('.app-container').style.opacity = '1';
+                document.querySelector('.app-container').style.pointerEvents = 'auto';
+                fetchTeacherData();
+            }
+        }
 
-        function enterApp() { document.getElementById('landingPage').classList.add('hidden'); document.getElementById('loginOverlay').classList.remove('hidden'); }
-        function saveStudentName() { 
-            studentName = document.getElementById('studentNameInput').value;
-            if(studentName.trim()) {
-                document.getElementById('loginOverlay').classList.add('hidden');
-                document.querySelector('.app-container').style.opacity = '1';
-                document.querySelector('.app-container').style.pointerEvents = 'auto';
-                fetchTeacherData();
-            }
-        }
+        function renderUnitSelection() { document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); }
+        function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
+        function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; setStudyMode('list'); }
+        function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
+        function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
 
-        function renderUnitSelection() { document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); }
-        function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
-        function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; setStudyMode('list'); }
-        function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
-        function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
+        function setStudyMode(mode) {
+            ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
+            document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden'));
+            document.getElementById(mode + 'Mode').classList.remove('hidden');
+            const list = units[currentUnit][currentClass];
+            if (mode === 'list') renderFullList(list);
+            if (mode === 'flash') { cardIdx = 0; updateCard(list); }
+            if (mode === 'quiz') startQuiz(list);
+            if (mode === 'match') startMatch(list);
+        }
 
-        function setStudyMode(mode) {
-            ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
-            document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-            ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden'));
-            document.getElementById(mode + 'Mode').classList.remove('hidden');
-            const list = units[currentUnit][currentClass];
-            if (mode === 'list') renderFullList(list);
-            if (mode === 'flash') { cardIdx = 0; updateCard(list); }
-            if (mode === 'quiz') startQuiz(list);
-            if (mode === 'match') startMatch(list);
-        }
+        function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item"><strong>${i.t}</strong>: ${i.d}</div>`).join(''); }
+        function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = card.t; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
+        function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
 
-        function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item"><strong>${i.t}</strong>: ${i.d}</div>`).join(''); }
-        function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = card.t; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
-        function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
+        function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); renderQuiz(); }
+        function renderQuiz() {
+            if (qIdx >= qPool.length) { 
+                const pct = Math.round((qScore/qPool.length)*100) + "%";
+                document.getElementById('quizContent').classList.add('hidden');
+                document.getElementById('quizEnd').innerHTML = `<h3>Final Score: ${pct}</h3>`;
+                document.getElementById('quizEnd').classList.remove('hidden');
+                syncSessionToSheet("Quiz", pct);
+                return;
+            }
+            const correct = qPool[qIdx];
+            document.getElementById('quizQuestion').innerText = `Def: ${correct.d}`;
+            document.getElementById('quizOptions').innerHTML = [correct, ...units[currentUnit][currentClass].filter(i=>i.t!=correct.t).slice(0,2)].sort(()=>0.5-Math.random()).map(o => `<button class="nav-btn" style="width:100%; margin-bottom:5px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.t}</button>`).join('');
+            document.getElementById('nextQuizBtn').classList.add('hidden');
+        }
+        function checkQuiz(el, correct) { if(correct) qScore++; el.style.background = correct ? 'var(--accent)' : 'var(--danger)'; qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
 
-        function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); renderQuiz(); }
-        function renderQuiz() {
-            if (qIdx >= qPool.length) { 
-                const pct = Math.round((qScore/qPool.length)*100) + "%";
-                document.getElementById('quizContent').classList.add('hidden');
-                document.getElementById('quizEnd').innerHTML = `<h3>Final Score: ${pct}</h3>`;
-                document.getElementById('quizEnd').classList.remove('hidden');
-                syncSessionToSheet("Quiz", pct);
-                return;
-            }
-            const correct = qPool[qIdx];
-            document.getElementById('quizQuestion').innerText = `Def: ${correct.d}`;
-            document.getElementById('quizOptions').innerHTML = [correct, ...units[currentUnit][currentClass].filter(i=>i.t!=correct.t).slice(0,2)].sort(()=>0.5-Math.random()).map(o => `<button class="nav-btn" style="width:100%; margin-bottom:5px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.t}</button>`).join('');
-            document.getElementById('nextQuizBtn').classList.add('hidden');
-        }
-        function checkQuiz(el, correct) { if(correct) qScore++; el.style.background = correct ? 'var(--accent)' : 'var(--danger)'; qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
-
-        function startMatch(list) {
-            mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length;
-            let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random());
-            let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random());
-            document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="e=>{draggedItem=e.target}" data-id="${i.id}" data-type="w">${i.t}</div>`).join('')}</div>
-                <div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="dropMatch(event)" data-id="${i.id}" data-type="d">${i.t}</div>`).join('')}</div>
-            </div>`;
-        }
-        function dropMatch(e) {
-            mTotal++; const target = e.target.closest('.nav-btn');
-            if(target.dataset.id === draggedItem.dataset.id) { mCorrect++; target.style.opacity = '0.3'; }
-            const acc = Math.round((mCorrect/mTotal)*100) + "%";
-            document.getElementById('matchStats').innerText = `Accuracy: ${acc}`;
-            if(mCorrect === mGoal) syncSessionToSheet("Matching", acc);
-        }
-    </script>
+        function startMatch(list) {
+            mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length;
+            let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random());
+            let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random());
+            document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="e=>{draggedItem=e.target}" data-id="${i.id}" data-type="w">${i.t}</div>`).join('')}</div>
+                <div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="dropMatch(event)" data-id="${i.id}" data-type="d">${i.t}</div>`).join('')}</div>
+            </div>`;
+        }
+        function dropMatch(e) {
+            mTotal++; const target = e.target.closest('.nav-btn');
+            if(target.dataset.id === draggedItem.dataset.id) { mCorrect++; target.style.opacity = '0.3'; }
+            const acc = Math.round((mCorrect/mTotal)*100) + "%";
+            document.getElementById('matchStats').innerText = `Accuracy: ${acc}`;
+            if(mCorrect === mGoal) syncSessionToSheet("Matching", acc);
+        }
+    </script>
 </body>
 </html>
+
+I want you to add the aura blobs without changing anything else at all.
