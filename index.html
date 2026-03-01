@@ -89,7 +89,6 @@
             box-shadow: 0 0 15px rgba(255,255,255,0.2);
         }
 
-        /* FIXED MAC/SAFARI FLASHCARD CSS */
         .flashcard { 
             height: 350px; 
             perspective: 1200px; 
@@ -208,13 +207,13 @@
             <div id="unitSelection">
                 <label style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Current Phase</label>
                 <h2 style="margin: 5px 0 20px 0;">Select Unit</h2>
-                <div id="unitBtnGrid" class="nav-grid"></div>
+                <div id="unitBtnGrid" class="nav-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             </div>
             
             <div id="listSelection" class="hidden">
                 <div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()"></div>
                 <h2 style="margin: 5px 0 20px 0;">Select List</h2>
-                <div id="listBtnGrid" class="nav-grid"></div>
+                <div id="listBtnGrid" class="nav-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             </div>
 
             <div id="studyInterface" class="hidden">
@@ -223,10 +222,10 @@
                 <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b; margin-bottom: 20px;"></div>
                 
                 <div class="study-tabs">
-                    <button id="tabList" class="active" onclick="setStudyMode('list')">Glossary</button>
-                    <button id="tabFlash" onclick="setStudyMode('flash')">Recall</button>
-                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Evaluate</button>
-                    <button id="tabMatch" onclick="setStudyMode('match')">Connect</button>
+                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
+                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
+                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
+                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
                 </div>
 
                 <div id="listMode">
@@ -250,18 +249,31 @@
                     </div>
                 </div>
 
-                <div id="quizMode" class="hidden"><div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary);"></div><div id="quizContent"><div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div><div id="quizOptions"></div><button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button></div><div id="quizEnd" class="hidden"></div></div>
-                <div id="matchMode" class="hidden"><div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary);"></div><div id="matchContainer" class="match-container"></div><div id="matchEnd" class="hidden"></div></div>
+                <div id="quizMode" class="hidden">
+                    <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                    <div id="quizContent">
+                        <div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div>
+                        <div id="quizOptions"></div>
+                        <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
+                    </div>
+                    <div id="quizEnd" class="hidden"></div>
+                </div>
+
+                <div id="matchMode" class="hidden">
+                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                    <div id="matchContainer" class="match-container"></div>
+                    <div id="matchEnd" class="hidden"></div>
+                </div>
             </div>
         </div>
 
         <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.9);">
             <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
             <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
-            <div id="adminUnitSelection"><div id="adminUnitGrid" class="nav-grid"></div></div>
+            <div id="adminUnitSelection"><div id="adminUnitGrid" class="nav-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
             <div id="adminListSelection" class="hidden">
                 <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
-                <div id="adminListGrid" class="nav-grid"></div>
+                <div id="adminListGrid" class="nav-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             </div>
             <div id="adminEditArea" class="hidden">
                 <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
@@ -285,6 +297,7 @@
         let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
         let vocabWords = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
         let adminSelectedUnit = "", adminSelectedList = "";
+        let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
 
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
@@ -465,13 +478,71 @@
 
         function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
         function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join(''); }
-        function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Progress: 0/${qPool.length}`; renderQuiz(); }
-        function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `Identify: ${correct.t}`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
-        function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; document.getElementById('quizStats').innerText = `Score: ${qScore}/${qIdx}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
-        function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Evaluation Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Session</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); }
-        function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Matched: 0"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; }
+        
+        function startQuiz(list) { 
+            qScore = 0; qIdx = 0; 
+            qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); 
+            document.getElementById('quizContent').classList.remove('hidden'); 
+            document.getElementById('quizEnd').classList.add('hidden'); 
+            document.getElementById('quizStats').innerText = `Accuracy: 0%`; 
+            renderQuiz(); 
+        }
+        function renderQuiz() { 
+            if (qIdx >= qPool.length) { endQuiz(); return; } 
+            const list = units[currentUnit][currentClass]; 
+            const correct = qPool[qIdx]; 
+            const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
+            document.getElementById('quizQuestion').innerText = `What is the definition of: ${correct.t}?`; 
+            document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
+            document.getElementById('nextQuizBtn').classList.add('hidden'); 
+        }
+        function checkQuiz(el, isCorrect) { 
+            if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
+            if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } 
+            qIdx++; 
+            const acc = Math.round((qScore/qIdx)*100) + "%";
+            document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; 
+            document.getElementById('nextQuizBtn').classList.remove('hidden'); 
+        }
+        function endQuiz() { 
+            document.getElementById('quizContent').classList.add('hidden'); 
+            const pct = Math.round((qScore/qPool.length)*100) + "%"; 
+            document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Quiz</button>`; 
+            document.getElementById('quizEnd').classList.remove('hidden'); 
+            addHistory("Quiz", pct); 
+        }
+
+        function startMatch(list) { 
+            mCorrect = 0; mTotal = 0; 
+            const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); 
+            mGoal = sub.length; 
+            document.getElementById('matchStats').innerText = "Accuracy: 0%"; 
+            document.getElementById('matchContainer').classList.remove('hidden'); 
+            document.getElementById('matchEnd').classList.add('hidden'); 
+            let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
+            let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
+            document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; 
+        }
         function drag(e) { draggedItem = e.target; }
-        function drop(e) { const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.opacity = '0.3'; target.style.borderColor = 'var(--accent)'; } document.getElementById('matchStats').innerText = `Matches: ${mCorrect}/${mGoal}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Connection Complete</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart Session</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", "100%"); } }
+        function drop(e) { 
+            const target = e.target.closest('.nav-btn'); 
+            if (!target || !draggedItem) return; 
+            mTotal++; 
+            if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { 
+                mCorrect++; 
+                draggedItem.style.visibility = 'hidden'; 
+                target.style.opacity = '0.3'; 
+                target.style.borderColor = 'var(--accent)'; 
+            } 
+            const acc = Math.round((mCorrect / mTotal) * 100) + "%";
+            document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
+            if (mCorrect === mGoal) { 
+                document.getElementById('matchContainer').classList.add('hidden'); 
+                document.getElementById('matchEnd').innerHTML = `<h3>Matching Complete: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart Matching</button>`; 
+                document.getElementById('matchEnd').classList.remove('hidden'); 
+                addHistory("Matching", acc); 
+            } 
+        }
     </script>
 </body>
 </html>
