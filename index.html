@@ -1,349 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary Sojourn</title>
-    <style>
-        :root { 
-            --primary: #6366f1; 
-            --primary-hover: #4f46e5;
-            --bg: #0f172a; 
-            --text: #f8fafc; 
-            --accent: #10b981; 
-            --danger: #ef4444; 
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
-        
-        body { 
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-            background: radial-gradient(circle at top left, #1e293b, #0f172a); 
-            color: var(--text); 
-            padding: 0; margin: 0; 
-            display: flex; flex-direction: column; align-items: center; 
-            min-height: 100vh; position: relative; overflow-x: hidden; 
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Sojourn</title>
+    <style>
+        :root { 
+            --primary: #6366f1; 
+            --primary-hover: #4f46e5;
+            --bg: #0f172a; 
+            --text: #f8fafc; 
+            --accent: #10b981; 
+            --danger: #ef4444; 
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        
+        body { 
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
+            background: radial-gradient(circle at top left, #1e293b, #0f172a); 
+            color: var(--text); 
+            padding: 0; margin: 0; 
+            display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; position: relative; overflow-x: hidden; 
+        }
 
-        .app-container { 
-            padding: 80px 20px 40px 20px; 
-            width: 100%; max-width: 650px; 
-            display: flex; flex-direction: column; 
-            position: relative; z-index: 10;
-            opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
-        }
+        .app-container { 
+            padding: 80px 20px 40px 20px; 
+            width: 100%; max-width: 650px; 
+            display: flex; flex-direction: column; 
+            position: relative; z-index: 10;
+            opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
+        }
 
-        .panel { 
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 30px; 
-            border-radius: 24px; 
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            margin-bottom: 25px; width: 100%; box-sizing: border-box; 
-        }
+        .panel { 
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 30px; 
+            border-radius: 24px; 
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 25px; width: 100%; box-sizing: border-box; 
+        }
 
-        .nav-btn { 
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            color: white;
-            padding: 20px; border-radius: 16px; 
-            cursor: pointer; font-weight: 600; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 1rem;
-        }
-        .nav-btn:hover { 
-            background: var(--primary); 
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-        }
+        .nav-btn { 
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 20px; border-radius: 16px; 
+            cursor: pointer; font-weight: 600; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
+        }
+        .nav-btn:hover { 
+            background: var(--primary); 
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
 
-        .main-btn { 
-            background: linear-gradient(135deg, var(--primary), #a855f7); 
-            color: white; border: none; font-weight: 700; cursor: pointer; 
-            padding: 14px; border-radius: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-        .main-btn:hover:not(:disabled) { 
-            transform: scale(1.02); 
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6); 
-        }
+        .main-btn { 
+            background: linear-gradient(135deg, var(--primary), #a855f7); 
+            color: white; border: none; font-weight: 700; cursor: pointer; 
+            padding: 14px; border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+        .main-btn:hover:not(:disabled) { 
+            transform: scale(1.02); 
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6); 
+        }
 
-        .breadcrumb { 
-            font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; 
-            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-            transition: color 0.3s; font-weight: 600;
-        }
-        .breadcrumb:hover { color: var(--primary); }
+        .breadcrumb { 
+            font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            transition: color 0.3s; font-weight: 600;
+        }
+        .breadcrumb:hover { color: var(--primary); }
 
-        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
-        .study-tabs button { 
-            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
-            border-radius: 10px; cursor: pointer; font-weight: 600;
-            background: var(--glass); color: #94a3b8; transition: 0.3s;
-        }
-        .study-tabs button.active { 
-            background: white; color: var(--bg);
-            box-shadow: 0 0 15px rgba(255,255,255,0.2);
-        }
+        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
+        .study-tabs button { 
+            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
+            border-radius: 10px; cursor: pointer; font-weight: 600;
+            background: var(--glass); color: #94a3b8; transition: 0.3s;
+        }
+        .study-tabs button.active { 
+            background: white; color: var(--bg);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
 
-        .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
-        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; -webkit-transform-style: preserve-3d; border-radius: 24px; }
-        .flipped .inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
-        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
-        .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); -webkit-transform: rotateY(0deg); }
-        .back { background: var(--primary); color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); font-size: 1.25rem; }
+        .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
+        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; -webkit-transform-style: preserve-3d; border-radius: 24px; }
+        .flipped .inner { transform: rotateY(180deg); -webkit-transform: rotateY(180deg); }
+        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
+        .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); -webkit-transform: rotateY(0deg); }
+        .back { background: var(--primary); color: white; transform: rotateY(180deg); -webkit-transform: rotateY(180deg); font-size: 1.25rem; }
 
-        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
-        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
+        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
+        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
 
-        input, select { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; }
+        input, select { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; }
 
-        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
-        .welcome-title { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); }
-        .start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }
-        .start-btn:hover { transform: scale(1.1); box-shadow: 0 0 30px white; }
+        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
+        .welcome-title { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); }
+        .start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }
+        .start-btn:hover { transform: scale(1.1); box-shadow: 0 0 30px white; }
 
-        .mode-toggle { position: absolute; top: 20px; left: 20px; z-index: 100; background: var(--glass); backdrop-filter: blur(5px); color: #94a3b8; border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 16px; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; }
-        .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; transition: 0.3s; }
-        .hidden { display: none !important; }
-    </style>
+        .mode-toggle { position: absolute; top: 20px; left: 20px; z-index: 100; background: var(--glass); backdrop-filter: blur(5px); color: #94a3b8; border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 16px; font-size: 0.7rem; cursor: pointer; text-transform: uppercase; }
+        .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; transition: 0.3s; }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
 
-    <canvas id="matrixCanvas"></canvas>
+    <canvas id="matrixCanvas"></canvas>
 
-    <div id="landingPage">
-        <h1 class="welcome-title">VOCABULARY SOJOURN</h1>
-        <div class="sojourn-def" style="color: #94a3b8; margin-bottom: 30px; font-style: italic;">so-journ (n): a temporary stay in a place.</div>
-        <button class="start-btn" onclick="enterApp()">BEGIN JOURNEY</button>
-    </div>
+    <div id="landingPage">
+        <h1 class="welcome-title">VOCABULARY SOJOURN</h1>
+        <div class="sojourn-def" style="color: #94a3b8; margin-bottom: 30px; font-style: italic;">so-journ (n): a temporary stay in a place.</div>
+        <button class="start-btn" onclick="enterApp()">BEGIN JOURNEY</button>
+    </div>
 
-    <div id="loginOverlay" class="hidden">
-        <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
-            <button class="teacher-login-btn" onclick="protectedToggle()" style="position: absolute; top: -50px; left: 0; background: none; border: 1px solid var(--glass-border); color: #94a3b8; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Teacher Login</button>
-            <h2 style="margin-top: 0;">Identity Required</h2>
-            <input type="text" id="studentNameInput" placeholder="Enter Full Name..." style="width: 100%;">
-            <button class="main-btn" onclick="saveStudentName()" style="width: 100%; margin-top: 15px;">Access System</button>
-        </div>
-    </div>
+    <div id="loginOverlay" class="hidden">
+        <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
+            <button class="teacher-login-btn" onclick="protectedToggle()" style="position: absolute; top: -50px; left: 0; background: none; border: 1px solid var(--glass-border); color: #94a3b8; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Teacher Login</button>
+            <h2 style="margin-top: 0;">Identity Required</h2>
+            <input type="text" id="studentNameInput" placeholder="Enter Full Name..." style="width: 100%;">
+            <button class="main-btn" onclick="saveStudentName()" style="width: 100%; margin-top: 15px;">Access System</button>
+        </div>
+    </div>
 
-    <button class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
+    <button class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
 
-    <div class="app-container">
-        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">� Sync Online</div>
-        
-        <div id="studyView" class="panel">
-            <div id="unitSelection">
-                <label style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Current Phase</label>
-                <h2 style="margin: 5px 0 20px 0;">Select Unit</h2>
-                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            </div>
+    <div class="app-container">
+        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">• Sync Online</div>
+        
+        <div id="studyView" class="panel">
+            <div id="unitSelection">
+                <label style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Current Phase</label>
+                <h2 style="margin: 5px 0 20px 0;">Select Unit</h2>
+                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            </div>
+            
+            <div id="listSelection" class="hidden">
+                <div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()"></div>
+                <h2 style="margin: 5px 0 20px 0;">Select List</h2>
+                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            </div>
+
+            <div id="studyInterface" class="hidden">
+                <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()"></div>
+                <h3 id="activeListName" style="margin:5px 0; color: var(--primary);"></h3>
+                <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b; margin-bottom: 20px;"></div>
+                
+                <div class="study-tabs">
+                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
+                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
+                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
+                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
+                </div>
+
+                <div id="listMode">
+                    <div id="fullListArea"></div>
+                    <div id="historyLogArea" style="margin-top:30px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+                        <h4 style="margin:0 0 15px 0; font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">Session Records</h4>
+                        <div id="historyEntries" style="font-size: 0.85rem;"></div>
+                    </div>
+                </div>
+
+                <div id="flashMode" class="hidden">
+                    <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
+                        <div class="inner"><div class="front" id="displayFront"></div><div class="back" id="displayBack"></div></div>
+                    </div>
+                    <div style="display:flex; gap:15px;">
+                        <button class="main-btn" onclick="changeCard(-1)" style="flex:1; background: var(--glass);">Previous</button>
+                        <button class="main-btn" onclick="changeCard(1)" style="flex:1;">Next Card</button>
+                    </div>
+                </div>
+
+                <div id="quizMode" class="hidden">
+                    <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                    <div id="quizContent">
+                        <div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div>
+                        <div id="quizOptions"></div>
+                        <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
+                    </div>
+                    <div id="quizEnd" class="hidden"></div>
+                </div>
+
+                <div id="matchMode" class="hidden">
+                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                    <div id="matchContainer"></div>
+                    <div id="matchEnd" class="hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.9);">
+            <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
+            <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
+            <div id="adminUnitSelection"><div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
+            <div id="adminListSelection" class="hidden">
+                <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
+                <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            </div>
+            <div id="adminEditArea" class="hidden">
+                <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
+                <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02);">
+                    <h4 style="margin-top:0;">New Entry</h4>
+                    <input type="text" id="newT" placeholder="Term" style="width:100%;">
+                    <input type="text" id="newD" placeholder="Definition" style="width:100%;">
+                    <input type="text" id="newI" placeholder="Image URL" style="width:100%;">
+                    <button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;">Commit to Database</button>
+                </div>
+                <div id="adminWordList"></div>
+            </div>
+        </div>
+    </div>
+
+   <script>
+    // 1. Ensure this URL is the "Published as CSV" link from Google Sheets
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyWqGJP03O1WM0earzVZTMJOVagTIoB7VxSAlmzmvQtu-Z0NFK62DSTYpkLxru-NuPR4Q/exec"; 
+    const ADMIN_PASS = "science123";
+
+    let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
+    let vocabWords = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
+    let adminSelectedUnit = "", adminSelectedList = "";
+    let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
+
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    let columns = [];
+
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; columns = Array(Math.floor(canvas.width / 20)).fill(0); }
+    function drawMatrix() { ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#3b82f6"; ctx.font = "bold 15px monospace"; columns.forEach((y, i) => { const word = vocabWords[Math.floor(Math.random() * vocabWords.length)]; ctx.fillText(word, i * 25, y); if (y > canvas.height && Math.random() > 0.95) columns[i] = 0; else columns[i] = y + 25; }); }
+    
+    window.onload = () => { 
+        fetchTeacherData(); 
+        resizeCanvas(); 
+        setInterval(drawMatrix, 50); 
+    };
+
+    async function fetchTeacherData() {
+        try {
+            const response = await fetch(`${SHEET_CSV_URL}?cachebust=${Date.now()}`); 
+            const csvText = await response.text();
             
-            <div id="listSelection" class="hidden">
-                <div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()"></div>
-                <h2 style="margin: 5px 0 20px 0;">Select List</h2>
-                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            </div>
+            // Debugging: View this in F12 console if it fails
+            console.log("Raw CSV Data Received:", csvText);
 
-            <div id="studyInterface" class="hidden">
-                <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()"></div>
-                <h3 id="activeListName" style="margin:5px 0; color: var(--primary);"></h3>
-                <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b; margin-bottom: 20px;"></div>
-                
-                <div class="study-tabs">
-                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
-                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
-                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
-                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
-                </div>
-
-                <div id="listMode">
-                    <div id="fullListArea"></div>
-                    <div id="historyLogArea" style="margin-top:30px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
-                        <h4 style="margin:0 0 15px 0; font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">Session Records</h4>
-                        <div id="historyEntries" style="font-size: 0.85rem;"></div>
-                    </div>
-                </div>
-
-                <div id="flashMode" class="hidden">
-                    <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
-                        <div class="inner"><div class="front" id="displayFront"></div><div class="back" id="displayBack"></div></div>
-                    </div>
-                    <div style="display:flex; gap:15px;">
-                        <button class="main-btn" onclick="changeCard(-1)" style="flex:1; background: var(--glass);">Previous</button>
-                        <button class="main-btn" onclick="changeCard(1)" style="flex:1;">Next Card</button>
-                    </div>
-                </div>
-
-                <div id="quizMode" class="hidden">
-                    <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
-                    <div id="quizContent">
-                        <div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div>
-                        <div id="quizOptions"></div>
-                        <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
-                    </div>
-                    <div id="quizEnd" class="hidden"></div>
-                </div>
-
-                <div id="matchMode" class="hidden">
-                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
-                    <div id="matchContainer"></div>
-                    <div id="matchEnd" class="hidden"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.9);">
-            <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
-            <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
-            <div id="adminUnitSelection"><div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
-            <div id="adminListSelection" class="hidden">
-                <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
-                <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            </div>
-            <div id="adminEditArea" class="hidden">
-                <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
-                <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02);">
-                    <h4 style="margin-top:0;">New Entry</h4>
-                    <input type="text" id="newT" placeholder="Term" style="width:100%;">
-                    <input type="text" id="newD" placeholder="Definition" style="width:100%;">
-                    <input type="text" id="newI" placeholder="Image URL" style="width:100%;">
-                    <button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;">Commit to Database</button>
-                </div>
-                <div id="adminWordList"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const SHEET_CSV_URL = "https://script.google.com/macros/s/AKfycbyNHmtow-MoZiyvb4Fl1OBlPLvp3jfbuH5arm4vbM2L-YC7Ci_Na4fFLZqtrbzuKs_d9w/exec";
-        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyWqGJP03O1WM0earzVZTMJOVagTIoB7VxSAlmzmvQtu-Z0NFK62DSTYpkLxru-NuPR4Q/exec"; 
-        const ADMIN_PASS = "science123";
-
-        let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
-        let vocabWords = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
-        let adminSelectedUnit = "", adminSelectedList = "";
-        let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
-
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-        let columns = [];
-
-        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; columns = Array(Math.floor(canvas.width / 20)).fill(0); }
-        function drawMatrix() { ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#3b82f6"; ctx.font = "bold 15px monospace"; columns.forEach((y, i) => { const word = vocabWords[Math.floor(Math.random() * vocabWords.length)]; ctx.fillText(word, i * 25, y); if (y > canvas.height && Math.random() > 0.95) columns[i] = 0; else columns[i] = y + 25; }); }
-        window.onload = () => { fetchTeacherData(); resizeCanvas(); setInterval(drawMatrix, 50); };
-
-        function enterApp() { 
-            document.getElementById('landingPage').style.opacity = '0'; 
-            canvas.style.opacity = '0';
-            setTimeout(() => { 
-                document.getElementById('landingPage').classList.add('hidden'); 
-                canvas.classList.add('hidden'); 
-                document.getElementById('loginOverlay').classList.remove('hidden'); 
-            }, 800); 
-        }
-
-        function saveStudentName() { 
-            studentName = document.getElementById('studentNameInput').value; 
-            if(studentName.trim()){ 
-                document.getElementById('loginOverlay').classList.add('hidden'); 
-                document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName;
-                document.querySelector('.app-container').style.opacity = '1'; 
-                document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-            } else { alert("Please enter your name."); } 
-        }
-
-        async function fetchTeacherData() {
-            try {
-                // Fixed '&' to '?' for the first URL parameter
-                const response = await fetch(`${SHEET_CSV_URL}?cachebust=${Date.now()}`); 
-                const csvText = await response.text();
-                const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0).slice(1); 
-                units = {}; 
-                rows.forEach(row => {
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                    if (cols.length >= 5) {
-                        const [term, def, img, listName, unitName] = cols;
-                        if (!units[unitName]) units[unitName] = {}; 
-                        if (!units[unitName][listName]) units[unitName][listName] = []; 
-                        units[unitName][listName].push({t: term, d: def, img: img});
-                    }
-                });
-                renderUnitSelection(); 
-                renderAdminUnitSelection();
-            } catch (e) { console.error("Error loading units:", e); }
-        }
-
-        function renderUnitSelection() { 
-            const grid = document.getElementById('unitBtnGrid');
-            const unitKeys = Object.keys(units);
-            if (unitKeys.length === 0) {
-                grid.innerHTML = "<p style='grid-column: span 2; color: #94a3b8; text-align: center;'>No units found in sheet.</p>";
-            } else {
-                grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
-            }
-        }
-        
-        function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
-        function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
-        function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
-        function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
-
-        async function syncSessionToSheet(mode, score) {
-            const payload = JSON.stringify({
-                action: "recordSession",
-                student: studentName,
-                unit: currentUnit,
-                list: currentClass,
-                mode: mode,
-                score: score
+            const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0).slice(1); 
+            const newUnits = {}; 
+            
+            rows.forEach(row => {
+                // Regex handles commas inside quotes correctly
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+                if (cols.length >= 5) {
+                    const [term, def, img, listName, unitName] = cols;
+                    if (!newUnits[unitName]) newUnits[unitName] = {}; 
+                    if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
+                    newUnits[unitName][listName].push({t: term, d: def, img: img});
+                }
             });
-            try { await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); } catch (e) { console.error("Sync Error:", e); }
+            
+            units = newUnits;
+            renderUnitSelection(); 
+            renderAdminUnitSelection();
+        } catch (e) { 
+            console.error("Critical Error loading units:", e);
+            document.getElementById('unitBtnGrid').innerHTML = "<p style='color:red'>Connection Error. Check CSV link.</p>";
         }
+    }
 
-        function setStudyMode(mode) {
-            ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
-            document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-            ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden'));
-            document.getElementById(mode + 'Mode').classList.remove('hidden');
-            const list = units[currentUnit][currentClass];
-            if (mode === 'list') { renderFullList(list); updateHistoryUI(); }
-            if (mode === 'flash') { cardIdx = 0; updateCard(list); }
-            if (mode === 'quiz') startQuiz(list);
-            if (mode === 'match') startMatch(list);
+    function renderUnitSelection() { 
+        const grid = document.getElementById('unitBtnGrid');
+        const unitKeys = Object.keys(units);
+        if (unitKeys.length === 0) {
+            grid.innerHTML = "<p style='grid-column: span 2; color: #94a3b8; text-align: center;'>No units found. Make sure sheet is Published to Web.</p>";
+        } else {
+            grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
         }
+    }
 
-        function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
-        function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
-        function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
-
-        function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz(); }
-        function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `What is the definition of: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
-        function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
-        function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Quiz</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
-
-        function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; }
-        function drag(e) { draggedItem = e.target; }
-        function drop(e) { const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.opacity = '0.3'; target.style.borderColor = 'var(--accent)'; } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Matching Complete: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart Matching</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Matching", acc); syncSessionToSheet("Matching", acc); } }
-
-        function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
-        function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join(''); }
-
-        /* Admin Logic */
-        function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); resetAdminView(); } } else { document.getElementById('adminView').classList.add('hidden'); if (!studentName) { document.getElementById('loginOverlay').classList.remove('hidden'); } else { document.getElementById('studyView').classList.remove('hidden'); } } }
-        function renderAdminUnitSelection() { document.getElementById('adminUnitGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
-        function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
-        function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
-        function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
-        function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-        function renderAdminWordList() { const u = adminSelectedUnit; const l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="edit-row panel" style="background: rgba(255,255,255,0.01);"><input type="text" id="t-${idx}" value="${item.t}" style="width:100%;"><input type="text" id="d-${idx}" value="${item.d}" style="width:100%;"><input type="text" id="i-${idx}" value="${item.img || ''}" style="width:100%;"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" style="flex:2; background:var(--accent);" onclick="saveEdit('${u}','${l}',${idx})">Update</button><button class="main-btn" style="flex:1; background:var(--danger);" onclick="deleteWord('${u}','${l}',${idx})">Delete</button></div></div>`).join(''); }
-        async function submitNewWord() { const btn = document.getElementById('addWordBtn'); const u = adminSelectedUnit; const l = adminSelectedList; btn.innerHTML = "Processing..."; btn.disabled = true; const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value }); try { await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; await new Promise(r => setTimeout(r, 1500)); await fetchTeacherData(); renderAdminWordList(); } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } }
-        async function saveEdit(u, l, idx) { const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); alert("Sent!"); await new Promise(r => setTimeout(r, 1200)); await fetchTeacherData(); renderAdminWordList(); }
-        async function deleteWord(u, l, idx) { if(!confirm("Delete?")) return; const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); await new Promise(r => setTimeout(r, 1500)); await fetchTeacherData(); renderAdminWordList(); }
-    </script>
+    /* Keep all your other navigation/study/admin functions exactly as they were */
+    function enterApp() { document.getElementById('landingPage').style.opacity = '0'; canvas.style.opacity = '0'; setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); canvas.classList.add('hidden'); document.getElementById('loginOverlay').classList.remove('hidden'); }, 800); }
+    function saveStudentName() { studentName = document.getElementById('studentNameInput').value; if(studentName.trim()){ document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; } else { alert("Please enter your name."); } }
+    function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
+    function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
+    function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
+    function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
+    async function syncSessionToSheet(mode, score) { const payload = JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }); try { await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); } catch (e) { console.error("Sync Error:", e); } }
+    function setStudyMode(mode) { ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); document.getElementById(mode + 'Mode').classList.remove('hidden'); const list = units[currentUnit][currentClass]; if (mode === 'list') { renderFullList(list); updateHistoryUI(); } if (mode === 'flash') { cardIdx = 0; updateCard(list); } if (mode === 'quiz') startQuiz(list); if (mode === 'match') startMatch(list); }
+    function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
+    function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
+    function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
+    function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz(); }
+    function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `What is the definition of: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
+    function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
+    function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Quiz</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
+    function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; }
+    function drag(e) { draggedItem = e.target; }
+    function drop(e) { const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.opacity = '0.3'; target.style.borderColor = 'var(--accent)'; } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Matching Complete: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart Matching</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Matching", acc); syncSessionToSheet("Matching", acc); } }
+    function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
+    function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join(''); }
+    function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); resetAdminView(); } } else { document.getElementById('adminView').classList.add('hidden'); if (!studentName) { document.getElementById('loginOverlay').classList.remove('hidden'); } else { document.getElementById('studyView').classList.remove('hidden'); } } }
+    function renderAdminUnitSelection() { document.getElementById('adminUnitGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
+    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
+    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
+    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
+    function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
+    function renderAdminWordList() { const u = adminSelectedUnit; const l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="edit-row panel" style="background: rgba(255,255,255,0.01);"><input type="text" id="t-${idx}" value="${item.t}" style="width:100%;"><input type="text" id="d-${idx}" value="${item.d}" style="width:100%;"><input type="text" id="i-${idx}" value="${item.img || ''}" style="width:100%;"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" style="flex:2; background:var(--accent);" onclick="saveEdit('${u}','${l}',${idx})">Update</button><button class="main-btn" style="flex:1; background:var(--danger);" onclick="deleteWord('${u}','${l}',${idx})">Delete</button></div></div>`).join(''); }
+    async function submitNewWord() { const btn = document.getElementById('addWordBtn'); const u = adminSelectedUnit; const l = adminSelectedList; btn.innerHTML = "Processing..."; btn.disabled = true; const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value }); try { await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; await new Promise(r => setTimeout(r, 1500)); await fetchTeacherData(); renderAdminWordList(); } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } }
+    async function saveEdit(u, l, idx) { const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); alert("Sent!"); await new Promise(r => setTimeout(r, 1200)); await fetchTeacherData(); renderAdminWordList(); }
+    async function deleteWord(u, l, idx) { if(!confirm("Delete?")) return; const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); await new Promise(r => setTimeout(r, 1500)); await fetchTeacherData(); renderAdminWordList(); }
+</script>
 </body>
 </html>
