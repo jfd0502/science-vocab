@@ -316,15 +316,36 @@
     function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
     function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Quiz</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
     
-    function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; }
+    // UPDATED REPAIRED MATCHING GAME
+    function startMatch(list) { 
+        mCorrect = 0; mTotal = 0; 
+        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); 
+        mGoal = sub.length; 
+        document.getElementById('matchStats').innerText = "Accuracy: 0%"; 
+        document.getElementById('matchContainer').classList.remove('hidden'); 
+        document.getElementById('matchEnd').classList.add('hidden'); 
+        let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
+        let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
+        
+        document.getElementById('matchContainer').innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    ${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}
+                </div>
+                <div>
+                    ${defs.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}
+                </div>
+            </div>`; 
+    }
+
     function drag(e) { draggedItem = e.target; }
     
-    // UPDATED MATCHING LOGIC FOR FEEDBACK
     function drop(e) { 
         const target = e.target.closest('.nav-btn'); 
-        if (!target || !draggedItem) return; 
+        if (!target || !draggedItem || target === draggedItem) return; 
         mTotal++; 
         
+        // Correct if IDs match and Types differ (Word to Def or Def to Word)
         const isMatch = (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type);
 
         if (isMatch) { 
@@ -334,8 +355,8 @@
             draggedItem.style.visibility = 'hidden'; 
             target.style.opacity = '0.3'; 
             target.style.borderColor = 'var(--accent)'; 
+            target.draggable = false;
         } else {
-            // Visual indicator for incorrect attempt
             target.style.background = 'var(--danger)';
             setTimeout(() => { target.style.background = 'var(--glass)'; }, 500);
         }
@@ -421,4 +442,5 @@
     }
 </script>
 </body>
+</html>
 </html>
