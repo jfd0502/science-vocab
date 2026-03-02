@@ -27,8 +27,14 @@
         }
 
         #matrixCanvas { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: -1; pointer-events: none; transition: opacity 0.8s ease;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; 
+            pointer-events: none;
+            transition: opacity 0.8s ease;
         }
 
         .app-container { 
@@ -43,28 +49,33 @@
             background: var(--glass);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            padding: 30px; border-radius: 24px; 
+            padding: 30px; 
+            border-radius: 24px; 
             border: 1px solid var(--glass-border);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             margin-bottom: 25px; width: 100%; box-sizing: border-box; 
         }
 
         .nav-btn { 
-            background: var(--glass); border: 1px solid var(--glass-border);
-            color: white; padding: 20px; border-radius: 16px; 
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 20px; border-radius: 16px; 
             cursor: pointer; font-weight: 600; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 1rem;
         }
         .nav-btn:hover { 
-            background: var(--primary); transform: translateY(-3px);
+            background: var(--primary); 
+            transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
         }
 
         .main-btn { 
             background: linear-gradient(135deg, var(--primary), #a855f7); 
             color: white; border: none; font-weight: 700; cursor: pointer; 
-            padding: 14px; border-radius: 12px; transition: all 0.3s ease;
+            padding: 14px; border-radius: 12px;
+            transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
@@ -213,9 +224,7 @@
         </div>
     </div>
 
-<script>
-    // CRITICAL FIX: The CSV URL must point to the Published-to-Web CSV endpoint
-    // Make sure you go to File > Share > Publish to Web > Select "CSV" for the output.
+   <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
     const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyWqGJP03O1WM0earzVZTMJOVagTIoB7VxSAlmzmvQtu-Z0NFK62DSTYpkLxru-NuPR4Q/exec"; 
     const ADMIN_PASS = "science123";
@@ -235,25 +244,20 @@
     window.onload = () => { fetchTeacherData(); resizeCanvas(); setInterval(drawMatrix, 50); };
     window.addEventListener('resize', resizeCanvas);
 
+    // OPTIMIZED FETCH: Prevent unnecessary reload lag
     async function fetchTeacherData(force = false) {
+        if (!force && Object.keys(units).length > 0) {
+            renderUnitSelection();
+            renderAdminUnitSelection();
+        }
         try {
-            // Using timestamp to bypass aggressive Google caching
-            const response = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`); 
+            const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
+            const response = await fetch(url); 
             const csvText = await response.text();
-            
-            // Debugging Check: If the sheet is private, Google returns HTML instead of CSV
-            if (csvText.includes("<!DOCTYPE html>")) {
-                console.error("ERROR: The Sheet is not published as a CSV. Check 'File > Share > Publish to Web'");
-                document.getElementById('syncStatus').innerText = "• Data Restricted (Check Publish Settings)";
-                return;
-            }
-
             const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0);
-            const dataRows = rows.slice(1); // Remove header row
+            const dataRows = rows.slice(1);
             const newUnits = {}; 
-            
             dataRows.forEach(row => {
-                // Regex to handle CSV columns that contain commas within quotes
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length >= 5) {
                     const [term, def, img, listName, unitName] = cols;
@@ -262,17 +266,10 @@
                     newUnits[unitName][listName].push({t: term, d: def, img: img});
                 }
             });
-            
             units = newUnits;
             renderUnitSelection(); 
             renderAdminUnitSelection();
-            document.getElementById('syncStatus').innerText = "• Sync Online";
-            document.getElementById('syncStatus').style.color = "var(--accent)";
-        } catch (e) { 
-            console.error("Fetch Error:", e);
-            document.getElementById('syncStatus').innerText = "• Connection Offline";
-            document.getElementById('syncStatus').style.color = "var(--danger)";
-        }
+        } catch (e) { console.error("Fetch Error:", e); }
     }
 
     function enterApp() { 
@@ -288,8 +285,11 @@
     function renderUnitSelection() { 
         const grid = document.getElementById('unitBtnGrid');
         const unitKeys = Object.keys(units);
-        if (unitKeys.length === 0) grid.innerHTML = "<p style='color: #94a3b8;'>Accessing Archives...</p>";
-        else grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
+        if (unitKeys.length === 0) {
+            grid.innerHTML = "<p style='color: #94a3b8;'>Accessing Archives...</p>";
+        } else {
+            grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
+        }
     }
 
     function saveStudentName() { studentName = document.getElementById('studentNameInput').value; if(studentName.trim()){ document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; } else { alert("Please enter your name."); } }
@@ -322,29 +322,60 @@
     function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Quiz</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
     
     function startMatch(list) { 
-        mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; 
-        document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); 
+        mCorrect = 0; mTotal = 0; 
+        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); 
+        mGoal = sub.length; 
+        document.getElementById('matchStats').innerText = "Accuracy: 0%"; 
+        document.getElementById('matchContainer').classList.remove('hidden'); 
+        document.getElementById('matchEnd').classList.add('hidden'); 
         let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
         let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
-        document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div>
-            <div>${defs.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div>
-        </div>`; 
+        
+        document.getElementById('matchContainer').innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    ${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}
+                </div>
+                <div>
+                    ${defs.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}
+                </div>
+            </div>`; 
     }
+
     function drag(e) { draggedItem = e.target; }
+    
     function drop(e) { 
-        const target = e.target.closest('.nav-btn'); if (!target || !draggedItem || target === draggedItem) return; 
-        mTotal++; const isMatch = (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type);
-        if (isMatch) { mCorrect++; target.style.background = 'var(--accent)'; target.style.transition = '0.3s'; draggedItem.style.visibility = 'hidden'; target.style.opacity = '0.3'; target.style.borderColor = 'var(--accent)'; target.draggable = false; }
-        else { target.style.background = 'var(--danger)'; setTimeout(() => { target.style.background = 'var(--glass)'; }, 500); }
-        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
-        if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Matching Complete: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart Matching</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Matching", acc); syncSessionToSheet("Matching", acc); } 
+        const target = e.target.closest('.nav-btn'); 
+        if (!target || !draggedItem || target === draggedItem) return; 
+        mTotal++; 
+        const isMatch = (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type);
+        if (isMatch) { 
+            mCorrect++; 
+            target.style.background = 'var(--accent)';
+            target.style.transition = '0.3s';
+            draggedItem.style.visibility = 'hidden'; 
+            target.style.opacity = '0.3'; 
+            target.style.borderColor = 'var(--accent)'; 
+            target.draggable = false;
+        } else {
+            target.style.background = 'var(--danger)';
+            setTimeout(() => { target.style.background = 'var(--glass)'; }, 500);
+        }
+        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
+        document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
+        if (mCorrect === mGoal) { 
+            document.getElementById('matchContainer').classList.add('hidden'); 
+            document.getElementById('matchEnd').innerHTML = `<h3>Matching Complete: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart Matching</button>`; 
+            document.getElementById('matchEnd').classList.remove('hidden'); 
+            addHistory("Matching", acc); 
+            syncSessionToSheet("Matching", acc); 
+        } 
     }
     
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join(''); }
     
-    function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); resetAdminView(); } } else { document.getElementById('adminView').classList.add('hidden'); if (!studentName) document.getElementById('loginOverlay').classList.remove('hidden'); else document.getElementById('studyView').classList.remove('hidden'); } }
+    function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); resetAdminView(); } } else { document.getElementById('adminView').classList.add('hidden'); if (!studentName) { document.getElementById('loginOverlay').classList.remove('hidden'); } else { document.getElementById('studyView').classList.remove('hidden'); } } }
     function renderAdminUnitSelection() { document.getElementById('adminUnitGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
@@ -352,31 +383,60 @@
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
     
     function renderAdminWordList() { 
-        const u = adminSelectedUnit; const l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; 
-        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="edit-row panel" style="background: rgba(255,255,255,0.01);">
-            <input type="text" id="t-${idx}" value="${item.t}" style="width:100%;"><input type="text" id="d-${idx}" value="${item.d}" style="width:100%;"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL" style="width:100%;">
-            <div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" style="flex:2; background:var(--accent);" onclick="saveEdit('${u}','${l}',${idx})">Update</button><button class="main-btn" style="flex:1; background:var(--danger);" onclick="deleteWord('${u}','${l}',${idx})">Delete</button></div>
-        </div>`).join(''); 
+        const u = adminSelectedUnit; 
+        const l = adminSelectedList; 
+        document.getElementById('adminHeader').innerText = `${u} > ${l}`; 
+        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `
+            <div class="edit-row panel" style="background: rgba(255,255,255,0.01);">
+                <input type="text" id="t-${idx}" value="${item.t}" style="width:100%;">
+                <input type="text" id="d-${idx}" value="${item.d}" style="width:100%;">
+                <input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL" style="width:100%;">
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="main-btn" style="flex:2; background:var(--accent);" onclick="saveEdit('${u}','${l}',${idx})">Update</button>
+                    <button class="main-btn" style="flex:1; background:var(--danger);" onclick="deleteWord('${u}','${l}',${idx})">Delete</button>
+                </div>
+            </div>`).join(''); 
     }
 
+    // SPEED FIX: Added immediate UI update before re-fetching
     async function submitNewWord() { 
-        const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
-        if(!t || !d) return;
-        units[u][l].push({t: t, d: d, img: i}); 
-        document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; renderAdminWordList(); 
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }) }).then(() => fetchTeacherData(true));
+        const btn = document.getElementById('addWordBtn'); 
+        const u = adminSelectedUnit; const l = adminSelectedList; 
+        const t = document.getElementById('newT').value;
+        const d = document.getElementById('newD').value;
+        const i = document.getElementById('newI').value;
+        btn.innerHTML = "Processing..."; btn.disabled = true; 
+        const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }); 
+        try { 
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+            units[u][l].push({t: t, d: d, img: i}); // Optimistic update
+            document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; 
+            renderAdminWordList(); 
+            fetchTeacherData(true); // Background refresh
+        } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } 
     }
 
     async function saveEdit(u, l, idx) { 
-        const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value, oldTerm = units[u][l][idx].t;
-        units[u][l][idx] = {t: nt, d: nd, img: ni}; alert("Local Update Sent!");
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: oldTerm, newTerm: nt, newDef: nd, newImg: ni }) }).then(() => fetchTeacherData(true));
+        const nt = document.getElementById(`t-${idx}`).value;
+        const nd = document.getElementById(`d-${idx}`).value;
+        const ni = document.getElementById(`i-${idx}`).value;
+        const payload = JSON.stringify({ 
+            action: "updateWord", unit: u, list: l, 
+            oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni 
+        }); 
+        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+        units[u][l][idx] = {t: nt, d: nd, img: ni}; // Optimistic update
+        alert("Sent!"); 
+        fetchTeacherData(true); // Background refresh
     }
 
     async function deleteWord(u, l, idx) { 
         if(!confirm("Delete?")) return; 
-        const term = units[u][l][idx].t; units[u][l].splice(idx, 1); renderAdminWordList();
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: term }) }).then(() => fetchTeacherData(true));
+        const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); 
+        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+        units[u][l].splice(idx, 1); // Optimistic update
+        renderAdminWordList();
+        fetchTeacherData(true); // Background refresh
     }
 </script>
 </body>
