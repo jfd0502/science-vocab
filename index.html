@@ -17,28 +17,26 @@
 
         body { 
             font-family: 'Inter', system-ui, sans-serif; 
-            background: radial-gradient(circle at top left, #1e293b, #0f172a); 
+            background: #0f172a; 
             color: var(--text); 
             padding: 0; margin: 0; 
             display: flex; flex-direction: column; align-items: center; 
             min-height: 100vh; position: relative; overflow-x: hidden; 
         }
 
-        /* Aura Blobs */
         .aura-bg {
             position: fixed; inset: 0; z-index: -2;
             overflow: hidden; pointer-events: none;
-            filter: blur(100px); opacity: 0.5;
+            filter: blur(100px); opacity: 0.6;
         }
         .blob { position: absolute; border-radius: 50%; animation: float 15s infinite alternate; }
         .b1 { width: 400px; height: 400px; background: #6366f1; top: -10%; left: -10%; }
         .b2 { width: 350px; height: 350px; background: #a855f7; bottom: -5%; right: -5%; }
-        @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(40px, 40px); } }
+        @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(60px, 60px); } }
 
-        /* Matrix Canvas with Fade */
         #matrixCanvas { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: -1; pointer-events: none; 
+            z-index: -1; pointer-events: none; opacity: 1;
             transition: opacity 1.5s ease;
         }
 
@@ -61,7 +59,7 @@
 
         .nav-btn { 
             background: var(--glass); border: 1px solid var(--glass-border);
-            color: white; padding: 20px; border-radius: 16px; 
+            color: white; padding: 18px; border-radius: 16px; 
             cursor: pointer; font-weight: 600; transition: 0.3s;
         }
         .nav-btn:hover { background: var(--primary); transform: translateY(-2px); }
@@ -84,8 +82,8 @@
         .back { background: var(--primary); transform: rotateY(180deg); font-size: 1.25rem; }
 
         .hidden { display: none !important; }
-        input { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; width: 100%; box-sizing: border-box;}
-        #landingPage { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); }
+        input { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; width: 100%; box-sizing: border-box;}
+        #landingPage { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0f172a; }
         .breadcrumb { font-size: 0.85rem; color: #94a3b8; cursor: pointer; margin-bottom: 15px; }
     </style>
 </head>
@@ -99,15 +97,16 @@
     <canvas id="matrixCanvas"></canvas>
 
     <div id="landingPage">
-        <h1 style="font-size: 3rem; color: white; font-weight: 900; text-align: center;">VOCABULARY SOJOURN</h1>
+        <h1 style="font-size: 3rem; color: white; font-weight: 900; text-align: center; letter-spacing: 2px;">VOCABULARY SOJOURN</h1>
         <button class="main-btn" onclick="enterApp()" style="padding: 20px 40px; border-radius: 50px;">BEGIN JOURNEY</button>
     </div>
 
-    <div id="loginOverlay" class="hidden" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:10000; background: var(--bg);">
+    <div id="loginOverlay" class="hidden" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:10000; background: #0f172a;">
         <div class="panel" style="max-width: 400px; text-align: center;">
-            <h2 style="margin-top:0;">Identify Yourself</h2>
+            <h2 style="margin-top:0;">Access Protocol</h2>
             <input type="text" id="studentNameInput" placeholder="Enter Full Name...">
-            <button class="main-btn" onclick="saveStudentName()" style="width: 100%; margin-top: 15px;">Access System</button>
+            <button class="main-btn" onclick="saveStudentName()" style="width: 100%; margin-top: 15px;">Student Login</button>
+            <button class="nav-btn" onclick="window.open('https://docs.google.com/spreadsheets/d/1SwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/edit', '_blank')" style="width: 100%; margin-top: 10px; font-size: 0.8rem;">Teacher System Access</button>
         </div>
     </div>
 
@@ -159,8 +158,12 @@
                 </div>
 
                 <div id="matchMode" class="hidden">
-                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary);">Accuracy: 0%</div>
+                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom:10px;">Accuracy: 0%</div>
                     <div id="matchContainer"></div>
+                    <div id="matchEnd" class="hidden" style="text-align:center;">
+                        <h3 id="matchFinalScore"></h3>
+                        <button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Try Again</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -173,23 +176,34 @@
         let units = {}, currentUnit = "", currentClass = "", studentName = "", cardIdx = 0, draggedItem = null;
         let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
 
-        // Matrix Rain Script
+        // Matrix Rain Setup
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         let cols = [];
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; cols = Array(Math.floor(canvas.width/20)).fill(0); }
+        function resize() { 
+            canvas.width = window.innerWidth; 
+            canvas.height = window.innerHeight; 
+            cols = Array(Math.floor(canvas.width/20)).fill(0); 
+        }
         function draw() {
-            ctx.fillStyle = "rgba(15, 23, 42, 0.05)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = "#6366f1"; ctx.font = "15px monospace";
+            ctx.fillStyle = "rgba(15, 23, 42, 0.15)"; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#6366f1"; 
+            ctx.font = "15px monospace";
             cols.forEach((y, i) => {
-                ctx.fillText(String.fromCharCode(Math.random()*128), i*20, y);
-                if(y > canvas.height && Math.random() > 0.975) cols[i] = 0; else cols[i] += 20;
+                const char = String.fromCharCode(33 + Math.random() * 94);
+                ctx.fillText(char, i * 20, y);
+                if (y > canvas.height && Math.random() > 0.975) cols[i] = 0;
+                else cols[i] += 20;
             });
         }
-        window.onresize = resize; resize(); setInterval(draw, 50);
+        window.addEventListener('resize', resize);
+        resize();
+        const matrixInterval = setInterval(draw, 50);
 
         function enterApp() { 
-            canvas.style.opacity = '0'; // Matrix fades away
+            canvas.style.opacity = '0';
+            setTimeout(() => { clearInterval(matrixInterval); }, 1500);
             document.getElementById('landingPage').classList.add('hidden'); 
             document.getElementById('loginOverlay').classList.remove('hidden'); 
         }
@@ -205,20 +219,22 @@
         }
 
         async function fetchTeacherData() {
-            const resp = await fetch(`${SHEET_CSV_URL}&cb=${Date.now()}`);
-            const csv = await resp.text();
-            const rows = csv.split(/\r?\n/).filter(r => r.trim()).slice(1);
-            units = {};
-            rows.forEach(row => {
-                const c = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, '').trim());
-                if (c.length >= 5) {
-                    const [term, def, img, list, unit] = c;
-                    if (!units[unit]) units[unit] = {};
-                    if (!units[unit][list]) units[unit][list] = [];
-                    units[unit][list].push({t: term, d: def});
-                }
-            });
-            renderUnitSelection();
+            try {
+                const resp = await fetch(`${SHEET_CSV_URL}&cb=${Date.now()}`);
+                const csv = await resp.text();
+                const rows = csv.split(/\r?\n/).filter(r => r.trim()).slice(1);
+                units = {};
+                rows.forEach(row => {
+                    const c = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, '').trim());
+                    if (c.length >= 5) {
+                        const [term, def, img, list, unit] = c;
+                        if (!units[unit]) units[unit] = {};
+                        if (!units[unit][list]) units[unit][list] = [];
+                        units[unit][list].push({t: term, d: def});
+                    }
+                });
+                renderUnitSelection();
+            } catch(e) { console.error("Data Fetch Error", e); }
         }
 
         async function syncSessionToSheet(mode, score) {
@@ -238,7 +254,7 @@
             ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden'));
             document.getElementById(mode + 'Mode').classList.remove('hidden');
             const list = units[currentUnit][currentClass];
-            if (mode === 'list') document.getElementById('fullListArea').innerHTML = list.map(i => `<div style="padding:10px; border-bottom:1px solid var(--glass-border)"><strong>${i.t}</strong>: ${i.d}</div>`).join('');
+            if (mode === 'list') document.getElementById('fullListArea').innerHTML = list.map(i => `<div style="padding:15px; border-bottom:1px solid var(--glass-border)"><strong>${i.t}</strong>: ${i.d}</div>`).join('');
             if (mode === 'flash') { cardIdx = 0; updateCard(list); }
             if (mode === 'quiz') startQuiz(list);
             if (mode === 'match') startMatch(list);
@@ -252,24 +268,26 @@
             if (qIdx >= qPool.length) { 
                 const pct = Math.round((qScore/qPool.length)*100) + "%";
                 document.getElementById('quizContent').classList.add('hidden');
-                document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct}</h3>`;
+                document.getElementById('quizEnd').innerHTML = `<h3>Final Score: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])" style="width:100%">Restart Quiz</button>`;
                 document.getElementById('quizEnd').classList.remove('hidden');
                 syncSessionToSheet("Quiz", pct); return;
             }
             const correct = qPool[qIdx];
             document.getElementById('quizQuestion').innerText = `Def: ${correct.d}`;
-            document.getElementById('quizOptions').innerHTML = [correct, ...units[currentUnit][currentClass].filter(i=>i.t!=correct.t).slice(0,2)].sort(()=>0.5-Math.random()).map(o => `<button class="nav-btn" style="width:100%; margin-bottom:5px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.t}</button>`).join('');
+            document.getElementById('quizOptions').innerHTML = [correct, ...units[currentUnit][currentClass].filter(i=>i.t!=correct.t).slice(0,2)].sort(()=>0.5-Math.random()).map(o => `<button class="nav-btn" style="width:100%; margin-bottom:8px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.t}</button>`).join('');
             document.getElementById('nextQuizBtn').classList.add('hidden');
         }
         function checkQuiz(el, correct) { if(correct) qScore++; el.style.background = correct ? 'var(--accent)' : 'var(--danger)'; qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
 
         function startMatch(list) {
-            mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length;
+            mCorrect = 0; mTotal = 0; document.getElementById('matchEnd').classList.add('hidden');
+            const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length;
             let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random());
             let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random());
+            document.getElementById('matchContainer').classList.remove('hidden');
             document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div id="wordCol">${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="draggedItem=this" data-id="${i.id}" style="margin-bottom:8px; padding:10px;">${i.t}</div>`).join('')}</div>
-                <div id="defCol">${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="dropMatch(event)" data-id="${i.id}" style="margin-bottom:8px; padding:10px; border-style:dashed;">${i.t}</div>`).join('')}</div>
+                <div id="wordCol">${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="draggedItem=this" data-id="${i.id}" style="margin-bottom:8px; padding:12px; font-size:0.9rem;">${i.t}</div>`).join('')}</div>
+                <div id="defCol">${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="dropMatch(event)" data-id="${i.id}" style="margin-bottom:8px; padding:12px; border-style:dashed; font-size:0.8rem;">${i.t}</div>`).join('')}</div>
             </div>`;
         }
         function dropMatch(e) {
@@ -278,11 +296,17 @@
                 mCorrect++; 
                 target.style.background = 'var(--accent)';
                 target.style.opacity = '0.4';
-                draggedItem.style.display = 'none'; // Word disappears on correct match
+                draggedItem.style.visibility = 'hidden'; 
             }
-            const acc = Math.round((mCorrect/mTotal)*100) + "%";
+            const accNum = Math.round((mCorrect/mTotal)*100);
+            const acc = accNum + "%";
             document.getElementById('matchStats').innerText = `Accuracy: ${acc}`;
-            if(mCorrect === mGoal) syncSessionToSheet("Matching", acc);
+            if(mCorrect === mGoal) {
+                document.getElementById('matchContainer').classList.add('hidden');
+                document.getElementById('matchEnd').classList.remove('hidden');
+                document.getElementById('matchFinalScore').innerText = `Match Complete! Accuracy: ${acc}`;
+                syncSessionToSheet("Matching", acc);
+            }
         }
     </script>
 </body>
