@@ -245,10 +245,6 @@
     window.addEventListener('resize', resizeCanvas);
 
     async function fetchTeacherData(force = false) {
-        if (!force && Object.keys(units).length > 0) {
-            renderUnitSelection();
-            renderAdminUnitSelection();
-        }
         try {
             const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
             const response = await fetch(url); 
@@ -291,7 +287,7 @@
         }
     }
 
-    function saveStudentName() { studentName = document.getElementById('studentNameInput').value; if(studentName.trim()){ document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; } else { alert("Please enter your name."); } }
+    function saveStudentName() { studentName = document.getElementById('studentNameInput').value; if(studentName.trim()){ document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderUnitSelection(); } else { alert("Please enter your name."); } }
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
@@ -382,25 +378,24 @@
 
         if (adminView.classList.contains('hidden')) { 
             if (prompt("Password:") === ADMIN_PASS) { 
-                // FORCE EVERYTHING ELSE TO HIDE
                 studyView.classList.add('hidden'); 
                 loginOverlay.classList.add('hidden'); 
-                
-                // FORCE ADMIN VIEW TO SHOW
                 adminView.classList.remove('hidden'); 
-                
-                // ENSURE THE CONTAINER IS VISIBLE EVEN IF NAME WASN'T ENTERED
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
-                
                 resetAdminView(); 
             } 
         } else { 
             adminView.classList.add('hidden'); 
+            // Re-render student units when leaving admin mode to ensure they are visible
+            renderUnitSelection(); 
             if (!studentName) { 
                 loginOverlay.classList.remove('hidden'); 
             } else { 
                 studyView.classList.remove('hidden'); 
+                document.getElementById('unitSelection').classList.remove('hidden');
+                document.getElementById('listSelection').classList.add('hidden');
+                document.getElementById('studyInterface').classList.add('hidden');
             } 
         } 
     }
