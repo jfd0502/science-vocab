@@ -255,6 +255,8 @@
                 document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName;
                 document.querySelector('.app-container').style.opacity = '1'; 
                 document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+                // Re-run render to ensure units appear if they loaded while student was typing
+                renderUnitSelection();
             } else { alert("Please enter your name."); } 
         }
 
@@ -278,7 +280,10 @@
             } catch (e) { console.error(e); }
         }
 
-        function renderUnitSelection() { document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); }
+        function renderUnitSelection() { 
+            if (Object.keys(units).length === 0) return;
+            document.getElementById('unitBtnGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
+        }
         function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
         function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
         function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
@@ -293,7 +298,14 @@
                 mode: mode,
                 score: score
             });
-            try { await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); } catch (e) { console.error("Sync Error:", e); }
+            try { 
+                await fetch(EXPORT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: payload 
+                }); 
+            } catch (e) { console.error("Sync Error:", e); }
         }
 
         function setStudyMode(mode) {
@@ -332,9 +344,9 @@
         function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
         function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
         function renderAdminWordList() { const u = adminSelectedUnit; const l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="edit-row panel" style="background: rgba(255,255,255,0.01);"><input type="text" id="t-${idx}" value="${item.t}" style="width:100%;"><input type="text" id="d-${idx}" value="${item.d}" style="width:100%;"><input type="text" id="i-${idx}" value="${item.img || ''}" style="width:100%;"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" style="flex:2; background:var(--accent);" onclick="saveEdit('${u}','${l}',${idx})">Update</button><button class="main-btn" style="flex:1; background:var(--danger);" onclick="deleteWord('${u}','${l}',${idx})">Delete</button></div></div>`).join(''); }
-        async function submitNewWord() { const btn = document.getElementById('addWordBtn'); const u = adminSelectedUnit; const l = adminSelectedList; btn.innerHTML = "Processing..."; btn.disabled = true; const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value }); try { await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; await new Promise(r => setTimeout(r, 1500)); await fetchTeacherData(); renderAdminWordList(); } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } }
-        async function saveEdit(u, l, idx) { const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); alert("Sent!"); await new Promise(r => setTimeout(r, 1200)); await fetchTeacherData(); renderAdminWordList(); }
-        async function deleteWord(u, l, idx) { if(!confirm("Delete?")) return; const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); await new Promise(r => setTimeout(r, 1500)); await fetchTeacherData(); renderAdminWordList(); }
+        async function submitNewWord() { const btn = document.getElementById('addWordBtn'); const u = adminSelectedUnit; const l = adminSelectedList; btn.innerHTML = "Processing..."; btn.disabled = true; const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value }); try { await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: payload }); document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; await new Promise(r => setTimeout(r, 1500)); await fetchTeacherData(); renderAdminWordList(); } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } }
+        async function saveEdit(u, l, idx) { const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value, newImg: document.getElementById(`i-${idx}`).value }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: payload }); alert("Sent!"); await new Promise(r => setTimeout(r, 1200)); await fetchTeacherData(); renderAdminWordList(); }
+        async function deleteWord(u, l, idx) { if(!confirm("Delete?")) return; const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: payload }); await new Promise(r => setTimeout(r, 1500)); await fetchTeacherData(); renderAdminWordList(); }
     </script>
 </body>
 </html>
