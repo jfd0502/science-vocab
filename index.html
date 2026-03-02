@@ -244,9 +244,14 @@
     window.onload = () => { fetchTeacherData(); resizeCanvas(); setInterval(drawMatrix, 50); };
     window.addEventListener('resize', resizeCanvas);
 
-    async function fetchTeacherData() {
+    async function fetchTeacherData(force = false) {
+        if (!force && Object.keys(units).length > 0) {
+            renderUnitSelection();
+            renderAdminUnitSelection();
+        }
         try {
-            const response = await fetch(`${SHEET_CSV_URL}&cachebust=${Date.now()}`); 
+            const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
+            const response = await fetch(url); 
             const csvText = await response.text();
             const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0);
             const dataRows = rows.slice(1);
@@ -280,8 +285,7 @@
         const grid = document.getElementById('unitBtnGrid');
         const unitKeys = Object.keys(units);
         if (unitKeys.length === 0) {
-            grid.innerHTML = "<p style='color: #94a3b8;'>Loading database...</p>";
-            setTimeout(fetchTeacherData, 2000);
+            grid.innerHTML = "<p style='color: #94a3b8;'>Accessing Archives...</p>";
         } else {
             grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
         }
@@ -316,7 +320,6 @@
     function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
     function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Quiz</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
     
-    // UPDATED REPAIRED MATCHING GAME
     function startMatch(list) { 
         mCorrect = 0; mTotal = 0; 
         const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); 
@@ -344,10 +347,7 @@
         const target = e.target.closest('.nav-btn'); 
         if (!target || !draggedItem || target === draggedItem) return; 
         mTotal++; 
-        
-        // Correct if IDs match and Types differ (Word to Def or Def to Word)
         const isMatch = (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type);
-
         if (isMatch) { 
             mCorrect++; 
             target.style.background = 'var(--accent)';
@@ -360,10 +360,8 @@
             target.style.background = 'var(--danger)';
             setTimeout(() => { target.style.background = 'var(--glass)'; }, 500);
         }
-
         const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
         document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
-        
         if (mCorrect === mGoal) { 
             document.getElementById('matchContainer').classList.add('hidden'); 
             document.getElementById('matchEnd').innerHTML = `<h3>Matching Complete: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart Matching</button>`; 
@@ -399,46 +397,62 @@
             </div>`).join(''); 
     }
 
+    // HIGH SPEED SUBMIT: UI Updates before the server even responds
     async function submitNewWord() { 
-        const btn = document.getElementById('addWordBtn'); 
         const u = adminSelectedUnit; 
         const l = adminSelectedList; 
-        btn.innerHTML = "Processing..."; 
-        btn.disabled = true; 
-        const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value }); 
-        try { 
-            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-            document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; 
-            await new Promise(r => setTimeout(r, 1500)); 
-            await fetchTeacherData(); 
-            renderAdminWordList(); 
-        } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } 
+        const t = document.getElementById('newT').value;
+        const d = document.getElementById('newD').value;
+        const i = document.getElementById('newI').value;
+        
+        if(!t || !d) return;
+
+        // 1. Instant local update (The Speed Secret)
+        units[u][l].push({t: t, d: d, img: i});
+        document.getElementById('newT').value = ""; 
+        document.getElementById('newD').value = ""; 
+        document.getElementById('newI').value = ""; 
+        renderAdminWordList(); 
+
+        // 2. Background Sync
+        const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }); 
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload })
+            .then(() => fetchTeacherData(true)); // Final silent background refresh
     }
 
     async function saveEdit(u, l, idx) { 
+        const nt = document.getElementById(`t-${idx}`).value;
+        const nd = document.getElementById(`d-${idx}`).value;
+        const ni = document.getElementById(`i-${idx}`).value;
+
+        // 1. Instant local update
+        const oldTerm = units[u][l][idx].t;
+        units[u][l][idx] = {t: nt, d: nd, img: ni};
+        
         const payload = JSON.stringify({ 
-            action: "updateWord", 
-            unit: u, 
-            list: l, 
-            oldTerm: units[u][l][idx].t, 
-            newTerm: document.getElementById(`t-${idx}`).value, 
-            newDef: document.getElementById(`d-${idx}`).value,
-            newImg: document.getElementById(`i-${idx}`).value 
+            action: "updateWord", unit: u, list: l, 
+            oldTerm: oldTerm, newTerm: nt, newDef: nd, newImg: ni 
         }); 
-        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-        alert("Sent!"); 
-        await new Promise(r => setTimeout(r, 1200)); 
-        await fetchTeacherData(); 
-        renderAdminWordList(); 
+
+        // 2. Background Sync
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload })
+            .then(() => fetchTeacherData(true));
+        
+        alert("Changes Saved Locally. Syncing to database...");
     }
 
     async function deleteWord(u, l, idx) { 
         if(!confirm("Delete?")) return; 
-        const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); 
-        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-        await new Promise(r => setTimeout(r, 1500)); 
-        await fetchTeacherData(); 
-        renderAdminWordList(); 
+        const term = units[u][l][idx].t;
+
+        // 1. Instant local removal
+        units[u][l].splice(idx, 1);
+        renderAdminWordList();
+
+        // 2. Background Sync
+        const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: term }); 
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload })
+            .then(() => fetchTeacherData(true));
     }
 </script>
 </body>
