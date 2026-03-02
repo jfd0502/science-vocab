@@ -214,9 +214,9 @@
     </div>
 
 <script>
-    // STABILITY UPDATE: Using the direct Visualization endpoint
-    const SHEET_ID = "1SwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4";
-    const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+    // CRITICAL FIX: The CSV URL must point to the Published-to-Web CSV endpoint
+    // Make sure you go to File > Share > Publish to Web > Select "CSV" for the output.
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
     const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyWqGJP03O1WM0earzVZTMJOVagTIoB7VxSAlmzmvQtu-Z0NFK62DSTYpkLxru-NuPR4Q/exec"; 
     const ADMIN_PASS = "science123";
 
@@ -236,17 +236,24 @@
     window.addEventListener('resize', resizeCanvas);
 
     async function fetchTeacherData(force = false) {
-        if (!force && Object.keys(units).length > 0) {
-            renderUnitSelection();
-            renderAdminUnitSelection();
-        }
         try {
+            // Using timestamp to bypass aggressive Google caching
             const response = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`); 
             const csvText = await response.text();
+            
+            // Debugging Check: If the sheet is private, Google returns HTML instead of CSV
+            if (csvText.includes("<!DOCTYPE html>")) {
+                console.error("ERROR: The Sheet is not published as a CSV. Check 'File > Share > Publish to Web'");
+                document.getElementById('syncStatus').innerText = "• Data Restricted (Check Publish Settings)";
+                return;
+            }
+
             const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0);
-            const dataRows = rows.slice(1);
+            const dataRows = rows.slice(1); // Remove header row
             const newUnits = {}; 
+            
             dataRows.forEach(row => {
+                // Regex to handle CSV columns that contain commas within quotes
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length >= 5) {
                     const [term, def, img, listName, unitName] = cols;
@@ -255,6 +262,7 @@
                     newUnits[unitName][listName].push({t: term, d: def, img: img});
                 }
             });
+            
             units = newUnits;
             renderUnitSelection(); 
             renderAdminUnitSelection();
@@ -313,7 +321,6 @@
     function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
     function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Quiz</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
     
-    // REPAIRED BIDIRECTIONAL MATCHING
     function startMatch(list) { 
         mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; 
         document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); 
@@ -352,7 +359,6 @@
         </div>`).join(''); 
     }
 
-    // HIGH SPEED SUBMIT (Optimistic Update)
     async function submitNewWord() { 
         const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
         if(!t || !d) return;
