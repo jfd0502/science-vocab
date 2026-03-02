@@ -97,11 +97,14 @@
         }
 
         .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
-        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; -webkit-transform-style: preserve-3d; border-radius: 24px; }
+        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; border-radius: 24px; }
         .flipped .inner { transform: rotateY(180deg); }
         .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
         .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); }
         .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }
+
+        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
+        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
 
         input, select { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; }
 
@@ -109,8 +112,9 @@
         .welcome-title { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); }
         .start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }
         
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); }
         .mode-toggle { position: absolute; top: 20px; left: 20px; z-index: 1000; background: var(--glass); color: #94a3b8; border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 16px; font-size: 0.7rem; cursor: pointer; }
+        .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -165,6 +169,7 @@
                 <div id="listMode">
                     <div id="fullListArea"></div>
                     <div id="historyLogArea" style="margin-top:30px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+                        <h4 style="margin:0 0 15px 0; font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">Session Records</h4>
                         <div id="historyEntries" style="font-size: 0.85rem;"></div>
                     </div>
                 </div>
@@ -207,6 +212,15 @@
             </div>
             <div id="adminEditArea" class="hidden">
                 <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
+                
+                <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                    <h4 style="margin-top:0;">New Entry</h4>
+                    <input type="text" id="newT" placeholder="Term" style="width:100%;">
+                    <input type="text" id="newD" placeholder="Definition" style="width:100%;">
+                    <input type="text" id="newI" placeholder="Image URL (Optional)" style="width:100%;">
+                    <button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;">Commit to Database</button>
+                </div>
+                
                 <div id="adminWordList"></div>
             </div>
         </div>
@@ -237,16 +251,11 @@
 
     window.addEventListener('resize', resizeCanvas);
 
-    // FIXED: Improved fetching logic for CSV
     async function fetchTeacherData() {
         try {
             const response = await fetch(`${SHEET_CSV_URL}&cachebust=${Date.now()}`); 
             const csvText = await response.text();
-            
-            // Split rows and filter empty lines
             const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0);
-            
-            // Skip header row
             const dataRows = rows.slice(1);
             const newUnits = {}; 
             
@@ -263,18 +272,15 @@
             units = newUnits;
             renderUnitSelection(); 
             renderAdminUnitSelection();
-        } catch (e) { 
-            console.error("Fetch Error:", e);
-        }
+        } catch (e) { console.error("Fetch Error:", e); }
     }
 
-    // FIXED: Background now disappears completely after login
     function enterApp() { 
         document.getElementById('landingPage').style.opacity = '0'; 
         canvas.style.opacity = '0'; 
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
-            canvas.style.display = 'none'; // Kill the canvas element
+            canvas.style.display = 'none';
             document.getElementById('loginOverlay').classList.remove('hidden'); 
         }, 800); 
     }
@@ -284,7 +290,6 @@
         const unitKeys = Object.keys(units);
         if (unitKeys.length === 0) {
             grid.innerHTML = "<p style='color: #94a3b8;'>Loading database...</p>";
-            // Retry once if empty
             setTimeout(fetchTeacherData, 2000);
         } else {
             grid.innerHTML = unitKeys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
@@ -296,28 +301,104 @@
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
+    
     async function syncSessionToSheet(mode, score) { const payload = JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }); try { await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); } catch (e) { console.error("Sync Error:", e); } }
-    function setStudyMode(mode) { ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); document.getElementById(mode + 'Mode').classList.remove('hidden'); const list = units[currentUnit][currentClass]; if (mode === 'list') { renderFullList(list); updateHistoryUI(); } if (mode === 'flash') { cardIdx = 0; updateCard(list); } if (mode === 'quiz') startQuiz(list); if (mode === 'match') startMatch(list); }
+    
+    function setStudyMode(mode) { 
+        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
+        document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+        ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden'));
+        document.getElementById(mode + 'Mode').classList.remove('hidden');
+        const list = units[currentUnit][currentClass];
+        if (mode === 'list') { renderFullList(list); updateHistoryUI(); }
+        if (mode === 'flash') { cardIdx = 0; updateCard(list); }
+        if (mode === 'quiz') startQuiz(list);
+        if (mode === 'match') startMatch(list);
+    }
+
     function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
     function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
     function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
+    
     function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz(); }
     function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `What is the definition of: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
     function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
     function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Quiz Complete: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart Quiz</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
+    
     function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; }
     function drag(e) { draggedItem = e.target; }
     function drop(e) { const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id && draggedItem.dataset.type !== target.dataset.type) { mCorrect++; draggedItem.style.visibility = 'hidden'; target.style.opacity = '0.3'; target.style.borderColor = 'var(--accent)'; } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Matching Complete: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart Matching</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Matching", acc); syncSessionToSheet("Matching", acc); } }
+    
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join(''); }
+    
     function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); resetAdminView(); } } else { document.getElementById('adminView').classList.add('hidden'); if (!studentName) { document.getElementById('loginOverlay').classList.remove('hidden'); } else { document.getElementById('studyView').classList.remove('hidden'); } } }
     function renderAdminUnitSelection() { document.getElementById('adminUnitGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-    function renderAdminWordList() { const u = adminSelectedUnit; const l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="edit-row panel" style="background: rgba(255,255,255,0.01);"><input type="text" id="t-${idx}" value="${item.t}" style="width:100%;"><input type="text" id="d-${idx}" value="${item.d}" style="width:100%;"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" style="flex:2; background:var(--accent);" onclick="saveEdit('${u}','${l}',${idx})">Update</button></div></div>`).join(''); }
-    async function saveEdit(u, l, idx) { const payload = JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: document.getElementById(`t-${idx}`).value, newDef: document.getElementById(`d-${idx}`).value }); await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); alert("Sent!"); await new Promise(r => setTimeout(r, 1200)); await fetchTeacherData(); renderAdminWordList(); }
+    
+    // Updated Admin List: Restore Image URL input
+    function renderAdminWordList() { 
+        const u = adminSelectedUnit; 
+        const l = adminSelectedList; 
+        document.getElementById('adminHeader').innerText = `${u} > ${l}`; 
+        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `
+            <div class="edit-row panel" style="background: rgba(255,255,255,0.01);">
+                <input type="text" id="t-${idx}" value="${item.t}" style="width:100%;">
+                <input type="text" id="d-${idx}" value="${item.d}" style="width:100%;">
+                <input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL" style="width:100%;">
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="main-btn" style="flex:2; background:var(--accent);" onclick="saveEdit('${u}','${l}',${idx})">Update</button>
+                    <button class="main-btn" style="flex:1; background:var(--danger);" onclick="deleteWord('${u}','${l}',${idx})">Delete</button>
+                </div>
+            </div>`).join(''); 
+    }
+
+    // Restore Add Word Logic
+    async function submitNewWord() { 
+        const btn = document.getElementById('addWordBtn'); 
+        const u = adminSelectedUnit; 
+        const l = adminSelectedList; 
+        btn.innerHTML = "Processing..."; 
+        btn.disabled = true; 
+        const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: document.getElementById('newT').value, def: document.getElementById('newD').value, img: document.getElementById('newI').value }); 
+        try { 
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+            document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; 
+            await new Promise(r => setTimeout(r, 1500)); 
+            await fetchTeacherData(); 
+            renderAdminWordList(); 
+        } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } 
+    }
+
+    // Restore Full Save Logic (with Image URL)
+    async function saveEdit(u, l, idx) { 
+        const payload = JSON.stringify({ 
+            action: "updateWord", 
+            unit: u, 
+            list: l, 
+            oldTerm: units[u][l][idx].t, 
+            newTerm: document.getElementById(`t-${idx}`).value, 
+            newDef: document.getElementById(`d-${idx}`).value,
+            newImg: document.getElementById(`i-${idx}`).value 
+        }); 
+        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+        alert("Sent!"); 
+        await new Promise(r => setTimeout(r, 1200)); 
+        await fetchTeacherData(); 
+        renderAdminWordList(); 
+    }
+
+    async function deleteWord(u, l, idx) { 
+        if(!confirm("Delete?")) return; 
+        const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); 
+        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
+        await new Promise(r => setTimeout(r, 1500)); 
+        await fetchTeacherData(); 
+        renderAdminWordList(); 
+    }
 </script>
 </body>
 </html>
