@@ -375,19 +375,32 @@
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join(''); }
     
     function protectedToggle() { 
-        if (document.getElementById('adminView').classList.contains('hidden')) { 
+        const adminView = document.getElementById('adminView');
+        const studyView = document.getElementById('studyView');
+        const loginOverlay = document.getElementById('loginOverlay');
+        const container = document.querySelector('.app-container');
+
+        if (adminView.classList.contains('hidden')) { 
             if (prompt("Password:") === ADMIN_PASS) { 
-                document.getElementById('studyView').classList.add('hidden'); 
-                document.getElementById('loginOverlay').classList.add('hidden'); 
-                document.getElementById('adminView').classList.remove('hidden'); 
+                // FORCE EVERYTHING ELSE TO HIDE
+                studyView.classList.add('hidden'); 
+                loginOverlay.classList.add('hidden'); 
+                
+                // FORCE ADMIN VIEW TO SHOW
+                adminView.classList.remove('hidden'); 
+                
+                // ENSURE THE CONTAINER IS VISIBLE EVEN IF NAME WASN'T ENTERED
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'auto';
+                
                 resetAdminView(); 
             } 
         } else { 
-            document.getElementById('adminView').classList.add('hidden'); 
+            adminView.classList.add('hidden'); 
             if (!studentName) { 
-                document.getElementById('loginOverlay').classList.remove('hidden'); 
+                loginOverlay.classList.remove('hidden'); 
             } else { 
-                document.getElementById('studyView').classList.remove('hidden'); 
+                studyView.classList.remove('hidden'); 
             } 
         } 
     }
