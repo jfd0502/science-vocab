@@ -244,7 +244,6 @@
     window.onload = () => { fetchTeacherData(); resizeCanvas(); setInterval(drawMatrix, 50); };
     window.addEventListener('resize', resizeCanvas);
 
-    // OPTIMIZED FETCH: Prevent unnecessary reload lag
     async function fetchTeacherData(force = false) {
         if (!force && Object.keys(units).length > 0) {
             renderUnitSelection();
@@ -375,7 +374,24 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); if(sessionHistory.length === 0) { container.innerHTML = "No attempts yet."; return; } container.innerHTML = sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join(''); }
     
-    function protectedToggle() { if (document.getElementById('adminView').classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('adminView').classList.remove('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); resetAdminView(); } } else { document.getElementById('adminView').classList.add('hidden'); if (!studentName) { document.getElementById('loginOverlay').classList.remove('hidden'); } else { document.getElementById('studyView').classList.remove('hidden'); } } }
+    function protectedToggle() { 
+        if (document.getElementById('adminView').classList.contains('hidden')) { 
+            if (prompt("Password:") === ADMIN_PASS) { 
+                document.getElementById('studyView').classList.add('hidden'); 
+                document.getElementById('loginOverlay').classList.add('hidden'); 
+                document.getElementById('adminView').classList.remove('hidden'); 
+                resetAdminView(); 
+            } 
+        } else { 
+            document.getElementById('adminView').classList.add('hidden'); 
+            if (!studentName) { 
+                document.getElementById('loginOverlay').classList.remove('hidden'); 
+            } else { 
+                document.getElementById('studyView').classList.remove('hidden'); 
+            } 
+        } 
+    }
+
     function renderAdminUnitSelection() { document.getElementById('adminUnitGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
@@ -398,7 +414,6 @@
             </div>`).join(''); 
     }
 
-    // SPEED FIX: Added immediate UI update before re-fetching
     async function submitNewWord() { 
         const btn = document.getElementById('addWordBtn'); 
         const u = adminSelectedUnit; const l = adminSelectedList; 
@@ -409,10 +424,10 @@
         const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }); 
         try { 
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-            units[u][l].push({t: t, d: d, img: i}); // Optimistic update
+            units[u][l].push({t: t, d: d, img: i}); 
             document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; 
             renderAdminWordList(); 
-            fetchTeacherData(true); // Background refresh
+            fetchTeacherData(true); 
         } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } 
     }
 
@@ -425,18 +440,18 @@
             oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni 
         }); 
         await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-        units[u][l][idx] = {t: nt, d: nd, img: ni}; // Optimistic update
+        units[u][l][idx] = {t: nt, d: nd, img: ni}; 
         alert("Sent!"); 
-        fetchTeacherData(true); // Background refresh
+        fetchTeacherData(true); 
     }
 
     async function deleteWord(u, l, idx) { 
         if(!confirm("Delete?")) return; 
         const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); 
         await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-        units[u][l].splice(idx, 1); // Optimistic update
+        units[u][l].splice(idx, 1); 
         renderAdminWordList();
-        fetchTeacherData(true); // Background refresh
+        fetchTeacherData(true); 
     }
 </script>
 </body>
