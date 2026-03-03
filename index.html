@@ -280,8 +280,8 @@
 
 <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    // UPDATED EXPORT URL
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwjZpH8xh0C5qlofQJT5CY0bM_AEfRARm78u5ia3uZMU9e3vDW4IJDdu3GHxos3vp2SuA/exec"; 
+    // INTEGRATED NEW DEPLOYMENT URL
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbzSggtkrxifIdFPwfGK1wlNq2zyjdDz7mkBagmlplDd098PQA40FU_Mf1G_J_U8dX8Rlg/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -432,14 +432,7 @@
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
     
     async function syncSessionToSheet(mode, score) { 
-        const payload = JSON.stringify({ 
-            action: "recordSession", 
-            student: studentName, 
-            unit: currentUnit, 
-            list: currentClass, 
-            mode: mode, 
-            score: score 
-        }); 
+        const payload = JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }); 
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
     }
     
@@ -504,22 +497,29 @@
         if (tab === 'analytics') fetchResultsAnalytics();
     }
 
-    // --- ANALYTICS / RESULTS FEATURE ---
+    // --- ENHANCED ANALYTICS FEATURE ---
     async function fetchResultsAnalytics() {
         try {
-            const response = await fetch(EXPORT_URL + "?action=getAnalytics");
+            // Added cache-buster to ensure the browser pulls fresh data from your sheet
+            const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now());
             const data = await response.json();
-            // Map keys consistently in case they come back with different names
-            rawAnalytics = data.map(row => ({
-                student: row.student || row.studentname || 'Unknown',
-                unit: row.unit || '',
-                list: row.list || '',
-                mode: row.mode || '',
-                score: row.score || '0%',
-                timestamp: row.timestamp || ''
-            }));
+            
+            // Forces all keys to lowercase to solve the "undefined" and missing score issues
+            rawAnalytics = data.map(row => {
+                const lowerRow = {};
+                for (let key in row) { lowerRow[key.toLowerCase().trim()] = row[key]; }
+                return {
+                    student: lowerRow.student || lowerRow.studentname || 'Unknown',
+                    unit: lowerRow.unit || 'N/A',
+                    list: lowerRow.list || 'N/A',
+                    mode: lowerRow.mode || 'N/A',
+                    score: lowerRow.score || '0%',
+                    timestamp: lowerRow.timestamp || 'No Date'
+                };
+            });
             renderStudentList();
         } catch (e) {
+            console.error("Analytics Error:", e);
             document.getElementById('studentListGrid').innerText = "Unable to load analytics.";
         }
     }
@@ -583,17 +583,17 @@
 
     async function saveEdit(u, l, idx) { 
         const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
-        const payload = { action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni }; 
-        units[u][l][idx] = {t: nt, d: nd, img: ni}; alert("Syncing update..."); 
+        const payload = { action: \"updateWord\", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni }; 
+        units[u][l][idx] = {t: nt, d: nd, img: ni}; alert(\"Syncing update...\"); 
         await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); 
         fetchTeacherData(true); 
     }
 
     async function deleteWord(u, l, idx) {
-        if(!confirm("Are you sure you want to delete this word?")) return;
+        if(!confirm(\"Are you sure you want to delete this word?\")) return;
         const termToDelete = units[u][l][idx].t;
         units[u][l].splice(idx, 1); renderAdminWordList();
-        const payload = { action: "deleteWord", unit: u, list: l, term: termToDelete };
+        const payload = { action: \"deleteWord\", unit: u, list: l, term: termToDelete };
         await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
         fetchTeacherData(true);
     }
