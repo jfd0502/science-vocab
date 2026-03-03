@@ -274,6 +274,8 @@
             document.getElementById('landingPage').classList.add('hidden'); 
             canvas.style.display = 'none';
             document.getElementById('loginOverlay').classList.remove('hidden'); 
+            // Pre-render units so they are ready
+            renderUnitSelection();
         }, 800); 
     }
 
@@ -391,10 +393,9 @@
 
         if (adminView.classList.contains('hidden')) { 
             if (prompt("Password:") === ADMIN_PASS) { 
-                // Ensure visibility is reset so manager mode shows up correctly
+                // ENTERING MANAGER MODE
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
-                
                 studyView.classList.add('hidden'); 
                 loginOverlay.classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
@@ -402,26 +403,21 @@
                 resetAdminView(); 
             } 
         } else { 
-            // EXITING MANAGER MODE
+            // EXITING MANAGER MODE - HARD RESET TO LOGIN
             adminView.classList.add('hidden'); 
+            studyView.classList.add('hidden');
             
-            // Re-render units to ensure data sync
-            renderUnitSelection();
-
-            if (!studentName) { 
-                // Go back to student login
-                loginOverlay.classList.remove('hidden'); 
-                container.style.opacity = '0';
-                container.style.pointerEvents = 'none';
-            } else { 
-                // Restore student dashboard
-                container.style.opacity = '1';
-                container.style.pointerEvents = 'auto';
-                studyView.classList.remove('hidden'); 
-                document.getElementById('unitSelection').classList.remove('hidden');
-                document.getElementById('listSelection').classList.add('hidden');
-                document.getElementById('studyInterface').classList.add('hidden');
-            } 
+            // Clean up student state
+            studentName = ""; 
+            document.getElementById('studentNameInput').value = "";
+            
+            // Hide container and show login overlay (simulate "Begin Journey")
+            container.style.opacity = '0';
+            container.style.pointerEvents = 'none';
+            loginOverlay.classList.remove('hidden'); 
+            
+            // Ensure units are fresh for the next login
+            renderUnitSelection(); 
         } 
     }
 
