@@ -42,7 +42,7 @@
             width: 100%; max-width: 650px; 
             display: flex; flex-direction: column; 
             position: relative; z-index: 10;
-            opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
+            opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
         }
 
         .panel { 
@@ -274,7 +274,6 @@
             document.getElementById('landingPage').classList.add('hidden'); 
             canvas.style.display = 'none';
             document.getElementById('loginOverlay').classList.remove('hidden'); 
-            // Pre-render units so they are ready
             renderUnitSelection();
         }, 800); 
     }
@@ -290,13 +289,17 @@
     }
 
     function saveStudentName() { 
-        studentName = document.getElementById('studentNameInput').value; 
+        const input = document.getElementById('studentNameInput');
+        studentName = input.value; 
         if(studentName.trim()){ 
             document.getElementById('loginOverlay').classList.add('hidden'); 
             document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; 
+            
+            // ENSURE APP CONTAINER IS VISIBLE
             const container = document.querySelector('.app-container');
             container.style.opacity = '1'; 
             container.style.pointerEvents = 'auto'; 
+            
             renderUnitSelection(); 
         } else { 
             alert("Please enter your name."); 
@@ -392,31 +395,36 @@
         const container = document.querySelector('.app-container');
 
         if (adminView.classList.contains('hidden')) { 
+            // ENTERING MANAGER MODE
             if (prompt("Password:") === ADMIN_PASS) { 
-                // ENTERING MANAGER MODE
+                // Force container visible so admin view can be seen
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
+                
                 studyView.classList.add('hidden'); 
                 loginOverlay.classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
+                
                 renderAdminUnitSelection(); 
                 resetAdminView(); 
             } 
         } else { 
-            // EXITING MANAGER MODE - HARD RESET TO LOGIN
+            // EXITING MANAGER MODE - HARD RESET TO IDENTITY SCREEN
             adminView.classList.add('hidden'); 
             studyView.classList.add('hidden');
             
-            // Clean up student state
+            // Clean state as requested (Act like Begin Journey)
             studentName = ""; 
             document.getElementById('studentNameInput').value = "";
             
-            // Hide container and show login overlay (simulate "Begin Journey")
+            // Hide the actual app dashboard
             container.style.opacity = '0';
             container.style.pointerEvents = 'none';
+            
+            // Show the name entry overlay
             loginOverlay.classList.remove('hidden'); 
             
-            // Ensure units are fresh for the next login
+            // Pre-draw the units so they are there the second a student logs in
             renderUnitSelection(); 
         } 
     }
