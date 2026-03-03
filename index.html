@@ -120,6 +120,8 @@
         #logoutBtn:hover { background: var(--danger); color: white; }
 
         .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
+        
+        .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); }
     </style>
 </head>
 <body>
@@ -158,6 +160,11 @@
     <button class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
 
     <div class="app-container">
+        <div class="session-info-bar">
+            <div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;"></div>
+            <button id="logoutBtn" onclick="logout()">Logout</button>
+        </div>
+
         <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">• Sync Online</div>
         
         <div id="studyView" class="panel">
@@ -175,11 +182,6 @@
             <div id="studyInterface" class="hidden">
                 <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()"></div>
                 <h3 id="activeListName" style="margin:5px 0; color: var(--primary);"></h3>
-                
-                <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                    <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b;"></div>
-                    <button id="logoutBtn" onclick="logout()">Logout</button>
-                </div>
                 
                 <div class="study-tabs">
                     <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
@@ -293,7 +295,10 @@
         resizeCanvas(); 
         matrixInterval = setInterval(drawMatrix, 50); 
         const stored = localStorage.getItem('vocabSojournName');
-        if (stored) studentName = stored;
+        if (stored) {
+            studentName = stored;
+            document.getElementById('studentWelcome').innerText = "Explorer: " + studentName;
+        }
     };
     window.addEventListener('resize', resizeCanvas);
 
@@ -445,7 +450,6 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
-    // --- ADMIN LOGIC ---
     function protectedToggle() { 
         const adminView = document.getElementById('adminView');
         if (adminView.classList.contains('hidden')) { 
@@ -453,7 +457,6 @@
                 document.getElementById('studyView').classList.add('hidden'); 
                 document.getElementById('loginOverlay').classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
-                // Reveal app container if it was hidden by landing page
                 const container = document.querySelector('.app-container');
                 container.style.opacity = '1'; 
                 container.style.pointerEvents = 'auto';
@@ -481,7 +484,7 @@
                 <input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL">
                 <div style="display:flex; gap:10px; margin-top:10px;">
                     <button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button>
-                    <button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
+                    <button class="main-btn" onclick="deleteWord('${u}','!${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
                 </div>
             </div>`).join(''); 
     }
