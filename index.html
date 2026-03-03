@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -252,7 +252,7 @@
                     <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
                 </div>
                 <div id="adminEditArea" class="hidden">
-                    <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
+                    <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()">&larr; Back to Lists</div>
                     <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
                         <h4 style="margin-top:0;">New Entry</h4>
                         <input type="text" id="newT" placeholder="Term">
@@ -288,6 +288,7 @@
     let matrixInterval = null; 
     let isDataLoaded = false;
     let rawAnalytics = [];
+    let adminSelectedUnit = "", adminSelectedList = "";
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -496,7 +497,6 @@
         if (tab === 'analytics') fetchResultsAnalytics();
     }
 
-    // --- ENHANCED ANALYTICS FEATURE ---
     async function fetchResultsAnalytics() {
         try {
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now());
@@ -550,7 +550,7 @@
         const grid = document.getElementById('adminUnitGrid');
         grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('');
     }
-    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
+    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = "&larr; All Units"; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
