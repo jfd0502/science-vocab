@@ -230,19 +230,18 @@
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
-    let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; // Fallback pool
+    let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
     let adminSelectedUnit = "", adminSelectedList = "";
     let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
+    let matrixInterval = null; // Variable to store the interval
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     let columns = [];
 
-    // Animation logic
     function resizeCanvas() { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
-        // Logic change: Initialize with random Y positions to prevent the "top line" effect
         columns = Array(Math.floor(canvas.width / 25)).fill(0).map(() => Math.random() * -canvas.height); 
     }
 
@@ -274,7 +273,7 @@
         }); 
     }
     
-    window.onload = () => { fetchTeacherData(); resizeCanvas(); setInterval(drawMatrix, 50); };
+    window.onload = () => { fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); };
     window.addEventListener('resize', resizeCanvas);
 
     async function fetchTeacherData(force = false) {
@@ -295,7 +294,7 @@
                 }
             });
             units = newUnits;
-            updateMatrixWords(); // Logic change: Refresh animation terms pool
+            updateMatrixWords();
             renderUnitSelection(); 
             renderAdminUnitSelection();
         } catch (e) { console.error("Fetch Error:", e); }
@@ -303,7 +302,10 @@
 
     function enterApp() { 
         document.getElementById('landingPage').style.opacity = '0'; 
-        canvas.style.opacity = '0.3'; // Dim it but keep it running
+        // Stop the animation loop and hide the canvas to return to static bg
+        if (matrixInterval) clearInterval(matrixInterval);
+        canvas.style.display = 'none';
+        
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
             document.getElementById('loginOverlay').classList.remove('hidden'); 
@@ -327,11 +329,9 @@
         if(studentName.trim()){ 
             document.getElementById('loginOverlay').classList.add('hidden'); 
             document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; 
-            
             const container = document.querySelector('.app-container');
             container.style.opacity = '1'; 
             container.style.pointerEvents = 'auto'; 
-            
             renderUnitSelection(); 
         } else { 
             alert("Please enter your name."); 
