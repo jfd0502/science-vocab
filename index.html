@@ -281,7 +281,7 @@
 <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
     // UPDATED EXPORT URL
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxz3cCkeEkB4icjqERzCiyN2WrpdShnUOKsKTadNrhhDLznDHQwFirBjG16u7KPEhhaNg/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwjZpH8xh0C5qlofQJT5CY0bM_AEfRARm78u5ia3uZMU9e3vDW4IJDdu3GHxos3vp2SuA/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -432,7 +432,14 @@
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
     
     async function syncSessionToSheet(mode, score) { 
-        const payload = JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }); 
+        const payload = JSON.stringify({ 
+            action: "recordSession", 
+            student: studentName, 
+            unit: currentUnit, 
+            list: currentClass, 
+            mode: mode, 
+            score: score 
+        }); 
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
     }
     
@@ -500,10 +507,17 @@
     // --- ANALYTICS / RESULTS FEATURE ---
     async function fetchResultsAnalytics() {
         try {
-            // Updated to use GET action
             const response = await fetch(EXPORT_URL + "?action=getAnalytics");
             const data = await response.json();
-            rawAnalytics = data;
+            // Map keys consistently in case they come back with different names
+            rawAnalytics = data.map(row => ({
+                student: row.student || row.studentname || 'Unknown',
+                unit: row.unit || '',
+                list: row.list || '',
+                mode: row.mode || '',
+                score: row.score || '0%',
+                timestamp: row.timestamp || ''
+            }));
             renderStudentList();
         } catch (e) {
             document.getElementById('studentListGrid').innerText = "Unable to load analytics.";
