@@ -118,6 +118,8 @@
         
         #logoutBtn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-left: 10px; transition: 0.3s; }
         #logoutBtn:hover { background: var(--danger); color: white; }
+
+        .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -222,7 +224,7 @@
             </div>
         </div>
 
-        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.9);">
+        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
             <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
             <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
             <div id="adminUnitSelection"><div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
@@ -325,16 +327,12 @@
         canvas.style.display = 'none'; 
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
-            if (studentName) {
-                unlockApp();
-            } else {
-                document.getElementById('loginOverlay').classList.remove('hidden'); 
-            }
+            if (studentName) unlockApp();
+            else document.getElementById('loginOverlay').classList.remove('hidden'); 
             renderUnitSelection();
         }, 800); 
     }
 
-    // --- AUTHENTICATION LOGIC ---
     function toggleAuthMode(isReg) {
         document.getElementById('loginForm').classList.toggle('hidden', isReg);
         document.getElementById('registerForm').classList.toggle('hidden', !isReg);
@@ -361,7 +359,6 @@
         }
 
         const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
-        const originalText = btn.innerText;
         btn.innerText = "Verifying...";
         btn.disabled = true;
 
@@ -370,46 +367,32 @@
             const result = await response.text();
             
             if (result.startsWith("Success:")) {
-                if(type === 'register') {
-                    studentName = fullNameInput;
-                } else {
-                    studentName = result.replace("Success: ", "");
-                }
+                studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "");
                 localStorage.setItem('vocabSojournName', studentName);
                 unlockApp();
-            } else {
-                alert(result);
-            }
-        } catch (e) {
-            alert("Network Error. Check connection.");
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
+            } else { alert(result); }
+        } catch (e) { alert("Network Error."); } finally { btn.innerText = (type === 'login') ? "Enter Journey" : "Register"; btn.disabled = false; }
     }
 
     function unlockApp() {
         document.getElementById('loginOverlay').classList.add('hidden'); 
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
         const container = document.querySelector('.app-container');
-        container.style.opacity = '1'; 
-        container.style.pointerEvents = 'auto'; 
+        container.style.opacity = '1'; container.style.pointerEvents = 'auto'; 
         renderUnitSelection(); 
     }
 
     function logout() {
-        if(confirm("Logout and return to identity selection?")) {
+        if(confirm("Logout?")) {
             localStorage.removeItem('vocabSojournName');
-            studentName = "";
-            location.reload();
+            studentName = ""; location.reload();
         }
     }
 
-    // --- NAVIGATION & STUDY MODES ---
     function renderUnitSelection() { 
         const grid = document.getElementById('unitBtnGrid');
         const keys = Object.keys(units);
-        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : "Loading Units...";
+        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : "Loading...";
     }
 
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
@@ -467,8 +450,6 @@
         const adminView = document.getElementById('adminView');
         if (adminView.classList.contains('hidden')) { 
             if (prompt("Password:") === ADMIN_PASS) { 
-                document.querySelector('.app-container').style.opacity = '1';
-                document.querySelector('.app-container').style.pointerEvents = 'auto';
                 document.getElementById('studyView').classList.add('hidden'); 
                 document.getElementById('loginOverlay').classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
@@ -485,10 +466,20 @@
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
+    
     function renderAdminWordList() { 
         const u = adminSelectedUnit, l = adminSelectedList; 
         document.getElementById('adminHeader').innerText = `${u} > ${l}`; 
-        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="panel" style="background: rgba(255,255,255,0.01);"><input type="text" id="t-${idx}" value="${item.t}"><input type="text" id="d-${idx}" value="${item.d}"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="background:var(--accent); margin-top:10px;">Update</button></div>`).join(''); 
+        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `
+            <div class="admin-entry">
+                <input type="text" id="t-${idx}" value="${item.t}" placeholder="Term">
+                <input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition">
+                <input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL">
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button>
+                    <button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
+                </div>
+            </div>`).join(''); 
     }
 
     async function submitNewWord() { 
@@ -496,15 +487,24 @@
         if(!t || !d) return alert("Fill fields");
         units[u][l].push({t, d, img: i}); renderAdminWordList();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }) });
-        document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; 
+        document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
     }
 
     async function saveEdit(u, l, idx) { 
-        const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value;
-        const payload = { action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd }; 
-        units[u][l][idx] = {t: nt, d: nd, img: units[u][l][idx].img}; alert("Syncing..."); 
+        const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
+        const payload = { action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni }; 
+        units[u][l][idx] = {t: nt, d: nd, img: ni}; alert("Syncing update..."); 
         await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); 
         fetchTeacherData(true); 
+    }
+
+    async function deleteWord(u, l, idx) {
+        if(!confirm("Are you sure you want to delete this word from the database?")) return;
+        const termToDelete = units[u][l][idx].t;
+        units[u][l].splice(idx, 1); renderAdminWordList();
+        const payload = { action: "deleteWord", unit: u, list: l, term: termToDelete };
+        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        fetchTeacherData(true);
     }
 </script>
 </body>
