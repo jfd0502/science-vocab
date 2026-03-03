@@ -453,6 +453,10 @@
                 document.getElementById('studyView').classList.add('hidden'); 
                 document.getElementById('loginOverlay').classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
+                // Reveal app container if it was hidden by landing page
+                const container = document.querySelector('.app-container');
+                container.style.opacity = '1'; 
+                container.style.pointerEvents = 'auto';
                 renderAdminUnitSelection(); 
             } 
         } else { location.reload(); } 
