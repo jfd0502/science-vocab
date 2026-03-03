@@ -506,7 +506,8 @@
                 const lowerRow = {};
                 for (let key in row) { lowerRow[key.toLowerCase().trim()] = row[key]; }
                 return {
-                    student: lowerRow.student || lowerRow.studentname || 'Unknown',
+                    // Site specifically looks for "Full Name" column
+                    student: lowerRow['full name'] || lowerRow.student || lowerRow.studentname || 'Unknown',
                     unit: lowerRow.unit || 'N/A',
                     list: lowerRow.list || 'N/A',
                     mode: lowerRow.mode || 'N/A',
