@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -280,7 +280,6 @@
 
 <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    // INTEGRATED NEW DEPLOYMENT URL
     const EXPORT_URL = "https://script.google.com/macros/s/AKfycbzSggtkrxifIdFPwfGK1wlNq2zyjdDz7mkBagmlplDd098PQA40FU_Mf1G_J_U8dX8Rlg/exec"; 
     const ADMIN_PASS = "science123";
 
@@ -500,11 +499,9 @@
     // --- ENHANCED ANALYTICS FEATURE ---
     async function fetchResultsAnalytics() {
         try {
-            // Added cache-buster to ensure the browser pulls fresh data from your sheet
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now());
             const data = await response.json();
             
-            // Forces all keys to lowercase to solve the "undefined" and missing score issues
             rawAnalytics = data.map(row => {
                 const lowerRow = {};
                 for (let key in row) { lowerRow[key.toLowerCase().trim()] = row[key]; }
@@ -583,19 +580,20 @@
 
     async function saveEdit(u, l, idx) { 
         const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
-        const payload = { action: \"updateWord\", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni }; 
-        units[u][l][idx] = {t: nt, d: nd, img: ni}; alert(\"Syncing update...\"); 
+        const payload = { action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni }; 
+        units[u][l][idx] = {t: nt, d: nd, img: ni}; alert("Syncing update..."); 
         await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); 
         fetchTeacherData(true); 
     }
 
     async function deleteWord(u, l, idx) {
-        if(!confirm(\"Are you sure you want to delete this word?\")) return;
+        if(!confirm("Are you sure you want to delete this word?")) return;
         const termToDelete = units[u][l][idx].t;
         units[u][l].splice(idx, 1); renderAdminWordList();
-        const payload = { action: \"deleteWord\", unit: u, list: l, term: termToDelete };
+        const payload = { action: "deleteWord", unit: u, list: l, term: termToDelete };
         await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
         fetchTeacherData(true);
+    }
 </script>
 </body>
 </html>
