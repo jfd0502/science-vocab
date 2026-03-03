@@ -324,7 +324,6 @@
         }, 800); 
     }
 
-    // --- AUTHENTICATION LOGIC ---
     function toggleAuthMode(isReg) {
         document.getElementById('loginForm').classList.toggle('hidden', isReg);
         document.getElementById('registerForm').classList.toggle('hidden', !isReg);
@@ -332,6 +331,8 @@
 
     async function handleAuth(type) {
         let payload = {};
+        const fullNameInput = document.getElementById('regFull').value;
+
         if (type === 'login') {
             payload = { 
                 action: 'login', 
@@ -339,9 +340,10 @@
                 password: document.getElementById('passIn').value 
             };
         } else {
+            if(!fullNameInput) return alert("Please enter your full name.");
             payload = { 
                 action: 'register', 
-                fullname: document.getElementById('regFull').value,
+                fullname: fullNameInput,
                 username: document.getElementById('regUser').value, 
                 password: document.getElementById('regPass').value 
             };
@@ -357,7 +359,12 @@
             const result = await response.text();
             
             if (result.startsWith("Success:")) {
-                studentName = result.replace("Success: ", "");
+                // Fix: Extract name from response, or use input for registration
+                if(type === 'register') {
+                    studentName = fullNameInput;
+                } else {
+                    studentName = result.replace("Success: ", "");
+                }
                 localStorage.setItem('vocabSojournName', studentName);
                 unlockApp();
             } else {
@@ -380,7 +387,6 @@
         renderUnitSelection(); 
     }
 
-    // --- NAVIGATION & STUDY MODES ---
     function renderUnitSelection() { 
         const grid = document.getElementById('unitBtnGrid');
         const keys = Object.keys(units);
@@ -437,7 +443,6 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
-    // --- ADMIN LOGIC ---
     function protectedToggle() { 
         const adminView = document.getElementById('adminView');
         if (adminView.classList.contains('hidden')) { 
@@ -449,7 +454,7 @@
                 adminView.classList.remove('hidden'); 
                 renderAdminUnitSelection(); 
             } 
-        } else { location.reload(); } // Quick reset
+        } else { location.reload(); } 
     }
 
     function renderAdminUnitSelection() { 
@@ -457,7 +462,7 @@
         grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('');
     }
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
-    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.remove('hidden'); renderAdminWordList(); }
+    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
     function renderAdminWordList() { 
