@@ -596,7 +596,6 @@
         const payload = { action: \"deleteWord\", unit: u, list: l, term: termToDelete };
         await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
         fetchTeacherData(true);
-    }
 </script>
 </body>
 </html>
