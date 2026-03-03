@@ -296,7 +296,7 @@
             container.style.opacity = '1'; 
             container.style.pointerEvents = 'auto'; 
             
-            // KEY FIX: Always trigger unit rendering when the student logs in
+            // Re-render units specifically for this session
             renderUnitSelection(); 
         } else { 
             alert("Please enter your name."); 
@@ -393,8 +393,10 @@
 
         if (adminView.classList.contains('hidden')) { 
             if (prompt("Password:") === ADMIN_PASS) { 
+                // Always ensure container is initialized when entering Manager Mode
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
+                
                 studyView.classList.add('hidden'); 
                 loginOverlay.classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
@@ -402,17 +404,23 @@
                 resetAdminView(); 
             } 
         } else { 
+            // Exiting Manager Mode
             adminView.classList.add('hidden'); 
-            renderUnitSelection(); 
+            
+            // Logic to check if student is logged in
             if (!studentName) { 
+                // Return to login overlay if no name exists
                 loginOverlay.classList.remove('hidden'); 
-                container.style.opacity = '0'; // Hide container until name is entered
+                container.style.opacity = '0';
                 container.style.pointerEvents = 'none';
+                renderUnitSelection(); // Pre-render units while hidden so they are ready
             } else { 
+                // Return to study grid if already logged in
                 studyView.classList.remove('hidden'); 
                 document.getElementById('unitSelection').classList.remove('hidden');
                 document.getElementById('listSelection').classList.add('hidden');
                 document.getElementById('studyInterface').classList.add('hidden');
+                renderUnitSelection();
             } 
         } 
     }
