@@ -391,8 +391,10 @@
 
         if (adminView.classList.contains('hidden')) { 
             if (prompt("Password:") === ADMIN_PASS) { 
+                // Ensure visibility is reset so manager mode shows up correctly
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
+                
                 studyView.classList.add('hidden'); 
                 loginOverlay.classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
@@ -400,13 +402,21 @@
                 resetAdminView(); 
             } 
         } else { 
+            // EXITING MANAGER MODE
             adminView.classList.add('hidden'); 
-            renderUnitSelection(); 
+            
+            // Re-render units to ensure data sync
+            renderUnitSelection();
+
             if (!studentName) { 
+                // Go back to student login
                 loginOverlay.classList.remove('hidden'); 
                 container.style.opacity = '0';
                 container.style.pointerEvents = 'none';
             } else { 
+                // Restore student dashboard
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'auto';
                 studyView.classList.remove('hidden'); 
                 document.getElementById('unitSelection').classList.remove('hidden');
                 document.getElementById('listSelection').classList.add('hidden');
