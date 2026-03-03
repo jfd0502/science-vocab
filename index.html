@@ -28,10 +28,8 @@
 
         #matrixCanvas { 
             position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
             z-index: -1; 
             pointer-events: none;
             transition: opacity 0.8s ease;
@@ -226,14 +224,14 @@
 
 <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyWqGJP03O1WM0earzVZTMJOVagTIoB7VxSAlmzmvQtu-Z0NFK62DSTYpkLxru-NuPR4Q/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycby2kdj_vqmgouwUiA0gWuYsjl1ape4ZsJpfY1vRJhbIFImOBfwZMgc6flBQrJIp7Wsnrg/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
     let adminSelectedUnit = "", adminSelectedList = "";
     let qScore = 0, qIdx = 0, qPool = [], mCorrect = 0, mTotal = 0, mGoal = 0;
-    let matrixInterval = null; // Variable to store the interval
+    let matrixInterval = null; 
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -242,6 +240,7 @@
     function resizeCanvas() { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
+        // Randomized start prevents the "line" effect
         columns = Array(Math.floor(canvas.width / 25)).fill(0).map(() => Math.random() * -canvas.height); 
     }
 
@@ -302,9 +301,8 @@
 
     function enterApp() { 
         document.getElementById('landingPage').style.opacity = '0'; 
-        // Stop the animation loop and hide the canvas to return to static bg
         if (matrixInterval) clearInterval(matrixInterval);
-        canvas.style.display = 'none';
+        canvas.style.display = 'none'; // Return to static CSS background
         
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
@@ -479,20 +477,27 @@
     }
 
     async function submitNewWord() { 
-        const btn = document.getElementById('addWordBtn'); 
         const u = adminSelectedUnit; const l = adminSelectedList; 
         const t = document.getElementById('newT').value;
         const d = document.getElementById('newD').value;
         const i = document.getElementById('newI').value;
-        btn.innerHTML = "Processing..."; btn.disabled = true; 
+
+        if(!t || !d) return alert("Term and Definition required");
+
+        // Optimistic UI: update local list immediately
+        units[u][l].push({t: t, d: d, img: i}); 
+        renderAdminWordList(); 
+        updateMatrixWords(); 
+
+        document.getElementById('newT').value = ""; 
+        document.getElementById('newD').value = ""; 
+        document.getElementById('newI').value = ""; 
+
         const payload = JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }); 
         try { 
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-            units[u][l].push({t: t, d: d, img: i}); 
-            document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = ""; 
-            renderAdminWordList(); 
-            fetchTeacherData(true); 
-        } finally { btn.innerHTML = "Commit to Database"; btn.disabled = false; } 
+            fetchTeacherData(true); // Silently refresh in background
+        } catch(e) { console.error("Sync failed"); }
     }
 
     async function saveEdit(u, l, idx) { 
@@ -503,18 +508,19 @@
             action: "updateWord", unit: u, list: l, 
             oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni 
         }); 
-        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
         units[u][l][idx] = {t: nt, d: nd, img: ni}; 
-        alert("Sent!"); 
+        alert("Updating Database..."); 
+        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
         fetchTeacherData(true); 
     }
 
     async function deleteWord(u, l, idx) { 
         if(!confirm("Delete?")) return; 
-        const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: units[u][l][idx].t }); 
-        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-        units[u][l].splice(idx, 1); 
+        const termToDelete = units[u][l][idx].t;
+        units[u][l].splice(idx, 1); // Optimistic UI
         renderAdminWordList();
+        const payload = JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete }); 
+        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
         fetchTeacherData(true); 
     }
 </script>
