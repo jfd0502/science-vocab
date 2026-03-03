@@ -115,6 +115,9 @@
         .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; }
         .hidden { display: none !important; }
         .auth-switch { color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.85rem; margin-top: 10px; display: inline-block; }
+        
+        #logoutBtn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-left: 10px; transition: 0.3s; }
+        #logoutBtn:hover { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
@@ -170,7 +173,11 @@
             <div id="studyInterface" class="hidden">
                 <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()"></div>
                 <h3 id="activeListName" style="margin:5px 0; color: var(--primary);"></h3>
-                <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b; margin-bottom: 20px;"></div>
+                
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <div id="studentWelcome" style="font-size: 0.8rem; color: #64748b;"></div>
+                    <button id="logoutBtn" onclick="logout()">Logout</button>
+                </div>
                 
                 <div class="study-tabs">
                     <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
@@ -318,12 +325,16 @@
         canvas.style.display = 'none'; 
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
-            if (studentName) unlockApp();
-            else document.getElementById('loginOverlay').classList.remove('hidden'); 
+            if (studentName) {
+                unlockApp();
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden'); 
+            }
             renderUnitSelection();
         }, 800); 
     }
 
+    // --- AUTHENTICATION LOGIC ---
     function toggleAuthMode(isReg) {
         document.getElementById('loginForm').classList.toggle('hidden', isReg);
         document.getElementById('registerForm').classList.toggle('hidden', !isReg);
@@ -359,7 +370,6 @@
             const result = await response.text();
             
             if (result.startsWith("Success:")) {
-                // Fix: Extract name from response, or use input for registration
                 if(type === 'register') {
                     studentName = fullNameInput;
                 } else {
@@ -371,7 +381,7 @@
                 alert(result);
             }
         } catch (e) {
-            alert("Network Error. Check internet connection.");
+            alert("Network Error. Check connection.");
         } finally {
             btn.innerText = originalText;
             btn.disabled = false;
@@ -387,10 +397,19 @@
         renderUnitSelection(); 
     }
 
+    function logout() {
+        if(confirm("Logout and return to identity selection?")) {
+            localStorage.removeItem('vocabSojournName');
+            studentName = "";
+            location.reload();
+        }
+    }
+
+    // --- NAVIGATION & STUDY MODES ---
     function renderUnitSelection() { 
         const grid = document.getElementById('unitBtnGrid');
         const keys = Object.keys(units);
-        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : "Loading...";
+        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : "Loading Units...";
     }
 
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
@@ -443,6 +462,7 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
+    // --- ADMIN LOGIC ---
     function protectedToggle() { 
         const adminView = document.getElementById('adminView');
         if (adminView.classList.contains('hidden')) { 
