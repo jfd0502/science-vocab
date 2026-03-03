@@ -224,7 +224,7 @@
         </div>
     </div>
 
-   <script>
+<script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
     const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyWqGJP03O1WM0earzVZTMJOVagTIoB7VxSAlmzmvQtu-Z0NFK62DSTYpkLxru-NuPR4Q/exec"; 
     const ADMIN_PASS = "science123";
@@ -295,7 +295,6 @@
             document.getElementById('loginOverlay').classList.add('hidden'); 
             document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; 
             
-            // ENSURE APP CONTAINER IS VISIBLE
             const container = document.querySelector('.app-container');
             container.style.opacity = '1'; 
             container.style.pointerEvents = 'auto'; 
@@ -395,9 +394,7 @@
         const container = document.querySelector('.app-container');
 
         if (adminView.classList.contains('hidden')) { 
-            // ENTERING MANAGER MODE
             if (prompt("Password:") === ADMIN_PASS) { 
-                // Force container visible so admin view can be seen
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
                 
@@ -409,22 +406,26 @@
                 resetAdminView(); 
             } 
         } else { 
-            // EXITING MANAGER MODE - HARD RESET TO IDENTITY SCREEN
+            // EXITING MANAGER MODE - LOGIC CHANGE APPLIED HERE
             adminView.classList.add('hidden'); 
-            studyView.classList.add('hidden');
             
-            // Clean state as requested (Act like Begin Journey)
+            // ENSURE THE STUDY VIEW IS VISIBLE AND RESET TO START
+            studyView.classList.remove('hidden');
+            document.getElementById('unitSelection').classList.remove('hidden');
+            document.getElementById('listSelection').classList.add('hidden');
+            document.getElementById('studyInterface').classList.add('hidden');
+            
+            // Clean state
             studentName = ""; 
             document.getElementById('studentNameInput').value = "";
             
-            // Hide the actual app dashboard
+            // Hide the actual app dashboard so student must log in
             container.style.opacity = '0';
             container.style.pointerEvents = 'none';
             
             // Show the name entry overlay
             loginOverlay.classList.remove('hidden'); 
             
-            // Pre-draw the units so they are there the second a student logs in
             renderUnitSelection(); 
         } 
     }
@@ -497,5 +498,4 @@
     }
 </script>
 </body>
-</html>
 </html>
