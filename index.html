@@ -287,7 +287,20 @@
         }
     }
 
-    function saveStudentName() { studentName = document.getElementById('studentNameInput').value; if(studentName.trim()){ document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderUnitSelection(); } else { alert("Please enter your name."); } }
+    function saveStudentName() { 
+        studentName = document.getElementById('studentNameInput').value; 
+        if(studentName.trim()){ 
+            document.getElementById('loginOverlay').classList.add('hidden'); 
+            document.getElementById('studentWelcome').innerText = "Logged in as: " + studentName; 
+            const container = document.querySelector('.app-container');
+            container.style.opacity = '1'; 
+            container.style.pointerEvents = 'auto'; 
+            renderUnitSelection(); 
+        } else { 
+            alert("Please enter your name."); 
+        } 
+    }
+
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
@@ -378,17 +391,21 @@
 
         if (adminView.classList.contains('hidden')) { 
             if (prompt("Password:") === ADMIN_PASS) { 
+                // Enable Visibility
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'auto';
+
                 studyView.classList.add('hidden'); 
                 loginOverlay.classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
-                container.style.opacity = '1';
-                container.style.pointerEvents = 'auto';
+                
+                renderAdminUnitSelection(); // Draw admin units
                 resetAdminView(); 
             } 
         } else { 
             adminView.classList.add('hidden'); 
-            // Re-render student units when leaving admin mode to ensure they are visible
-            renderUnitSelection(); 
+            renderUnitSelection(); // Re-paint student units
+            
             if (!studentName) { 
                 loginOverlay.classList.remove('hidden'); 
             } else { 
@@ -400,10 +417,15 @@
         } 
     }
 
-    function renderAdminUnitSelection() { document.getElementById('adminUnitGrid').innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
+    function renderAdminUnitSelection() { 
+        const grid = document.getElementById('adminUnitGrid');
+        const keys = Object.keys(units);
+        grid.innerHTML = keys.length > 0 ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('') : "Loading..."; 
+    }
+
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
-    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
+    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
     
     function renderAdminWordList() { 
