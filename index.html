@@ -295,6 +295,8 @@
             const container = document.querySelector('.app-container');
             container.style.opacity = '1'; 
             container.style.pointerEvents = 'auto'; 
+            
+            // KEY FIX: Always trigger unit rendering when the student logs in
             renderUnitSelection(); 
         } else { 
             alert("Please enter your name."); 
@@ -391,23 +393,21 @@
 
         if (adminView.classList.contains('hidden')) { 
             if (prompt("Password:") === ADMIN_PASS) { 
-                // Enable Visibility
                 container.style.opacity = '1';
                 container.style.pointerEvents = 'auto';
-
                 studyView.classList.add('hidden'); 
                 loginOverlay.classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
-                
-                renderAdminUnitSelection(); // Draw admin units
+                renderAdminUnitSelection(); 
                 resetAdminView(); 
             } 
         } else { 
             adminView.classList.add('hidden'); 
-            renderUnitSelection(); // Re-paint student units
-            
+            renderUnitSelection(); 
             if (!studentName) { 
                 loginOverlay.classList.remove('hidden'); 
+                container.style.opacity = '0'; // Hide container until name is entered
+                container.style.pointerEvents = 'none';
             } else { 
                 studyView.classList.remove('hidden'); 
                 document.getElementById('unitSelection').classList.remove('hidden');
