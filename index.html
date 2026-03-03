@@ -122,6 +122,9 @@
         .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
         
         .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); }
+
+        .loading-text { text-align: center; color: var(--primary); font-style: italic; letter-spacing: 1px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
     </style>
 </head>
 <body>
@@ -131,7 +134,7 @@
     <div id="landingPage">
         <h1 class="welcome-title">VOCABULARY SOJOURN</h1>
         <div class="sojourn-def" style="color: #94a3b8; margin-bottom: 30px; font-style: italic;">so-journ (n): a temporary stay in a place.</div>
-        <button class="start-btn" onclick="enterApp()">BEGIN JOURNEY</button>
+        <button class="start-btn" id="landingStartBtn" onclick="enterApp()">BEGIN JOURNEY</button>
     </div>
 
     <div id="loginOverlay" class="hidden">
@@ -161,7 +164,7 @@
 
     <div class="app-container">
         <div class="session-info-bar">
-            <div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;"></div>
+            <div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Explorer: Guest</div>
             <button id="logoutBtn" onclick="logout()">Logout</button>
         </div>
 
@@ -170,7 +173,9 @@
         <div id="studyView" class="panel">
             <div id="unitSelection">
                 <h2 style="margin: 5px 0 20px 0;">Select Unit</h2>
-                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="loading-text">Preparing your journey...</div>
+                </div>
             </div>
             
             <div id="listSelection" class="hidden">
@@ -256,6 +261,7 @@
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
     let matrixInterval = null; 
+    let isDataLoaded = false;
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -290,6 +296,7 @@
         }); 
     }
     
+    // START PRE-FETCHING DATA IMMEDIATELY
     window.onload = () => { 
         fetchTeacherData(); 
         resizeCanvas(); 
@@ -320,10 +327,15 @@
                 }
             });
             units = newUnits;
+            isDataLoaded = true;
             updateMatrixWords();
             renderUnitSelection(); 
             renderAdminUnitSelection();
-        } catch (e) { console.error("Fetch Error:", e); }
+        } catch (e) { 
+            console.error("Fetch Error:", e);
+            document.getElementById('unitBtnGrid').innerHTML = '<div style="color:var(--danger)">Connection weak. Retrying...</div>';
+            setTimeout(() => fetchTeacherData(), 3000);
+        }
     }
 
     function enterApp() { 
@@ -396,8 +408,9 @@
 
     function renderUnitSelection() { 
         const grid = document.getElementById('unitBtnGrid');
+        if (!isDataLoaded) return; // Wait for background fetch to complete
         const keys = Object.keys(units);
-        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : "Loading...";
+        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">Synchronizing records...</div>';
     }
 
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
@@ -484,7 +497,7 @@
                 <input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL">
                 <div style="display:flex; gap:10px; margin-top:10px;">
                     <button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button>
-                    <button class="main-btn" onclick="deleteWord('${u}','!${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
+                    <button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
                 </div>
             </div>`).join(''); 
     }
