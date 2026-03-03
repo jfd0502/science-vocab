@@ -125,6 +125,11 @@
 
         .loading-text { text-align: center; color: var(--primary); font-style: italic; letter-spacing: 1px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
+        /* ANALYTICS TABLE STYLING */
+        .analytics-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
+        .analytics-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--glass-border); color: var(--primary); }
+        .analytics-table td { padding: 10px; border-bottom: 1px solid var(--glass-border); }
     </style>
 </head>
 <body>
@@ -233,22 +238,42 @@
 
         <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
             <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
-            <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
-            <div id="adminUnitSelection"><div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
-            <div id="adminListSelection" class="hidden">
-                <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
-                <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+                <button class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content Manager</button>
+                <button class="main-btn" style="flex: 1; background: var(--accent);" onclick="switchAdminTab('analytics')">Student Results</button>
             </div>
-            <div id="adminEditArea" class="hidden">
-                <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
-                <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
-                    <h4 style="margin-top:0;">New Entry</h4>
-                    <input type="text" id="newT" placeholder="Term">
-                    <input type="text" id="newD" placeholder="Definition">
-                    <input type="text" id="newI" placeholder="Image URL (Optional)">
-                    <button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;">Commit to Database</button>
+
+            <div id="adminContentArea">
+                <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
+                <div id="adminUnitSelection"><div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
+                <div id="adminListSelection" class="hidden">
+                    <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
+                    <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
                 </div>
-                <div id="adminWordList"></div>
+                <div id="adminEditArea" class="hidden">
+                    <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
+                    <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                        <h4 style="margin-top:0;">New Entry</h4>
+                        <input type="text" id="newT" placeholder="Term">
+                        <input type="text" id="newD" placeholder="Definition">
+                        <input type="text" id="newI" placeholder="Image URL (Optional)">
+                        <button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;">Commit to Database</button>
+                    </div>
+                    <div id="adminWordList"></div>
+                </div>
+            </div>
+
+            <div id="adminAnalyticsArea" class="hidden">
+                <h3 style="margin-top: 0;">Student Insights</h3>
+                <div id="studentListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="loading-text">Fetching records...</div>
+                </div>
+                <div id="individualStudentView" class="hidden">
+                    <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to All Students</div>
+                    <h4 id="viewingStudentName" style="color: var(--accent); margin-bottom: 5px;"></h4>
+                    <div id="studentDetailTable"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -262,6 +287,7 @@
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
     let matrixInterval = null; 
     let isDataLoaded = false;
+    let rawAnalytics = [];
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -296,7 +322,6 @@
         }); 
     }
     
-    // START PRE-FETCHING DATA IMMEDIATELY
     window.onload = () => { 
         fetchTeacherData(); 
         resizeCanvas(); 
@@ -360,19 +385,10 @@
         const fullNameInput = document.getElementById('regFull').value;
 
         if (type === 'login') {
-            payload = { 
-                action: 'login', 
-                username: document.getElementById('userIn').value, 
-                password: document.getElementById('passIn').value 
-            };
+            payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };
         } else {
             if(!fullNameInput) return alert("Please enter your full name.");
-            payload = { 
-                action: 'register', 
-                fullname: fullNameInput,
-                username: document.getElementById('regUser').value, 
-                password: document.getElementById('regPass').value 
-            };
+            payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value };
         }
 
         const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
@@ -382,7 +398,6 @@
         try {
             const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) });
             const result = await response.text();
-            
             if (result.startsWith("Success:")) {
                 studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "");
                 localStorage.setItem('vocabSojournName', studentName);
@@ -400,15 +415,12 @@
     }
 
     function logout() {
-        if(confirm("Logout?")) {
-            localStorage.removeItem('vocabSojournName');
-            studentName = ""; location.reload();
-        }
+        if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); studentName = ""; location.reload(); }
     }
 
     function renderUnitSelection() { 
         const grid = document.getElementById('unitBtnGrid');
-        if (!isDataLoaded) return; // Wait for background fetch to complete
+        if (!isDataLoaded) return;
         const keys = Object.keys(units);
         grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">Synchronizing records...</div>';
     }
@@ -463,6 +475,7 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
+    // --- ADMIN LOGIC ---
     function protectedToggle() { 
         const adminView = document.getElementById('adminView');
         if (adminView.classList.contains('hidden')) { 
@@ -471,12 +484,54 @@
                 document.getElementById('loginOverlay').classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
                 const container = document.querySelector('.app-container');
-                container.style.opacity = '1'; 
-                container.style.pointerEvents = 'auto';
+                container.style.opacity = '1'; container.style.pointerEvents = 'auto';
                 renderAdminUnitSelection(); 
             } 
         } else { location.reload(); } 
     }
+
+    function switchAdminTab(tab) {
+        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content');
+        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics');
+        if (tab === 'analytics') fetchResultsAnalytics();
+    }
+
+    // --- ANALYTICS / RESULTS FEATURE ---
+    async function fetchResultsAnalytics() {
+        try {
+            const response = await fetch(EXPORT_URL + "?action=getAnalytics");
+            const data = await response.json();
+            rawAnalytics = data;
+            renderStudentList();
+        } catch (e) {
+            document.getElementById('studentListGrid').innerText = "Unable to load analytics.";
+        }
+    }
+
+    function renderStudentList() {
+        const grid = document.getElementById('studentListGrid');
+        document.getElementById('individualStudentView').classList.add('hidden');
+        grid.classList.remove('hidden');
+        const students = [...new Set(rawAnalytics.map(row => row.student))];
+        grid.innerHTML = students.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join('');
+    }
+
+    function viewStudentDetail(name) {
+        document.getElementById('studentListGrid').classList.add('hidden');
+        const view = document.getElementById('individualStudentView');
+        view.classList.remove('hidden');
+        document.getElementById('viewingStudentName').innerText = "History for: " + name;
+        
+        const filtered = rawAnalytics.filter(row => row.student === name);
+        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`;
+        filtered.reverse().forEach(row => {
+            html += `<tr><td>${row.timestamp}</td><td>${row.unit}</td><td>${row.list}</td><td>${row.mode}</td><td>${row.score}</td></tr>`;
+        });
+        html += `</table>`;
+        document.getElementById('studentDetailTable').innerHTML = html;
+    }
+
+    function backToStudentList() { renderStudentList(); }
 
     function renderAdminUnitSelection() { 
         const grid = document.getElementById('adminUnitGrid');
@@ -519,7 +574,7 @@
     }
 
     async function deleteWord(u, l, idx) {
-        if(!confirm("Are you sure you want to delete this word from the database?")) return;
+        if(!confirm("Are you sure you want to delete this word?")) return;
         const termToDelete = units[u][l][idx].t;
         units[u][l].splice(idx, 1); renderAdminWordList();
         const payload = { action: "deleteWord", unit: u, list: l, term: termToDelete };
