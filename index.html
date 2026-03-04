@@ -77,11 +77,23 @@
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
-        .main-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            filter: grayscale(1);
+        /* Sync Toast Animation */
+        #syncIndicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            z-index: 10000;
+            transform: translateY(100px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        #syncIndicator.show { transform: translateY(0); }
 
         .breadcrumb { 
             font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; 
@@ -138,6 +150,8 @@
     </style>
 </head>
 <body>
+
+    <div id="syncIndicator">Syncing with Database...</div>
 
     <canvas id="matrixCanvas"></canvas>
 
@@ -288,64 +302,47 @@
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
-    let matrixInterval = null; 
-    let isDataLoaded = false;
-    let rawAnalytics = [];
+    let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     let columns = [];
 
     function resizeCanvas() { 
-        canvas.width = window.innerWidth; 
-        canvas.height = window.innerHeight; 
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
         columns = Array(Math.floor(canvas.width / 25)).fill(0).map(() => Math.random() * -canvas.height); 
     }
 
     function updateMatrixWords() {
         let terms = [];
-        for (let unit in units) {
-            for (let list in units[unit]) {
-                units[unit][list].forEach(item => terms.push(item.t));
-            }
-        }
+        for (let u in units) for (let l in units[u]) units[u][l].forEach(i => terms.push(i.t));
         if (terms.length > 0) allTerms = terms;
     }
 
     function drawMatrix() { 
-        ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height); 
-        ctx.fillStyle = "#3b82f6"; 
-        ctx.font = "bold 15px monospace"; 
+        ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        ctx.fillStyle = "#3b82f6"; ctx.font = "bold 15px monospace"; 
         columns.forEach((y, i) => { 
             const word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
             ctx.fillText(word, i * 28, y); 
-            if (y > canvas.height && Math.random() > 0.975) columns[i] = 0; 
-            else columns[i] = y + 25; 
+            if (y > canvas.height && Math.random() > 0.975) columns[i] = 0; else columns[i] = y + 25; 
         }); 
     }
     
     window.onload = () => { 
-        fetchTeacherData(); 
-        resizeCanvas(); 
-        matrixInterval = setInterval(drawMatrix, 50); 
+        fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
         const stored = localStorage.getItem('vocabSojournName');
-        if (stored) {
-            studentName = stored;
-            document.getElementById('studentWelcome').innerText = "Explorer: " + studentName;
-        }
+        if (stored) { studentName = stored; document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; }
     };
     window.addEventListener('resize', resizeCanvas);
 
     async function fetchTeacherData(force = false) {
         try {
             const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
-            const response = await fetch(url); 
-            const csvText = await response.text();
-            const rows = csvText.split(/\r?\n/).filter(row => row.trim().length > 0);
-            const dataRows = rows.slice(1);
+            const response = await fetch(url); const csvText = await response.text();
+            const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
             const newUnits = {}; 
-            dataRows.forEach(row => {
+            rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length >= 5) {
                     const [term, def, img, listName, unitName] = cols;
@@ -354,250 +351,101 @@
                     newUnits[unitName][listName].push({t: term, d: def, img: img});
                 }
             });
-            units = newUnits;
-            isDataLoaded = true;
-            updateMatrixWords();
-            renderUnitSelection(); 
-            renderAdminUnitSelection();
-        } catch (e) { 
-            console.error("Fetch Error:", e);
-        }
+            units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
+        } catch (e) { console.error("Fetch Error:", e); }
     }
 
-    function enterApp() { 
-        document.getElementById('landingPage').style.opacity = '0'; 
-        if (matrixInterval) clearInterval(matrixInterval);
-        canvas.style.display = 'none'; 
-        setTimeout(() => { 
-            document.getElementById('landingPage').classList.add('hidden'); 
-            if (studentName) unlockApp();
-            else document.getElementById('loginOverlay').classList.remove('hidden'); 
-            renderUnitSelection();
-        }, 800); 
-    }
-
-    function toggleAuthMode(isReg) {
-        document.getElementById('loginForm').classList.toggle('hidden', isReg);
-        document.getElementById('registerForm').classList.toggle('hidden', !isReg);
-    }
-
-    async function handleAuth(type) {
-        let payload = {};
-        const fullNameInput = document.getElementById('regFull').value;
-
-        if (type === 'login') {
-            payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };
-        } else {
-            if(!fullNameInput) return alert("Please enter your full name.");
-            payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value };
-        }
-
-        const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
-        const oldText = btn.innerText;
-        btn.innerText = "Verifying...";
-        btn.disabled = true;
-
-        try {
-            const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            const result = await response.text();
-            if (result.startsWith("Success:")) {
-                studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "");
-                localStorage.setItem('vocabSojournName', studentName);
-                unlockApp();
-            } else { alert(result); }
-        } catch (e) { alert("Network Error."); } finally { btn.innerText = oldText; btn.disabled = false; }
-    }
-
-    function unlockApp() {
-        document.getElementById('loginOverlay').classList.add('hidden'); 
-        document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
-        const container = document.querySelector('.app-container');
-        container.style.opacity = '1'; container.style.pointerEvents = 'auto'; 
-        renderUnitSelection(); 
-    }
-
-    function logout() {
-        if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); studentName = ""; location.reload(); }
-    }
-
-    function renderUnitSelection() { 
-        const grid = document.getElementById('unitBtnGrid');
-        if (!isDataLoaded) return;
-        const keys = Object.keys(units);
-        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">Synchronizing records...</div>';
-    }
-
-    function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
-    function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
-    function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
-    function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
-    
-    async function syncSessionToSheet(mode, score) { 
-        const payload = JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }); 
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: payload }); 
-    }
-    
-    function setStudyMode(mode) { 
-        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active'));
-        document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
-        ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden'));
-        document.getElementById(mode + 'Mode').classList.remove('hidden');
-        const list = units[currentUnit][currentClass];
-        if (mode === 'list') { renderFullList(list); updateHistoryUI(); }
-        if (mode === 'flash') { cardIdx = 0; updateCard(list); }
-        if (mode === 'quiz') startQuiz(list);
-        if (mode === 'match') startMatch(list);
-    }
-
-    function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
-    function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
-    function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
-    
-    function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz(); }
-    function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
-    function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
-    function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
-    
-    function startMatch(list) { 
-        mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; 
-        document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); 
-        let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
-        let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
-        document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; 
-    }
-    function drag(e) { draggedItem = e.target; }
-    function drop(e) { 
-        const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; mTotal++; 
-        if (draggedItem.dataset.id === target.dataset.id) { mCorrect++; target.style.background = 'var(--accent)'; draggedItem.style.visibility = 'hidden'; target.draggable = false; }
-        else { target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); }
-        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`;
-        if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", acc); syncSessionToSheet("Match", acc); }
-    }
-    
-    function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
-    function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
-    
-    function protectedToggle() { 
-        const adminView = document.getElementById('adminView');
-        if (adminView.classList.contains('hidden')) { 
-            if (prompt("Password:") === ADMIN_PASS) { 
-                document.getElementById('studyView').classList.add('hidden'); 
-                document.getElementById('loginOverlay').classList.add('hidden'); 
-                adminView.classList.remove('hidden'); 
-                const container = document.querySelector('.app-container');
-                container.style.opacity = '1'; container.style.pointerEvents = 'auto';
-                renderAdminUnitSelection(); 
-            } 
-        } else { location.reload(); } 
-    }
-
-    function switchAdminTab(tab) {
-        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content');
-        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics');
-        if (tab === 'analytics') fetchResultsAnalytics();
-    }
-
-    async function fetchResultsAnalytics() {
-        try {
-            const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now());
-            const data = await response.json();
-            rawAnalytics = data.map(row => {
-                const lowerRow = {};
-                for (let key in row) { lowerRow[key.toLowerCase().trim()] = row[key]; }
-                return {
-                    student: lowerRow.student || lowerRow.fullname || lowerRow.studentname || 'Unknown',
-                    unit: lowerRow.unit || 'N/A',
-                    list: lowerRow.list || 'N/A',
-                    mode: lowerRow.mode || 'N/A',
-                    score: lowerRow.score || '0%',
-                    timestamp: lowerRow.timestamp || 'No Date'
-                };
-            });
-            renderStudentList();
-        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; }
-    }
-
-    function renderStudentList() {
-        const grid = document.getElementById('studentListGrid');
-        document.getElementById('individualStudentView').classList.add('hidden');
-        grid.classList.remove('hidden');
-        const students = [...new Set(rawAnalytics.map(row => row.student))];
-        grid.innerHTML = students.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join('');
-    }
-
-    function viewStudentDetail(name) {
-        document.getElementById('studentListGrid').classList.add('hidden');
-        const view = document.getElementById('individualStudentView');
-        view.classList.remove('hidden');
-        document.getElementById('viewingStudentName').innerText = "History for: " + name;
-        const filtered = rawAnalytics.filter(row => row.student === name);
-        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`;
-        filtered.reverse().forEach(row => { html += `<tr><td>${row.timestamp}</td><td>${row.unit}</td><td>${row.list}</td><td>${row.mode}</td><td>${row.score}</td></tr>`; });
-        html += `</table>`;
-        document.getElementById('studentDetailTable').innerHTML = html;
-    }
-
-    function backToStudentList() { renderStudentList(); }
-
-    function renderAdminUnitSelection() { 
-        const grid = document.getElementById('adminUnitGrid');
-        grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('');
-    }
-    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
-    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
-    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
-    function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-    
-    function renderAdminWordList() { 
-        const u = adminSelectedUnit, l = adminSelectedList; 
-        document.getElementById('adminHeader').innerText = `${u} > ${l}`; 
-        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `
-            <div class="admin-entry">
-                <input type="text" id="t-${idx}" value="${item.t}" placeholder="Term">
-                <input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition">
-                <input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL">
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button id="saveBtn-${idx}" class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button>
-                    <button id="delBtn-${idx}" class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
-                </div>
-            </div>`).join(''); 
+    // --- CHEAT TRICK SYNC UI ---
+    function triggerSyncIndicator() {
+        const toast = document.getElementById('syncIndicator');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
     async function submitNewWord() { 
         const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
         if(!t || !d) return alert("Fill fields");
-        const btn = document.getElementById('addWordBtn');
-        btn.disabled = true; btn.innerText = "Processing...";
+        
+        // Instant Feedback
         units[u][l].push({t, d, img: i}); 
         renderAdminWordList();
-        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }) });
-        await fetchTeacherData(true); 
-        btn.disabled = false; btn.innerText = "Commit to Database";
+        triggerSyncIndicator();
         document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
+
+        // Background Upload
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }) });
     }
 
     async function saveEdit(u, l, idx) { 
         const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
-        const btn = document.getElementById(`saveBtn-${idx}`);
-        btn.disabled = true; btn.innerText = "Syncing...";
-        const payload = { action: "updateWord", unit: u, list: l, oldTerm: units[u][l][idx].t, newTerm: nt, newDef: nd, newImg: ni }; 
+        const oldTerm = units[u][l][idx].t;
+
+        // Instant Feedback
         units[u][l][idx] = {t: nt, d: nd, img: ni}; 
-        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); 
-        await fetchTeacherData(true); 
-        btn.disabled = false; btn.innerText = "Update Word";
-        renderAdminWordList();
+        triggerSyncIndicator();
+
+        // Background Upload
+        const payload = { action: "updateWord", unit: u, list: l, oldTerm: oldTerm, newTerm: nt, newDef: nd, newImg: ni }; 
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); 
     }
 
     async function deleteWord(u, l, idx) {
         if(!confirm("Are you sure?")) return;
-        const btn = document.getElementById(`delBtn-${idx}`);
-        btn.disabled = true; btn.innerText = "Deleting...";
         const termToDelete = units[u][l][idx].t;
+        
+        // Instant Feedback
         units[u][l].splice(idx, 1); 
         renderAdminWordList();
-        await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete }) });
-        await fetchTeacherData(true); 
+        triggerSyncIndicator();
+
+        // Background Upload
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete }) });
     }
+
+    // --- ALL OTHER UNCHANGED FUNCTIONS ---
+    function enterApp() { document.getElementById('landingPage').style.opacity = '0'; if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); renderUnitSelection(); }, 800); }
+    function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
+    async function handleAuth(type) {
+        let payload = {}; const fullNameInput = document.getElementById('regFull').value;
+        if (type === 'login') payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };
+        else { if(!fullNameInput) return alert("Please enter your full name."); payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value }; }
+        const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
+        const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
+        try { const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await response.text(); if (result.startsWith("Success:")) { studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", ""); localStorage.setItem('vocabSojournName', studentName); unlockApp(); } else { alert(result); } } catch (e) { alert("Network Error."); } finally { btn.innerText = oldText; btn.disabled = false; }
+    }
+    function unlockApp() { document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderUnitSelection(); }
+    function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); studentName = ""; location.reload(); } }
+    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">Synchronizing records...</div>'; }
+    function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
+    function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
+    function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
+    function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
+    async function syncSessionToSheet(mode, score) { fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }) }); }
+    function setStudyMode(mode) { ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); document.getElementById(mode + 'Mode').classList.remove('hidden'); const list = units[currentUnit][currentClass]; if (mode === 'list') { renderFullList(list); updateHistoryUI(); } if (mode === 'flash') { cardIdx = 0; updateCard(list); } if (mode === 'quiz') startQuiz(list); if (mode === 'match') startMatch(list); }
+    function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
+    function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
+    function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
+    function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz(); }
+    function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
+    function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
+    function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
+    function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; }
+    function drag(e) { draggedItem = e.target; }
+    function drop(e) { const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id) { mCorrect++; target.style.background = 'var(--accent)'; draggedItem.style.visibility = 'hidden'; target.draggable = false; } else { target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", acc); syncSessionToSheet("Match", acc); } }
+    function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
+    function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
+    function protectedToggle() { const adminView = document.getElementById('adminView'); if (adminView.classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); adminView.classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderAdminUnitSelection(); } } else { location.reload(); } }
+    function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
+    async function fetchResultsAnalytics() { try { const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); const data = await response.json(); rawAnalytics = data.map(row => { const lowerRow = {}; for (let k in row) lowerRow[k.toLowerCase().trim()] = row[k]; return { student: lowerRow.student || lowerRow.fullname || lowerRow.studentname || 'Unknown', unit: lowerRow.unit || 'N/A', list: lowerRow.list || 'N/A', mode: lowerRow.mode || 'N/A', score: lowerRow.score || '0%', timestamp: lowerRow.timestamp || 'No Date' }; }); renderStudentList(); } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } }
+    function renderStudentList() { const grid = document.getElementById('studentListGrid'); document.getElementById('individualStudentView').classList.add('hidden'); grid.classList.remove('hidden'); const students = [...new Set(rawAnalytics.map(r => r.student))]; grid.innerHTML = students.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); }
+    function viewStudentDetail(name) { document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
+    function backToStudentList() { renderStudentList(); }
+    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
+    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
+    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
+    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
+    function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
+    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
 </script>
 </body>
 </html>
