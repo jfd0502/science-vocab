@@ -422,15 +422,21 @@
     function protectedToggle() { const adminView = document.getElementById('adminView'); if (adminView.classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); adminView.classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderAdminUnitSelection(); } } else { location.reload(); } }
     function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
     
+    // UPDATED ANALYTICS PARSING TO ELIMINATE "ANONYMOUS" LABELING
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
             const data = await response.json(); 
             rawAnalytics = data.map(row => { 
                 const lowerRow = {}; 
-                for (let k in row) lowerRow[k.toLowerCase().trim()] = row[k]; 
+                // Clean up all keys from Google Sheet to ensure match
+                for (let k in row) lowerRow[k.toLowerCase().replace(/\s/g, "")] = row[k]; 
+                
+                // Prioritize keys in order of common spreadsheet headers
+                const name = lowerRow.student || lowerRow.fullname || lowerRow.name || lowerRow.explorer || 'Anonymous';
+                
                 return { 
-                    student: lowerRow.student || lowerRow.fullname || lowerRow.studentname || lowerRow.name || 'Anonymous', 
+                    student: name, 
                     unit: lowerRow.unit || 'N/A', 
                     list: lowerRow.list || 'N/A', 
                     mode: lowerRow.mode || 'N/A', 
@@ -446,12 +452,17 @@
         const grid = document.getElementById('studentListGrid'); 
         document.getElementById('individualStudentView').classList.add('hidden'); 
         grid.classList.remove('hidden'); 
-        const students = [...new Set(rawAnalytics.map(r => r.student))]; 
-        if (students.length === 0) {
+        // Filter out "Anonymous" only if there are other names found
+        let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
+        if (studentSet.length > 1 && studentSet.includes('Anonymous')) {
+            studentSet = studentSet.filter(s => s !== 'Anonymous');
+        }
+
+        if (studentSet.length === 0) {
             grid.innerHTML = '<div class="loading-text">No records found.</div>';
             return;
         }
-        grid.innerHTML = students.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
+        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
     }
 
     function viewStudentDetail(name) { document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
@@ -461,7 +472,7 @@
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
+    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','\${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','\${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
 </script>
 </body>
 </html>
