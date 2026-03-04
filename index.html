@@ -77,7 +77,6 @@
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
-        /* Sync Toast Animation */
         #syncIndicator {
             position: fixed;
             bottom: 20px;
@@ -355,7 +354,6 @@
         } catch (e) { console.error("Fetch Error:", e); }
     }
 
-    // --- CHEAT TRICK SYNC UI ---
     function triggerSyncIndicator() {
         const toast = document.getElementById('syncIndicator');
         toast.classList.add('show');
@@ -365,26 +363,18 @@
     async function submitNewWord() { 
         const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
         if(!t || !d) return alert("Fill fields");
-        
-        // Instant Feedback
         units[u][l].push({t, d, img: i}); 
         renderAdminWordList();
         triggerSyncIndicator();
         document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
-
-        // Background Upload
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }) });
     }
 
     async function saveEdit(u, l, idx) { 
         const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
         const oldTerm = units[u][l][idx].t;
-
-        // Instant Feedback
         units[u][l][idx] = {t: nt, d: nd, img: ni}; 
         triggerSyncIndicator();
-
-        // Background Upload
         const payload = { action: "updateWord", unit: u, list: l, oldTerm: oldTerm, newTerm: nt, newDef: nd, newImg: ni }; 
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); 
     }
@@ -392,17 +382,12 @@
     async function deleteWord(u, l, idx) {
         if(!confirm("Are you sure?")) return;
         const termToDelete = units[u][l][idx].t;
-        
-        // Instant Feedback
         units[u][l].splice(idx, 1); 
         renderAdminWordList();
         triggerSyncIndicator();
-
-        // Background Upload
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete }) });
     }
 
-    // --- ALL OTHER UNCHANGED FUNCTIONS ---
     function enterApp() { document.getElementById('landingPage').style.opacity = '0'; if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); renderUnitSelection(); }, 800); }
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
     async function handleAuth(type) {
@@ -436,8 +421,30 @@
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     function protectedToggle() { const adminView = document.getElementById('adminView'); if (adminView.classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); adminView.classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderAdminUnitSelection(); } } else { location.reload(); } }
     function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
-    async function fetchResultsAnalytics() { try { const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); const data = await response.json(); rawAnalytics = data.map(row => { const lowerRow = {}; for (let k in row) lowerRow[k.toLowerCase().trim()] = row[k]; return { student: lowerRow.student || lowerRow.fullname || lowerRow.studentname || 'Unknown', unit: lowerRow.unit || 'N/A', list: lowerRow.list || 'N/A', mode: lowerRow.mode || 'N/A', score: lowerRow.score || '0%', timestamp: lowerRow.timestamp || 'No Date' }; }); renderStudentList(); } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } }
-    function renderStudentList() { const grid = document.getElementById('studentListGrid'); document.getElementById('individualStudentView').classList.add('hidden'); grid.classList.remove('hidden'); const students = [...new Set(rawAnalytics.map(r => r.student))]; grid.innerHTML = students.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); }
+    
+    // UPDATED PARSING LOGIC TO FIX "UNKNOWN" STUDENT
+    async function fetchResultsAnalytics() { 
+        try { 
+            const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
+            const data = await response.json(); 
+            rawAnalytics = data.map(row => { 
+                const lowerRow = {}; 
+                for (let k in row) lowerRow[k.toLowerCase().trim()] = row[k]; 
+                // Checks multiple possible header names for student
+                return { 
+                    student: lowerRow.student || lowerRow.fullname || lowerRow.studentname || lowerRow.name || 'Unknown', 
+                    unit: lowerRow.unit || 'N/A', 
+                    list: lowerRow.list || 'N/A', 
+                    mode: lowerRow.mode || 'N/A', 
+                    score: lowerRow.score || '0%', 
+                    timestamp: lowerRow.timestamp || 'No Date' 
+                }; 
+            }); 
+            renderStudentList(); 
+        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
+    }
+
+    function renderStudentList() { const grid = document.getElementById('studentListGrid'); document.getElementById('individualStudentView').classList.add('hidden'); grid.classList.remove('hidden'); const students = [...new Set(rawAnalytics.map(r => r.student))].filter(s => s !== 'Unknown'); grid.innerHTML = students.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); }
     function viewStudentDetail(name) { document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
     function backToStudentList() { renderStudentList(); }
     function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
