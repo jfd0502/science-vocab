@@ -116,7 +116,7 @@
         .flipped .inner { transform: rotateY(180deg); }
         .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
         .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); }
-        .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }
+        .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.1rem; overflow-y: auto; }
 
         .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
         .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
@@ -335,16 +335,24 @@
     };
     window.addEventListener('resize', resizeCanvas);
 
+    // FIXED PARSER FOR COLUMN B AS DEFINITION
     async function fetchTeacherData(force = false) {
         try {
             const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
             const response = await fetch(url); const csvText = await response.text();
             const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
             const newUnits = {}; 
+            
             rows.slice(1).forEach(row => {
+                // Regex handles commas inside quotes for long definitions
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length >= 5) {
-                    const [term, def, img, listName, unitName] = cols;
+                    const term = cols[0];
+                    const def = cols[1]; // Column B
+                    const img = cols[2]; // Column C
+                    const listName = cols[3]; // Column D
+                    const unitName = cols[4]; // Column E
+
                     if (!newUnits[unitName]) newUnits[unitName] = {}; 
                     if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
                     newUnits[unitName][listName].push({t: term, d: def, img: img});
@@ -405,20 +413,14 @@
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
-    
-    // UPDATED TO SEND WHOLE PERCENTAGE STRINGS
-    async function syncSessionToSheet(mode, score) { 
-        let finalScore = score;
-        if (typeof score === 'number') finalScore = Math.round(score * 100) + "%";
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: finalScore }) }); 
-    }
+    async function syncSessionToSheet(mode, score) { let finalScore = score; if (typeof score === 'number') finalScore = Math.round(score * 100) + "%"; fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: finalScore }) }); }
 
     function setStudyMode(mode) { ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); document.getElementById(mode + 'Mode').classList.remove('hidden'); const list = units[currentUnit][currentClass]; if (mode === 'list') { renderFullList(list); updateHistoryUI(); } if (mode === 'flash') { cardIdx = 0; updateCard(list); } if (mode === 'quiz') startQuiz(list); if (mode === 'match') startMatch(list); }
     function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
     function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
     function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
     function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz(); }
-    function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
+    function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px; font-size:0.9rem;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
     function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
     function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pctNum = Math.round((qScore/qPool.length)*100); const pct = pctNum + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
     function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; }
@@ -429,7 +431,6 @@
     function protectedToggle() { const adminView = document.getElementById('adminView'); if (adminView.classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); adminView.classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderAdminUnitSelection(); } } else { location.reload(); } }
     function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
     
-    // UPDATED ANALYTICS TO CONVERT DECIMALS TO PERCENTAGES
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
@@ -438,41 +439,15 @@
                 const lowerRow = {}; 
                 for (let k in row) lowerRow[k.toLowerCase().replace(/\s/g, "")] = row[k]; 
                 const name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || 'Anonymous';
-                
-                // Convert decimal scores (like 0.8) to "80%" if found
                 let displayScore = lowerRow.score || '0%';
-                if (!isNaN(displayScore) && displayScore !== '' && displayScore <= 1 && displayScore > 0) {
-                    displayScore = Math.round(displayScore * 100) + "%";
-                }
-                
-                return { 
-                    student: name, 
-                    unit: lowerRow.unit || 'N/A', 
-                    list: lowerRow.list || 'N/A', 
-                    mode: lowerRow.mode || 'N/A', 
-                    score: displayScore, 
-                    timestamp: lowerRow.timestamp || 'No Date' 
-                }; 
+                if (!isNaN(displayScore) && displayScore !== '' && displayScore <= 1 && displayScore > 0) { displayScore = Math.round(displayScore * 100) + "%"; }
+                return { student: name, unit: lowerRow.unit || 'N/A', list: lowerRow.list || 'N/A', mode: lowerRow.mode || 'N/A', score: displayScore, timestamp: lowerRow.timestamp || 'No Date' }; 
             }); 
             renderStudentList(); 
         } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
     }
 
-    function renderStudentList() { 
-        const grid = document.getElementById('studentListGrid'); 
-        document.getElementById('individualStudentView').classList.add('hidden'); 
-        grid.classList.remove('hidden'); 
-        let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        if (studentSet.length > 1 && studentSet.includes('Anonymous')) {
-            studentSet = studentSet.filter(s => s !== 'Anonymous');
-        }
-        if (studentSet.length === 0) {
-            grid.innerHTML = '<div class="loading-text">No records found.</div>';
-            return;
-        }
-        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
-    }
-
+    function renderStudentList() { const grid = document.getElementById('studentListGrid'); document.getElementById('individualStudentView').classList.add('hidden'); grid.classList.remove('hidden'); let studentSet = [...new Set(rawAnalytics.map(r => r.student))]; if (studentSet.length > 1 && studentSet.includes('Anonymous')) { studentSet = studentSet.filter(s => s !== 'Anonymous'); } if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records found.</div>'; return; } grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); }
     function viewStudentDetail(name) { document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
     function backToStudentList() { renderStudentList(); }
     function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
