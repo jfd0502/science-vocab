@@ -302,6 +302,7 @@
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
     let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
+    let adminSelectedUnit = "", adminSelectedList = "";
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -419,10 +420,30 @@
     function drop(e) { const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id) { mCorrect++; target.style.background = 'var(--accent)'; draggedItem.style.visibility = 'hidden'; target.draggable = false; } else { target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", acc); syncSessionToSheet("Match", acc); } }
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
-    function protectedToggle() { const adminView = document.getElementById('adminView'); if (adminView.classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); adminView.classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderAdminUnitSelection(); } } else { location.reload(); } }
-    function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
     
-   // UPDATED ANALYTICS PARSING FOR READABLE TIME AND PERCENTAGE SCORING
+    function protectedToggle() { 
+        const adminView = document.getElementById('adminView'); 
+        if (adminView.classList.contains('hidden')) { 
+            if (prompt("Password:") === ADMIN_PASS) { 
+                document.getElementById('studyView').classList.add('hidden'); 
+                document.getElementById('loginOverlay').classList.add('hidden'); 
+                adminView.classList.remove('hidden'); 
+                document.querySelector('.app-container').style.opacity = '1'; 
+                document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+                renderAdminUnitSelection(); 
+            } 
+        } else { 
+            location.reload(); 
+        } 
+    }
+    
+    function switchAdminTab(tab) { 
+        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
+        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
+        if (tab === 'analytics') fetchResultsAnalytics(); 
+    }
+    
+    // UPDATED ANALYTICS PARSING FOR READABLE TIME AND PERCENTAGE SCORING
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
@@ -449,8 +470,7 @@
 
                 // 2. CONVERT DECIMAL SCORES TO PERCENTAGES
                 let displayScore = lowerRow.score || '0%';
-                if (!isNaN(displayScore) && displayScore !== '') {
-                    // Convert decimal (e.g., 0.8) to percent (80%)
+                if (!isNaN(displayScore) && displayScore !== '' && !String(displayScore).includes('%')) {
                     displayScore = Math.round(parseFloat(displayScore) * 100) + "%";
                 }
                 
@@ -470,14 +490,85 @@
         } 
     }
 
-    function viewStudentDetail(name) { document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
+    function renderStudentList() { 
+        const grid = document.getElementById('studentListGrid'); 
+        document.getElementById('individualStudentView').classList.add('hidden'); 
+        grid.classList.remove('hidden'); 
+        let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
+        
+        if (studentSet.length > 1 && studentSet.includes('Anonymous')) {
+            studentSet = studentSet.filter(s => s !== 'Anonymous');
+        }
+
+        if (studentSet.length === 0) {
+            grid.innerHTML = '<div class="loading-text">No records found.</div>';
+            return;
+        }
+        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
+    }
+
+    function viewStudentDetail(name) { 
+        document.getElementById('studentListGrid').classList.add('hidden'); 
+        const view = document.getElementById('individualStudentView'); 
+        view.classList.remove('hidden'); 
+        document.getElementById('viewingStudentName').innerText = "History for: " + name; 
+        const filtered = rawAnalytics.filter(r => r.student === name); 
+        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
+        filtered.reverse().forEach(r => { 
+            html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; 
+        }); 
+        html += `</table>`; 
+        document.getElementById('studentDetailTable').innerHTML = html; 
+    }
+
     function backToStudentList() { renderStudentList(); }
-    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
-    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
-    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
-    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
-    function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','\${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','\${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
+    
+    function renderAdminUnitSelection() { 
+        const grid = document.getElementById('adminUnitGrid'); 
+        grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); 
+    }
+
+    function adminSelectUnit(u) { 
+        adminSelectedUnit = u; 
+        document.getElementById('adminUnitSelection').classList.add('hidden'); 
+        document.getElementById('adminListSelection').classList.remove('hidden'); 
+        document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; 
+        document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); 
+    }
+
+    function adminSelectList(l) { 
+        adminSelectedList = l; 
+        document.getElementById('adminEditArea').classList.remove('hidden'); 
+        document.getElementById('adminListSelection').classList.add('hidden'); 
+        document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; 
+        renderAdminWordList(); 
+    }
+
+    function resetAdminView() { 
+        document.getElementById('adminListSelection').classList.add('hidden'); 
+        document.getElementById('adminEditArea').classList.add('hidden'); 
+        document.getElementById('adminUnitSelection').classList.remove('hidden'); 
+    }
+
+    function backToAdminLists() { 
+        document.getElementById('adminEditArea').classList.add('hidden'); 
+        document.getElementById('adminListSelection').classList.remove('hidden'); 
+    }
+
+    function renderAdminWordList() { 
+        const u = adminSelectedUnit, l = adminSelectedList; 
+        document.getElementById('adminHeader').innerText = `${u} > ${l}`; 
+        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `
+            <div class="admin-entry">
+                <input type="text" id="t-${idx}" value="${item.t}" placeholder="Term">
+                <input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition">
+                <input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL">
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button>
+                    <button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
+                </div>
+            </div>`).join(''); 
+    }
 </script>
 </body>
 </html>
