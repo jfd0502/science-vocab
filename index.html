@@ -422,48 +422,52 @@
     function protectedToggle() { const adminView = document.getElementById('adminView'); if (adminView.classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); adminView.classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderAdminUnitSelection(); } } else { location.reload(); } }
     function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
     
-    // UPDATED ANALYTICS PARSING SPECIFICALLY FOR "STUDENT NAME" COLUMN
+   // UPDATED ANALYTICS PARSING FOR READABLE TIME AND PERCENTAGE SCORING
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
             const data = await response.json(); 
             rawAnalytics = data.map(row => { 
                 const lowerRow = {}; 
-                // Normalize all spreadsheet headers to lowercase with no spaces
                 for (let k in row) lowerRow[k.toLowerCase().replace(/\s/g, "")] = row[k]; 
                 
-                // Specific priority for "Student Name" as per request
                 const name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || 'Anonymous';
+                
+                // 1. IMPROVED TIMESTAMP READABILITY
+                let readableTime = lowerRow.timestamp || 'No Date';
+                if (readableTime !== 'No Date') {
+                    const dateObj = new Date(readableTime);
+                    if (!isNaN(dateObj)) {
+                        readableTime = dateObj.toLocaleString([], { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        });
+                    }
+                }
+
+                // 2. CONVERT DECIMAL SCORES TO PERCENTAGES
+                let displayScore = lowerRow.score || '0%';
+                if (!isNaN(displayScore) && displayScore !== '') {
+                    // Convert decimal (e.g., 0.8) to percent (80%)
+                    displayScore = Math.round(parseFloat(displayScore) * 100) + "%";
+                }
                 
                 return { 
                     student: name, 
                     unit: lowerRow.unit || 'N/A', 
                     list: lowerRow.list || 'N/A', 
                     mode: lowerRow.mode || 'N/A', 
-                    score: lowerRow.score || '0%', 
-                    timestamp: lowerRow.timestamp || 'No Date' 
+                    score: displayScore, 
+                    timestamp: readableTime 
                 }; 
             }); 
             renderStudentList(); 
-        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
-    }
-
-    function renderStudentList() { 
-        const grid = document.getElementById('studentListGrid'); 
-        document.getElementById('individualStudentView').classList.add('hidden'); 
-        grid.classList.remove('hidden'); 
-        let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        
-        // Ensure "Anonymous" only appears if it is the only data present
-        if (studentSet.length > 1 && studentSet.includes('Anonymous')) {
-            studentSet = studentSet.filter(s => s !== 'Anonymous');
-        }
-
-        if (studentSet.length === 0) {
-            grid.innerHTML = '<div class="loading-text">No records found.</div>';
-            return;
-        }
-        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
+        } catch (e) { 
+            console.error(e);
+            document.getElementById('studentListGrid').innerText = "Unable to load analytics."; 
+        } 
     }
 
     function viewStudentDetail(name) { document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
