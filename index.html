@@ -43,23 +43,25 @@
             opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
         }
 
-        /* Typing Animation Styles */
+        /* Updated Typing Animation Styles */
         #typingTitleContainer {
-            margin-bottom: 15px;
-            min-height: 1.6em;
-            font-size: 1.1rem;
-            font-weight: 600;
+            margin-bottom: 25px;
+            min-height: 3.5em; /* Increased to accommodate two lines */
+            font-size: 1.6rem; /* Bigger font size */
+            font-weight: 700;
             color: var(--primary);
             text-align: center;
-            text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+            text-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
             letter-spacing: 0.5px;
+            line-height: 1.4;
+            white-space: pre-wrap; /* Allows the \n line break to work */
         }
         .blinking-cursor {
             display: inline-block;
-            width: 2px;
+            width: 3px;
             height: 1.1em;
             background-color: var(--primary);
-            margin-left: 4px;
+            margin-left: 6px;
             vertical-align: middle;
             animation: blink 1s step-end infinite;
         }
@@ -366,7 +368,7 @@
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
     let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
     let adminSelectedUnit = "", adminSelectedList = "";
-    let hasAnimatedWelcome = false; // Flag to prevent re-animation
+    let hasAnimatedWelcome = false; 
     
     let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
     let mGoal = 0, mCorrect = 0, mTotal = 0;
@@ -416,8 +418,8 @@
                     const term = cols[0];
                     const def = cols[1];
                     const img = cols[2];
-                    const listName = cols[3]; // Column D
-                    const unitName = cols[4]; // Column E
+                    const listName = cols[3]; 
+                    const unitName = cols[4]; 
 
                     if (!newUnits[unitName]) newUnits[unitName] = {}; 
                     if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
@@ -428,14 +430,13 @@
         } catch (e) { console.error("Fetch Error:", e); }
     }
 
-    // TYPING ANIMATION FUNCTION
+    // UPDATED TYPING ANIMATION WITH LINE BREAK
     function playWelcomeAnimation() {
-        const text = "Welcome to your Vocabulary Journey. Please select a unit...";
+        const text = "Welcome to your Vocabulary Journey.\nPlease select a unit...";
         const container = document.getElementById('typingTitleContainer');
         
-        // If already animated this session, just show text immediately
         if (hasAnimatedWelcome) {
-            container.innerHTML = text;
+            container.innerText = text;
             return;
         }
         
@@ -445,9 +446,9 @@
         
         function type() {
             if (i < text.length) {
-                target.innerHTML += text.charAt(i);
+                target.innerText += text.charAt(i);
                 i++;
-                setTimeout(type, 45); // Adjust speed here (lower = faster)
+                setTimeout(type, 40); 
             } else {
                 hasAnimatedWelcome = true;
             }
@@ -512,7 +513,7 @@
         document.querySelector('.app-container').style.opacity = '1'; 
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         renderUnitSelection(); 
-        playWelcomeAnimation(); // Trigger the typing title
+        playWelcomeAnimation(); 
     }
 
     function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); studentName = ""; location.reload(); } }
@@ -662,42 +663,23 @@
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
             const data = await response.json(); 
-            
-            console.log("Raw Server Data:", data); 
-
             rawAnalytics = data.map(row => { 
                 let u = 'N/A', l = 'N/A', name = 'Anonymous', m = 'N/A', s = '0%', t = 'No Date';
-
-                // ARRAY HANDLING: Strict mapping for Column C (Unit) and Column D (List)
                 if (Array.isArray(row)) {
-                    t = row[0] || t;
-                    name = row[1] || name;
-                    u = row[2] || u; // Index 2 is Column C
-                    l = row[3] || l; // Index 3 is Column D
-                    m = row[4] || m; 
-                    s = row[5] || s;
+                    t = row[0] || t; name = row[1] || name; u = row[2] || u; l = row[3] || l; m = row[4] || m; s = row[5] || s;
                 } 
                 else if (typeof row === 'object' && row !== null) {
-                    const lowerRow = {}; 
-                    for (let k in row) lowerRow[k.toLowerCase().replace(/[^a-z0-9]/g, "")] = row[k]; 
-                    
+                    const lowerRow = {}; for (let k in row) lowerRow[k.toLowerCase().replace(/[^a-z0-9]/g, "")] = row[k]; 
                     name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || name;
-                    m = lowerRow.mode || m;
-                    s = lowerRow.score || lowerRow.result || s;
-                    t = lowerRow.timestamp || lowerRow.time || lowerRow.date || t;
-                    u = lowerRow.unit || lowerRow.unitofstudy || lowerRow.unitname || u;
-                    l = lowerRow.list || lowerRow.listname || l;
+                    m = lowerRow.mode || m; s = lowerRow.score || lowerRow.result || s; t = lowerRow.timestamp || lowerRow.time || lowerRow.date || t;
+                    u = lowerRow.unit || lowerRow.unitofstudy || lowerRow.unitname || u; l = lowerRow.list || lowerRow.listname || l;
                 }
-
                 if (t !== 'No Date') {
-                    const dateObj = new Date(t);
-                    if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 }
                 if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
-                
                 return { student: name, unit: u, list: l, mode: m, score: s, timestamp: t }; 
             }); 
-            
             renderStudentList(); 
         } catch (e) { 
             console.error("Analytics Fetch Error:", e);
@@ -722,9 +704,7 @@
         document.getElementById('viewingStudentName').innerText = "History for: " + name; 
         const filtered = rawAnalytics.filter(r => r.student === name); 
         let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
-        filtered.reverse().forEach(r => { 
-            html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; 
-        }); 
+        filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); 
         html += `</table>`; 
         document.getElementById('studentDetailTable').innerHTML = html; 
     }
