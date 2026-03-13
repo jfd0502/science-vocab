@@ -388,10 +388,8 @@
                     const term = cols[0];
                     const def = cols[1];
                     const img = cols[2];
-                    
-                    // FIXED MAPPING: Column D (index 3) is List Name, Column E (index 4) is Unit of Study
-                    const listName = cols[3]; 
-                    const unitName = cols[4]; 
+                    const listName = cols[3]; // Column D
+                    const unitName = cols[4]; // Column E
 
                     if (!newUnits[unitName]) newUnits[unitName] = {}; 
                     if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
@@ -600,58 +598,47 @@
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
             const data = await response.json(); 
+            
+            console.log("Raw Server Data:", data); 
+
             rawAnalytics = data.map(row => { 
-                const lowerRow = {}; 
-                // Aggressive cleanup: strips out all spaces, dashes, and special characters 
-                // to guarantee the code can find the column headers
-                for (let k in row) {
-                    let safeKey = k.toLowerCase().replace(/[^a-z0-9]/g, "");
-                    lowerRow[safeKey] = row[k]; 
-                }
-                
-                const name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || 'Anonymous';
-                
-                let readableTime = lowerRow.timestamp || lowerRow.time || lowerRow.date || 'No Date';
-                if (readableTime !== 'No Date') {
-                    const dateObj = new Date(readableTime);
-                    if (!isNaN(dateObj)) {
-                        readableTime = dateObj.toLocaleString([], { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                        });
-                    }
-                }
+                let u = 'N/A', l = 'N/A', name = 'Anonymous', m = 'N/A', s = '0%', t = 'No Date';
 
-                let displayScore = lowerRow.score || lowerRow.result || '0%';
-                if (!isNaN(displayScore) && displayScore !== '' && !String(displayScore).includes('%')) {
-                    displayScore = Math.round(parseFloat(displayScore) * 100) + "%";
-                }
-                
-                // MAPPED EXACTLY: look for "listname" and "unitofstudy" 
-                let listVal = lowerRow.listname || lowerRow.list || 'N/A';
-                let unitVal = lowerRow.unitofstudy || lowerRow.unit || 'N/A';
-
-                // UNIVERSAL FALLBACK: If the Google Script sends an array instead of objects, 
-                // this guarantees it still pulls Column D (index 3) and Column E (index 4)
+                // ARRAY HANDLING: Strict mapping for Column C (Unit) and Column D (List)
                 if (Array.isArray(row)) {
-                    listVal = row[3] || listVal;
-                    unitVal = row[4] || unitVal;
+                    t = row[0] || t;
+                    name = row[1] || name;
+                    u = row[2] || u; // Index 2 is Column C
+                    l = row[3] || l; // Index 3 is Column D
+                    m = row[4] || m; 
+                    s = row[5] || s;
+                } 
+                // OBJECT HANDLING: For Apps Script responses with header objects
+                else if (typeof row === 'object' && row !== null) {
+                    const lowerRow = {}; 
+                    for (let k in row) lowerRow[k.toLowerCase().replace(/[^a-z0-9]/g, "")] = row[k]; 
+                    
+                    name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || name;
+                    m = lowerRow.mode || m;
+                    s = lowerRow.score || lowerRow.result || s;
+                    t = lowerRow.timestamp || lowerRow.time || lowerRow.date || t;
+                    u = lowerRow.unit || lowerRow.unitofstudy || lowerRow.unitname || u;
+                    l = lowerRow.list || lowerRow.listname || l;
                 }
 
-                return { 
-                    student: name, 
-                    unit: unitVal, 
-                    list: listVal, 
-                    mode: lowerRow.mode || 'N/A', 
-                    score: displayScore, 
-                    timestamp: readableTime 
-                }; 
+                // Clean and Format
+                if (t !== 'No Date') {
+                    const dateObj = new Date(t);
+                    if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                }
+                if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
+                
+                return { student: name, unit: u, list: l, mode: m, score: s, timestamp: t }; 
             }); 
+            
             renderStudentList(); 
         } catch (e) { 
-            console.error(e);
+            console.error("Analytics Fetch Error:", e);
             document.getElementById('studentListGrid').innerText = "Unable to load analytics."; 
         } 
     }
