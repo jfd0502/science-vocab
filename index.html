@@ -422,7 +422,7 @@
     function protectedToggle() { const adminView = document.getElementById('adminView'); if (adminView.classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); adminView.classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderAdminUnitSelection(); } } else { location.reload(); } }
     function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
     
-    // UPDATED ANALYTICS PARSING SPECIFICALLY FOR UNIT AND LIST COLUMNS
+    // UPDATED ANALYTICS PARSING SPECIFICALLY FOR "Unit of Study" (Col E) AND "List Name" (Col D)
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
@@ -432,13 +432,13 @@
                 // Normalize all spreadsheet headers to lowercase with no spaces for easier mapping
                 for (let k in row) lowerRow[k.toLowerCase().replace(/\s/g, "")] = row[k]; 
                 
-                // Priority mapping for "Unit" from Col E and "List" from Col D
+                // Specific priority for "Student Name", "Unit of Study" (Col E), and "List Name" (Col D)
                 const name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || 'Anonymous';
                 
                 return { 
                     student: name, 
-                    unit: lowerRow.unit || lowerRow.unitname || 'N/A', 
-                    list: lowerRow.list || lowerRow.listname || 'N/A', 
+                    unit: lowerRow.unitofstudy || lowerRow.unit || 'N/A', 
+                    list: lowerRow.listname || lowerRow.list || 'N/A', 
                     mode: lowerRow.mode || 'N/A', 
                     score: lowerRow.score || '0%', 
                     timestamp: lowerRow.timestamp || 'No Date' 
@@ -454,6 +454,7 @@
         grid.classList.remove('hidden'); 
         let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
         
+        // Ensure "Anonymous" only appears if it is the only data present
         if (studentSet.length > 1 && studentSet.includes('Anonymous')) {
             studentSet = studentSet.filter(s => s !== 'Anonymous');
         }
