@@ -594,6 +594,7 @@
             const data = await response.json(); 
             rawAnalytics = data.map(row => { 
                 const lowerRow = {}; 
+                // Normalize keys by removing spaces and converting to lowercase
                 for (let k in row) lowerRow[k.toLowerCase().replace(/\s/g, "")] = row[k]; 
                 
                 const name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || 'Anonymous';
@@ -616,7 +617,7 @@
                     displayScore = Math.round(parseFloat(displayScore) * 100) + "%";
                 }
                 
-                // MAPPED TO COLUMN E (List Name) AND COLUMN D (Unit of Study)
+                // MAPPED TO COLUMN E ("List Name") AND COLUMN D ("Unit of Study")
                 return { 
                     student: name, 
                     unit: lowerRow.unitofstudy || lowerRow.unit || 'N/A', 
