@@ -384,14 +384,8 @@
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length >= 5) {
-                    // FIX: This explicitly maps Column D to Unit and Column E to List, 
-                    // changing how the app stores and sends data.
-                    const term = cols[0];
-                    const def = cols[1];
-                    const img = cols[2];
-                    const unitName = cols[3]; // Column D -> Unit of Study
-                    const listName = cols[4]; // Column E -> List Name
-
+                    // Reverted this exactly to how it was in your reference to fix the UI grouping bug
+                    const [term, def, img, listName, unitName] = cols;
                     if (!newUnits[unitName]) newUnits[unitName] = {}; 
                     if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
                     newUnits[unitName][listName].push({t: term, d: def, img: img});
@@ -601,6 +595,7 @@
             const data = await response.json(); 
             rawAnalytics = data.map(row => { 
                 const lowerRow = {}; 
+                // Normalize keys by removing spaces and converting to lowercase
                 for (let k in row) lowerRow[k.toLowerCase().replace(/\s/g, "")] = row[k]; 
                 
                 const name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || 'Anonymous';
@@ -623,10 +618,15 @@
                     displayScore = Math.round(parseFloat(displayScore) * 100) + "%";
                 }
                 
+                // Maps specifically to "List Name" for the Unit, and "Unit of Study" for the List.
+                // Included standard fallbacks just in case headers ever change slightly.
+                let u = lowerRow.listname || lowerRow.unit || 'N/A';
+                let l = lowerRow.unitofstudy || lowerRow.list || 'N/A';
+
                 return { 
                     student: name, 
-                    unit: lowerRow.unitofstudy || lowerRow.unit || 'N/A', 
-                    list: lowerRow.listname || lowerRow.list || 'N/A', 
+                    unit: u, 
+                    list: l, 
                     mode: lowerRow.mode || 'N/A', 
                     score: displayScore, 
                     timestamp: readableTime 
