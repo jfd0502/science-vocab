@@ -588,44 +588,55 @@
         if (tab === 'analytics') fetchResultsAnalytics(); 
     }
     
+    // UNIVERSAL PARSER - Automatically finds List/Unit regardless of how the script sends it
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
             const data = await response.json(); 
+            
             rawAnalytics = data.map(row => { 
-                const lowerRow = {}; 
-                for (let k in row) lowerRow[k.toLowerCase().replace(/\s/g, "")] = row[k]; 
-                
-                const name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || 'Anonymous';
-                
-                let readableTime = lowerRow.timestamp || 'No Date';
-                if (readableTime !== 'No Date') {
-                    const dateObj = new Date(readableTime);
-                    if (!isNaN(dateObj)) {
-                        readableTime = dateObj.toLocaleString([], { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                        });
+                let u = 'N/A', l = 'N/A', name = 'Anonymous', m = 'N/A', s = '0%', t = 'No Date';
+
+                if (Array.isArray(row)) {
+                    // Fallback if the Google Script sends an Array instead of an Object
+                    // Usually: 0=Time, 1=Student, 2=Unit, 3=List, 4=Mode, 5=Score
+                    t = row[0] || t;
+                    name = row[1] || name;
+                    l = row[3] || l; // Column D (List)
+                    u = row[4] || u; // Column E (Unit)
+                    m = row[2] || m; 
+                    s = row[5] || s;
+                } else {
+                    // Scans the object for any key matching 'unit' or 'list'
+                    for (let k in row) {
+                        let val = row[k];
+                        if (val === undefined || val === null || val === '') continue;
+                        
+                        let keyClean = k.toLowerCase().replace(/[^a-z0-9]/g, ''); 
+                        
+                        if (keyClean.includes('unit')) u = val;
+                        else if (keyClean.includes('list')) l = val;
+                        else if (keyClean === 'student' || keyClean === 'name' || keyClean === 'studentname' || keyClean === 'fullname') name = val;
+                        else if (keyClean.includes('mode')) m = val;
+                        else if (keyClean.includes('score') || keyClean.includes('result')) s = val;
+                        else if (keyClean.includes('time') || keyClean.includes('date') || keyClean === 'timestamp') t = val;
                     }
                 }
 
-                let displayScore = lowerRow.score || '0%';
-                if (!isNaN(displayScore) && displayScore !== '' && !String(displayScore).includes('%')) {
-                    displayScore = Math.round(parseFloat(displayScore) * 100) + "%";
+                if (t !== 'No Date') {
+                    const dateObj = new Date(t);
+                    if (!isNaN(dateObj)) {
+                        t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    }
+                }
+
+                if (!isNaN(s) && s !== '' && !String(s).includes('%')) {
+                    s = Math.round(parseFloat(s) * 100) + "%";
                 }
                 
-                // MAPPED: Column E ("Unit of Study") for Unit, and Column D ("List Name") for List.
-                return { 
-                    student: name, 
-                    unit: lowerRow.unitofstudy || lowerRow.unit || 'N/A', 
-                    list: lowerRow.listname || lowerRow.list || 'N/A', 
-                    mode: lowerRow.mode || 'N/A', 
-                    score: displayScore, 
-                    timestamp: readableTime 
-                }; 
+                return { student: name, unit: u, list: l, mode: m, score: s, timestamp: t }; 
             }); 
+            
             renderStudentList(); 
         } catch (e) { 
             console.error(e);
