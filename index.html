@@ -111,6 +111,26 @@
             box-shadow: 0 0 15px rgba(255,255,255,0.2);
         }
 
+        .diff-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .diff-btn {
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            color: white;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .diff-btn:hover { background: rgba(255,255,255,0.1); }
+
         .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
         .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; border-radius: 24px; }
         .flipped .inner { transform: rotateY(180deg); }
@@ -168,6 +188,8 @@
                 <input type="password" id="passIn" placeholder="Password">
                 <button class="main-btn" id="loginSubmit" onclick="handleAuth('login')" style="width: 100%; margin-top: 15px;">Enter Journey</button>
                 <div class="auth-switch" onclick="toggleAuthMode(true)">New here? Create an account</div>
+                <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+                <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
             </div>
 
             <div id="registerForm" class="hidden">
@@ -235,18 +257,32 @@
                 </div>
 
                 <div id="quizMode" class="hidden">
-                    <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
-                    <div id="quizContent">
-                        <div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div>
-                        <div id="quizOptions"></div>
-                        <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
+                    <div id="quizDifficultyArea" class="diff-selector">
+                        <button class="diff-btn" onclick="initQuiz('Easy')">Easy (5)</button>
+                        <button class="diff-btn" onclick="initQuiz('Medium')">Medium (10)</button>
+                        <button class="diff-btn" onclick="initQuiz('Expert')">Expert (All)</button>
+                    </div>
+                    <div id="quizPlayArea" class="hidden">
+                        <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                        <div id="quizContent">
+                            <div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div>
+                            <div id="quizOptions"></div>
+                            <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
+                        </div>
                     </div>
                     <div id="quizEnd" class="hidden"></div>
                 </div>
 
                 <div id="matchMode" class="hidden">
-                    <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
-                    <div id="matchContainer"></div>
+                    <div id="matchDifficultyArea" class="diff-selector">
+                        <button class="diff-btn" onclick="initMatch('Easy')">Easy (5)</button>
+                        <button class="diff-btn" onclick="initMatch('Medium')">Medium (10)</button>
+                        <button class="diff-btn" onclick="initMatch('Expert')">Expert (All)</button>
+                    </div>
+                    <div id="matchPlayArea" class="hidden">
+                        <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                        <div id="matchContainer"></div>
+                    </div>
                     <div id="matchEnd" class="hidden"></div>
                 </div>
             </div>
@@ -302,6 +338,10 @@
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
     let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
+    let adminSelectedUnit = "", adminSelectedList = "";
+    
+    let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
+    let mGoal = 0, mCorrect = 0, mTotal = 0;
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -390,6 +430,12 @@
 
     function enterApp() { document.getElementById('landingPage').style.opacity = '0'; if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); renderUnitSelection(); }, 800); }
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
+    
+    function continueAsGuest() {
+        studentName = "Guest";
+        unlockApp();
+    }
+
     async function handleAuth(type) {
         let payload = {}; const fullNameInput = document.getElementById('regFull').value;
         if (type === 'login') payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };
@@ -405,47 +451,186 @@
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
-    async function syncSessionToSheet(mode, score) { fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }) }); }
-    function setStudyMode(mode) { ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); document.getElementById(mode + 'Mode').classList.remove('hidden'); const list = units[currentUnit][currentClass]; if (mode === 'list') { renderFullList(list); updateHistoryUI(); } if (mode === 'flash') { cardIdx = 0; updateCard(list); } if (mode === 'quiz') startQuiz(list); if (mode === 'match') startMatch(list); }
+    
+    async function syncSessionToSheet(mode, score) { 
+        if (studentName === "Guest") return; 
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }) 
+        }); 
+    }
+    
+    function setStudyMode(mode) { 
+        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); 
+        document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); 
+        ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
+        document.getElementById(mode + 'Mode').classList.remove('hidden'); 
+        
+        const list = units[currentUnit][currentClass]; 
+        if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
+        if (mode === 'flash') { cardIdx = 0; updateCard(list); } 
+        if (mode === 'quiz') resetQuizUI();
+        if (mode === 'match') resetMatchUI();
+    }
+
     function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
     function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
     function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
-    function startQuiz(list) { qScore = 0; qIdx = 0; qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); document.getElementById('quizContent').classList.remove('hidden'); document.getElementById('quizEnd').classList.add('hidden'); document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz(); }
-    function renderQuiz() { if (qIdx >= qPool.length) { endQuiz(); return; } const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`; document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); document.getElementById('nextQuizBtn').classList.add('hidden'); }
-    function checkQuiz(el, isCorrect) { if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } qIdx++; const acc = Math.round((qScore/qIdx)*100) + "%"; document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; document.getElementById('nextQuizBtn').classList.remove('hidden'); }
-    function endQuiz() { document.getElementById('quizContent').classList.add('hidden'); const pct = Math.round((qScore/qPool.length)*100) + "%"; document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct}</h3><button class="main-btn" onclick="startQuiz(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('quizEnd').classList.remove('hidden'); addHistory("Quiz", pct); syncSessionToSheet("Quiz", pct); }
-    function startMatch(list) { mCorrect = 0; mTotal = 0; const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, 5); mGoal = sub.length; document.getElementById('matchStats').innerText = "Accuracy: 0%"; document.getElementById('matchContainer').classList.remove('hidden'); document.getElementById('matchEnd').classList.add('hidden'); let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`; }
+
+    function resetQuizUI() {
+        document.getElementById('quizDifficultyArea').classList.remove('hidden');
+        document.getElementById('quizPlayArea').classList.add('hidden');
+        document.getElementById('quizEnd').classList.add('hidden');
+    }
+    function initQuiz(diff) {
+        currentDifficulty = diff;
+        const list = units[currentUnit][currentClass];
+        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
+        qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        qScore = 0; qIdx = 0;
+        document.getElementById('quizDifficultyArea').classList.add('hidden');
+        document.getElementById('quizPlayArea').classList.remove('hidden');
+        document.getElementById('quizStats').innerText = `Accuracy: 0%`;
+        renderQuiz();
+    }
+    function renderQuiz() { 
+        if (qIdx >= qPool.length) { endQuiz(); return; } 
+        const list = units[currentUnit][currentClass]; 
+        const correct = qPool[qIdx]; 
+        const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
+        document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`; 
+        document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
+        document.getElementById('nextQuizBtn').classList.add('hidden'); 
+    }
+    function checkQuiz(el, isCorrect) { 
+        if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
+        if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } 
+        else { el.style.background = 'var(--danger)'; } 
+        qIdx++; 
+        const acc = Math.round((qScore/qIdx)*100) + "%"; 
+        document.getElementById('quizStats').innerText = `Accuracy: ${acc}`; 
+        document.getElementById('nextQuizBtn').classList.remove('hidden'); 
+    }
+    function endQuiz() { 
+        document.getElementById('quizPlayArea').classList.add('hidden'); 
+        const pct = Math.round((qScore/qPool.length)*100) + "%"; 
+        document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct} (${currentDifficulty})</h3><button class="main-btn" onclick="resetQuizUI()">Restart</button>`; 
+        document.getElementById('quizEnd').classList.remove('hidden'); 
+        const modeTag = `Quiz (${currentDifficulty})`;
+        addHistory(modeTag, pct); 
+        syncSessionToSheet(modeTag, pct); 
+    }
+
+    function resetMatchUI() {
+        document.getElementById('matchDifficultyArea').classList.remove('hidden');
+        document.getElementById('matchPlayArea').classList.add('hidden');
+        document.getElementById('matchEnd').classList.add('hidden');
+    }
+    function initMatch(diff) {
+        currentDifficulty = diff;
+        const list = units[currentUnit][currentClass];
+        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
+        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        mGoal = sub.length; mCorrect = 0; mTotal = 0;
+        document.getElementById('matchDifficultyArea').classList.add('hidden');
+        document.getElementById('matchPlayArea').classList.remove('hidden');
+        document.getElementById('matchStats').innerText = "Accuracy: 0%";
+        let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
+        let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
+        document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`;
+    }
     function drag(e) { draggedItem = e.target; }
-    function drop(e) { const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; mTotal++; if (draggedItem.dataset.id === target.dataset.id) { mCorrect++; target.style.background = 'var(--accent)'; draggedItem.style.visibility = 'hidden'; target.draggable = false; } else { target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); } const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; if (mCorrect === mGoal) { document.getElementById('matchContainer').classList.add('hidden'); document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc}</h3><button class="main-btn" onclick="startMatch(units[currentUnit][currentClass])">Restart</button>`; document.getElementById('matchEnd').classList.remove('hidden'); addHistory("Match", acc); syncSessionToSheet("Match", acc); } }
+    function drop(e) { 
+        const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; 
+        mTotal++; 
+        if (draggedItem.dataset.id === target.dataset.id) { 
+            mCorrect++; target.style.background = 'var(--accent)'; 
+            draggedItem.style.visibility = 'hidden'; target.draggable = false; 
+        } else { 
+            target.style.background = 'var(--danger)'; 
+            setTimeout(() => target.style.background = 'var(--glass)', 500); 
+        } 
+        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
+        document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
+        if (mCorrect === mGoal) { 
+            document.getElementById('matchPlayArea').classList.add('hidden'); 
+            document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc} (${currentDifficulty})</h3><button class="main-btn" onclick="resetMatchUI()">Restart</button>`; 
+            document.getElementById('matchEnd').classList.remove('hidden'); 
+            const modeTag = `Match (${currentDifficulty})`;
+            addHistory(modeTag, acc); 
+            syncSessionToSheet(modeTag, acc); 
+        } 
+    }
+
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
-    function protectedToggle() { const adminView = document.getElementById('adminView'); if (adminView.classList.contains('hidden')) { if (prompt("Password:") === ADMIN_PASS) { document.getElementById('studyView').classList.add('hidden'); document.getElementById('loginOverlay').classList.add('hidden'); adminView.classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; renderAdminUnitSelection(); } } else { location.reload(); } }
-    function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
     
-    // UPDATED ANALYTICS PARSING SPECIFICALLY FOR "Unit of Study" (Col E) AND "List Name" (Col D)
+    function protectedToggle() { 
+        const adminView = document.getElementById('adminView'); 
+        if (adminView.classList.contains('hidden')) { 
+            if (prompt("Password:") === ADMIN_PASS) { 
+                document.getElementById('studyView').classList.add('hidden'); 
+                document.getElementById('loginOverlay').classList.add('hidden'); 
+                adminView.classList.remove('hidden'); 
+                document.querySelector('.app-container').style.opacity = '1'; 
+                document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+                renderAdminUnitSelection(); 
+            } 
+        } else { 
+            location.reload(); 
+        } 
+    }
+    
+    function switchAdminTab(tab) { 
+        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
+        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
+        if (tab === 'analytics') fetchResultsAnalytics(); 
+    }
+    
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
             const data = await response.json(); 
             rawAnalytics = data.map(row => { 
                 const lowerRow = {}; 
-                // Normalize all spreadsheet headers to lowercase with no spaces for easier mapping
                 for (let k in row) lowerRow[k.toLowerCase().replace(/\s/g, "")] = row[k]; 
                 
-                // Specific priority for "Student Name", "Unit of Study" (Col E), and "List Name" (Col D)
                 const name = lowerRow.studentname || lowerRow.student || lowerRow.fullname || lowerRow.name || 'Anonymous';
                 
+                let readableTime = lowerRow.timestamp || 'No Date';
+                if (readableTime !== 'No Date') {
+                    const dateObj = new Date(readableTime);
+                    if (!isNaN(dateObj)) {
+                        readableTime = dateObj.toLocaleString([], { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        });
+                    }
+                }
+
+                let displayScore = lowerRow.score || '0%';
+                if (!isNaN(displayScore) && displayScore !== '' && !String(displayScore).includes('%')) {
+                    displayScore = Math.round(parseFloat(displayScore) * 100) + "%";
+                }
+                
+                // MAPPED TO COLUMN E (List Name) AND COLUMN D (Unit of Study)
                 return { 
                     student: name, 
                     unit: lowerRow.unitofstudy || lowerRow.unit || 'N/A', 
                     list: lowerRow.listname || lowerRow.list || 'N/A', 
                     mode: lowerRow.mode || 'N/A', 
-                    score: lowerRow.score || '0%', 
-                    timestamp: lowerRow.timestamp || 'No Date' 
+                    score: displayScore, 
+                    timestamp: readableTime 
                 }; 
             }); 
             renderStudentList(); 
-        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
+        } catch (e) { 
+            console.error(e);
+            document.getElementById('studentListGrid').innerText = "Unable to load analytics."; 
+        } 
     }
 
     function renderStudentList() { 
@@ -453,27 +638,32 @@
         document.getElementById('individualStudentView').classList.add('hidden'); 
         grid.classList.remove('hidden'); 
         let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        
-        // Ensure "Anonymous" only appears if it is the only data present
-        if (studentSet.length > 1 && studentSet.includes('Anonymous')) {
-            studentSet = studentSet.filter(s => s !== 'Anonymous');
-        }
-
-        if (studentSet.length === 0) {
-            grid.innerHTML = '<div class="loading-text">No records found.</div>';
-            return;
-        }
+        if (studentSet.length > 1 && studentSet.includes('Anonymous')) studentSet = studentSet.filter(s => s !== 'Anonymous');
+        if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records found.</div>'; return; }
         grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
     }
 
-    function viewStudentDetail(name) { document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
+    function viewStudentDetail(name) { 
+        document.getElementById('studentListGrid').classList.add('hidden'); 
+        const view = document.getElementById('individualStudentView'); 
+        view.classList.remove('hidden'); 
+        document.getElementById('viewingStudentName').innerText = "History for: " + name; 
+        const filtered = rawAnalytics.filter(r => r.student === name); 
+        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
+        filtered.reverse().forEach(r => { 
+            html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; 
+        }); 
+        html += `</table>`; 
+        document.getElementById('studentDetailTable').innerHTML = html; 
+    }
+
     function backToStudentList() { renderStudentList(); }
     function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','\${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','\${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
+    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
 </script>
 </body>
 </html>
