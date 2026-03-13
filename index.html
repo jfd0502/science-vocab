@@ -188,6 +188,8 @@
                 <input type="password" id="passIn" placeholder="Password">
                 <button class="main-btn" id="loginSubmit" onclick="handleAuth('login')" style="width: 100%; margin-top: 15px;">Enter Journey</button>
                 <div class="auth-switch" onclick="toggleAuthMode(true)">New here? Create an account</div>
+                <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+                <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
             </div>
 
             <div id="registerForm" class="hidden">
@@ -338,7 +340,6 @@
     let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
     let adminSelectedUnit = "", adminSelectedList = "";
     
-    // Logic for dynamic quiz/matching
     let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
     let mGoal = 0, mCorrect = 0, mTotal = 0;
 
@@ -429,6 +430,13 @@
 
     function enterApp() { document.getElementById('landingPage').style.opacity = '0'; if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); renderUnitSelection(); }, 800); }
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
+    
+    function continueAsGuest() {
+        studentName = "Guest";
+        // We don't save "Guest" to localStorage so it prompts them next time
+        unlockApp();
+    }
+
     async function handleAuth(type) {
         let payload = {}; const fullNameInput = document.getElementById('regFull').value;
         if (type === 'login') payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };
@@ -444,7 +452,17 @@
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
-    async function syncSessionToSheet(mode, score) { fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }) }); }
+    
+    async function syncSessionToSheet(mode, score) { 
+        // DO NOT SYNC GUEST DATA TO SPREADSHEET
+        if (studentName === "Guest") return; 
+        
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }) 
+        }); 
+    }
     
     function setStudyMode(mode) { 
         ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); 
@@ -463,7 +481,6 @@
     function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
     function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
 
-    // QUIZ LOGIC WITH DIFFICULTY
     function resetQuizUI() {
         document.getElementById('quizDifficultyArea').classList.remove('hidden');
         document.getElementById('quizPlayArea').classList.add('hidden');
@@ -508,7 +525,6 @@
         syncSessionToSheet(modeTag, pct); 
     }
 
-    // MATCH LOGIC WITH DIFFICULTY
     function resetMatchUI() {
         document.getElementById('matchDifficultyArea').classList.remove('hidden');
         document.getElementById('matchPlayArea').classList.add('hidden');
