@@ -379,7 +379,7 @@
 
 <script>
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwWczyvE2N4X6Rk8aSfLPdreAMRfR5fwJ03ldrYwKfdh4tGGjB87XARsaGEcPUOngxYUA/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyUiQKcBO3r2fgngNjNzA06XP9dFHMepwwKb98DzFkHSs_Nyo6ZUvnCY6_FzCLZkT_p/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -387,7 +387,6 @@
     let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
     let adminSelectedUnit = "", adminSelectedList = "";
     
-    // Tracks both animations uniquely
     let hasAnimatedStudentWelcome = false;
     let hasAnimatedTeacherWelcome = false; 
     
@@ -451,7 +450,6 @@
         } catch (e) { console.error("Fetch Error:", e); }
     }
 
-    // Handles Teacher mode & Student mode seamlessly
     function playWelcomeAnimation(mode = 'student') {
         const text = mode === 'teacher' 
             ? "Welcome to Teacher Mode.\nBelow you can edit vocabulary lists, and view student results."
@@ -529,7 +527,6 @@
     
     function continueAsGuest() { studentName = "Guest"; unlockApp(); }
 
-    // BUG FIX HERE: Captures user input to safely prevent empty names going into the database
     async function handleAuth(type) {
         let payload = {}; const fullNameInput = document.getElementById('regFull').value;
         const userInput = document.getElementById('userIn').value;
@@ -544,10 +541,7 @@
             const result = await response.text(); 
             if (result.startsWith("Success:")) { 
                 studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "").trim(); 
-                
-                // Active safeguard against accidentally blank Full Names
                 if (!studentName || studentName === "") studentName = userInput; 
-                
                 localStorage.setItem('vocabSojournName', studentName); 
                 unlockApp(); 
             } else { alert(result); } 
@@ -712,39 +706,46 @@
         if (tab === 'analytics') fetchResultsAnalytics(); 
     }
     
-    // BUG FIX HERE: Bulletproof database mapping function
+    // STRICT DIRECT READING - No fancy mapping, just read the sheet directly
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
             const data = await response.json(); 
-            rawAnalytics = data.map(row => { 
-                let u = 'N/A', l = 'N/A', name = 'Anonymous', m = 'N/A', s = '0%', t = 'No Date';
+            
+            rawAnalytics = [];
+            
+            for (let i = 0; i < data.length; i++) {
+                let row = data[i];
                 
-                // Automatically adapt to whichever Database structure Google is returning
-                if (Array.isArray(row)) { 
-                    t = row[0] || t; name = row[1] || name; u = row[2] || u; l = row[3] || l; m = row[4] || m; s = row[5] || s; 
-                } else if (typeof row === 'object' && row !== null) {
-                    t = row.timestamp || row.date || t;
-                    name = row.student || row.name || row.fullname || name;
-                    u = row.unit || u;
-                    l = row.list || l;
-                    m = row.mode || m;
-                    s = row.score || s;
+                // Skip if row is completely empty
+                if (!row || row.length < 6) continue;
+                
+                let t = row[0]; // Timestamp
+                let name = row[1]; // Student Name
+                let u = row[2]; // Unit
+                let l = row[3]; // List
+                let m = row[4]; // Mode
+                let s = row[5]; // Score
+                
+                // Set name fallback if blank
+                if (!name || String(name).trim() === "") name = "Anonymous";
+                
+                // Format timestamp
+                if (t) {
+                    const dateObj = new Date(t);
+                    if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 }
-
-                if (t !== 'No Date') { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+                
+                // Format score
                 if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
                 
-                if (name === null || name.trim() === "") name = "Unknown Explorer";
-                
-                return { student: name, unit: u, list: l, mode: m, score: s, timestamp: t }; 
-            }); 
-            
-            // Clean out generic or broken entries entirely from the list
-            rawAnalytics = rawAnalytics.filter(r => r.student && r.student !== "Anonymous" && r.student !== "Unknown Explorer");
+                rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
+            }
 
             renderStudentList(); 
-        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
+        } catch (e) { 
+            document.getElementById('studentListGrid').innerText = "Unable to load analytics. Error: " + e.message; 
+        } 
     }
 
     function renderStudentList() { 
