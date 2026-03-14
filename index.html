@@ -1,685 +1,702 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocabulary Sojourn</title>
-    <style>
-        :root { 
-            --primary: #6366f1; 
-            --primary-hover: #4f46e5;
-            --bg: #0f172a; 
-            --text: #f8fafc; 
-            --accent: #10b981; 
-            --danger: #ef4444; 
-            --glass: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
-        
-        body { 
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-            background: #0f172a;
-            background: radial-gradient(circle at top left, #1e293b, #0f172a); 
-            color: var(--text); 
-            padding: 0; margin: 0; 
-            display: flex; flex-direction: column; align-items: center; 
-            min-height: 100vh; position: relative; overflow-x: hidden; 
-        }
-
-        #matrixCanvas { 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            z-index: -1; 
-            pointer-events: none;
-            transition: opacity 0.8s ease;
-        }
-
-        .app-container { 
-            padding: 40px 20px 40px 20px; 
-            width: 100%; max-width: 650px; 
-            display: flex; flex-direction: column; 
-            position: relative; z-index: 10;
-            opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
-        }
-
-        #typingTitleContainer {
-            margin-bottom: 25px;
-            min-height: 3.5em;
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-align: center;
-            text-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
-            letter-spacing: 0.5px;
-            line-height: 1.4;
-            white-space: pre-wrap;
-        }
-        .blinking-cursor {
-            display: inline-block;
-            width: 3px;
-            height: 1.1em;
-            background-color: var(--primary);
-            margin-left: 6px;
-            vertical-align: middle;
-            animation: blink 1s step-end infinite;
-        }
-        @keyframes blink {
-            from, to { background-color: transparent; }
-            50% { background-color: var(--primary); }
-        }
-
-        .panel { 
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 30px; 
-            border-radius: 24px; 
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            margin-bottom: 25px; width: 100%; box-sizing: border-box; 
-        }
-
-        .nav-btn { 
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            color: white;
-            padding: 20px; border-radius: 16px; 
-            cursor: pointer; font-weight: 600; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 1rem;
-        }
-        .nav-btn:hover { 
-            background: var(--primary); 
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
-        }
-
-        .main-btn { 
-            background: linear-gradient(135deg, var(--primary), #a855f7); 
-            color: white; border: none; font-weight: 700; cursor: pointer; 
-            padding: 14px; border-radius: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-
-        #syncIndicator {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--accent);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            z-index: 10000;
-            transform: translateY(100px);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #syncIndicator.show { transform: translateY(0); }
-
-        .breadcrumb { 
-            font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; 
-            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-            transition: color 0.3s; font-weight: 600;
-        }
-
-        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
-        .study-tabs button { 
-            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
-            border-radius: 10px; cursor: pointer; font-weight: 600;
-            background: var(--glass); color: #94a3b8; transition: 0.3s;
-        }
-        .study-tabs button.active { 
-            background: white; color: var(--bg);
-            box-shadow: 0 0 15px rgba(255,255,255,0.2);
-        }
-
-        .diff-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .diff-btn {
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid var(--glass-border);
-            background: var(--glass);
-            color: white;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        .diff-btn:hover { background: rgba(255,255,255,0.1); }
-
-        .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
-        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; border-radius: 24px; }
-        .flipped .inner { transform: rotateY(180deg); }
-        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
-        .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); }
-        .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }
-
-        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
-        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
-
-        input { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; width: 100%; box-sizing: border-box; }
-
-        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
-        .welcome-title { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); }
-        .start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }
-        
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); }
-        .mode-toggle { position: absolute; top: 20px; left: 20px; z-index: 1000; background: var(--glass); color: #94a3b8; border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 16px; font-size: 0.7rem; cursor: pointer; }
-        .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; }
-        .hidden { display: none !important; }
-        .auth-switch { color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.85rem; margin-top: 10px; display: inline-block; }
-        
-        #logoutBtn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-left: 10px; transition: 0.3s; }
-        #logoutBtn:hover { background: var(--danger); color: white; }
-
-        .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
-        
-        .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); }
-
-        .loading-text { text-align: center; color: var(--primary); font-style: italic; letter-spacing: 1px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
-
-        .analytics-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
-        .analytics-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--glass-border); color: var(--primary); }
-        .analytics-table td { padding: 10px; border-bottom: 1px solid var(--glass-border); }
-    </style>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2487.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000; min-height: 14.0px}
+    span.s1 {font-kerning: none}
+  </style>
 </head>
 <body>
-
-    <div id="syncIndicator">Syncing with Database...</div>
-
-    <canvas id="matrixCanvas"></canvas>
-
-    <div id="landingPage">
-        <h1 class="welcome-title">VOCABULARY SOJOURN</h1>
-        <div class="sojourn-def" style="color: #94a3b8; margin-bottom: 30px; font-style: italic;">so-journ (n): a temporary stay in a place.</div>
-        <button class="start-btn" id="landingStartBtn" onclick="enterApp()">BEGIN JOURNEY</button>
-    </div>
-
-    <div id="loginOverlay" class="hidden">
-        <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
-            <div id="loginForm">
-                <h2 style="margin-top: 0;">Student Login</h2>
-                <input type="text" id="userIn" placeholder="Username">
-                <input type="password" id="passIn" placeholder="Password">
-                <button class="main-btn" id="loginSubmit" onclick="handleAuth('login')" style="width: 100%; margin-top: 15px;">Enter Journey</button>
-                <div class="auth-switch" onclick="toggleAuthMode(true)">New here? Create an account</div>
-                <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
-                <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
-            </div>
-
-            <div id="registerForm" class="hidden">
-                <h2 style="margin-top: 0;">Create Account</h2>
-                <input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)">
-                <input type="text" id="regUser" placeholder="Choose Username">
-                <input type="password" id="regPass" placeholder="Choose Password">
-                <button class="main-btn" id="regSubmit" onclick="handleAuth('register')" style="width: 100%; margin-top: 15px;">Register</button>
-                <div class="auth-switch" onclick="toggleAuthMode(false)">Already have an account? Log in</div>
-            </div>
-        </div>
-    </div>
-
-    <button class="mode-toggle" onclick="protectedToggle()">Manager Mode</button>
-
-    <div class="app-container">
-        <div id="typingTitleContainer"></div>
-
-        <div class="session-info-bar">
-            <div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Explorer: Guest</div>
-            <button id="logoutBtn" onclick="logout()">Logout</button>
-        </div>
-
-        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">� Sync Online</div>
-        
-        <div id="studyView" class="panel">
-            <div id="unitSelection">
-                <h2 style="margin: 5px 0 20px 0;">Select Unit</h2>
-                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="loading-text">Preparing your journey...</div>
-                </div>
-            </div>
-            
-            <div id="listSelection" class="hidden">
-                <div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()"></div>
-                <h2 style="margin: 5px 0 20px 0;">Select List</h2>
-                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            </div>
-
-            <div id="studyInterface" class="hidden">
-                <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()"></div>
-                <h3 id="activeListName" style="margin:5px 0; color: var(--primary);"></h3>
-                
-                <div class="study-tabs">
-                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
-                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
-                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
-                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
-                </div>
-
-                <div id="listMode">
-                    <div id="fullListArea"></div>
-                    <div id="historyLogArea" style="margin-top:30px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
-                        <h4 style="margin:0 0 15px 0; font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">Session Records</h4>
-                        <div id="historyEntries" style="font-size: 0.85rem;"></div>
-                    </div>
-                </div>
-
-                <div id="flashMode" class="hidden">
-                    <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
-                        <div class="inner"><div class="front" id="displayFront"></div><div class="back" id="displayBack"></div></div>
-                    </div>
-                    <div style="display:flex; gap:15px;">
-                        <button class="main-btn" onclick="changeCard(-1)" style="flex:1; background: var(--glass);">Previous</button>
-                        <button class="main-btn" onclick="changeCard(1)" style="flex:1;">Next Card</button>
-                    </div>
-                </div>
-
-                <div id="quizMode" class="hidden">
-                    <div id="quizDifficultyArea" class="diff-selector">
-                        <button class="diff-btn" onclick="initQuiz('Easy')">Easy (5)</button>
-                        <button class="diff-btn" onclick="initQuiz('Medium')">Medium (10)</button>
-                        <button class="diff-btn" onclick="initQuiz('Expert')">Expert (All)</button>
-                    </div>
-                    <div id="quizPlayArea" class="hidden">
-                        <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
-                        <div id="quizContent">
-                            <div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div>
-                            <div id="quizOptions"></div>
-                            <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
-                        </div>
-                    </div>
-                    <div id="quizEnd" class="hidden"></div>
-                </div>
-
-                <div id="matchMode" class="hidden">
-                    <div id="matchDifficultyArea" class="diff-selector">
-                        <button class="diff-btn" onclick="initMatch('Easy')">Easy (5)</button>
-                        <button class="diff-btn" onclick="initMatch('Medium')">Medium (10)</button>
-                        <button class="diff-btn" onclick="initMatch('Expert')">Expert (All)</button>
-                    </div>
-                    <div id="matchPlayArea" class="hidden">
-                        <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
-                        <div id="matchContainer"></div>
-                    </div>
-                    <div id="matchEnd" class="hidden"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
-            <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
-                <button class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content Manager</button>
-                <button class="main-btn" style="flex: 1; background: var(--accent);" onclick="switchAdminTab('analytics')">Student Results</button>
-            </div>
-
-            <div id="adminContentArea">
-                <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
-                <div id="adminUnitSelection"><div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
-                <div id="adminListSelection" class="hidden">
-                    <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
-                    <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-                </div>
-                <div id="adminEditArea" class="hidden">
-                    <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
-                    <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
-                        <h4 style="margin-top:0;">New Entry</h4>
-                        <input type="text" id="newT" placeholder="Term">
-                        <input type="text" id="newD" placeholder="Definition">
-                        <input type="text" id="newI" placeholder="Image URL (Optional)">
-                        <button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;">Commit to Database</button>
-                    </div>
-                    <div id="adminWordList"></div>
-                </div>
-            </div>
-
-            <div id="adminAnalyticsArea" class="hidden">
-                <h3 style="margin-top: 0;">Student Insights</h3>
-                <div id="studentListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="loading-text">Fetching records...</div>
-                </div>
-                <div id="individualStudentView" class="hidden">
-                    <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to All Students</div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h4 id="viewingStudentName" style="color: var(--accent); margin: 0;"></h4>
-                        <button id="clearAllBtn" onclick="clearResultsPrompt()" style="background: var(--danger); border: none; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Clear All Results</button>
-                    </div>
-
-                    <div id="studentDetailTable"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-<script>
-    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwkVwDmr-JODl-xaedCxvoTEVw1EtZK9UY7kWZe0_jTHwgzaTQMrXYFg41Z3hnxlMk0Ow/exec"; 
-    const ADMIN_PASS = "science123";
-
-    let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
-    let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
-    let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
-    let adminSelectedUnit = "", adminSelectedList = "";
-    let hasAnimatedWelcome = false; 
-    let currentViewingStudent = ""; // Helper for deletion
-
-    let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
-    let mGoal = 0, mCorrect = 0, mTotal = 0;
-
-    const canvas = document.getElementById('matrixCanvas');
-    const ctx = canvas.getContext('2d');
-    let columns = [];
-
-    function resizeCanvas() { 
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
-        columns = Array(Math.floor(canvas.width / 25)).fill(0).map(() => Math.random() * -canvas.height); 
-    }
-
-    function updateMatrixWords() {
-        let terms = [];
-        for (let u in units) for (let l in units[u]) units[u][l].forEach(i => terms.push(i.t));
-        if (terms.length > 0) allTerms = terms;
-    }
-
-    function drawMatrix() { 
-        ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height); 
-        ctx.fillStyle = "#3b82f6"; ctx.font = "bold 15px monospace"; 
-        columns.forEach((y, i) => { 
-            const word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
-            ctx.fillText(word, i * 28, y); 
-            if (y > canvas.height && Math.random() > 0.975) columns[i] = 0; else columns[i] = y + 25; 
-        }); 
-    }
-    
-    window.onload = () => { 
-        fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
-        const stored = localStorage.getItem('vocabSojournName');
-        if (stored) { studentName = stored; document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; }
-    };
-    window.addEventListener('resize', resizeCanvas);
-
-    async function fetchTeacherData(force = false) {
-        try {
-            const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
-            const response = await fetch(url); const csvText = await response.text();
-            const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
-            const newUnits = {}; 
-            
-            rows.slice(1).forEach(row => {
-                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                if (cols.length >= 5) {
-                    const term = cols[0]; const def = cols[1]; const img = cols[2];
-                    const listName = cols[3]; const unitName = cols[4]; 
-                    if (!newUnits[unitName]) newUnits[unitName] = {}; 
-                    if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
-                    newUnits[unitName][listName].push({t: term, d: def, img: img});
-                }
-            });
-            units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
-        } catch (e) { console.error("Fetch Error:", e); }
-    }
-
-    function playWelcomeAnimation() {
-        const text = "Welcome to your Vocabulary Journey.\nPlease select a unit...";
-        const container = document.getElementById('typingTitleContainer');
-        if (hasAnimatedWelcome) { container.innerText = text; return; }
-        container.innerHTML = '<span id="typingContent"></span><span class="blinking-cursor"></span>';
-        const target = document.getElementById('typingContent');
-        let i = 0;
-        function type() {
-            if (i < text.length) { target.innerText += text.charAt(i); i++; setTimeout(type, 40); } 
-            else { hasAnimatedWelcome = true; }
-        }
-        type();
-    }
-
-    function triggerSyncIndicator() {
-        const toast = document.getElementById('syncIndicator');
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2000);
-    }
-
-    async function submitNewWord() { 
-        const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
-        if(!t || !d) return alert("Fill fields");
-        units[u][l].push({t, d, img: i}); 
-        renderAdminWordList(); triggerSyncIndicator();
-        document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }) });
-    }
-
-    async function saveEdit(u, l, idx) { 
-        const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
-        const oldTerm = units[u][l][idx].t;
-        units[u][l][idx] = {t: nt, d: nd, img: ni}; 
-        triggerSyncIndicator();
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni }) }); 
-    }
-
-    async function deleteWord(u, l, idx) {
-        if(!confirm("Are you sure?")) return;
-        const termToDelete = units[u][l][idx].t;
-        units[u][l].splice(idx, 1); 
-        renderAdminWordList(); triggerSyncIndicator();
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete }) });
-    }
-
-    function enterApp() { document.getElementById('landingPage').style.opacity = '0'; if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; setTimeout(() => { document.getElementById('landingPage').classList.add('hidden'); if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); renderUnitSelection(); }, 800); }
-    function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
-    function continueAsGuest() { studentName = "Guest"; unlockApp(); }
-
-    async function handleAuth(type) {
-        let payload = {}; const fullNameInput = document.getElementById('regFull').value;
-        if (type === 'login') payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };
-        else { if(!fullNameInput) return alert("Please enter your full name."); payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value }; }
-        const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
-        const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
-        try { const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await response.text(); if (result.startsWith("Success:")) { studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", ""); localStorage.setItem('vocabSojournName', studentName); unlockApp(); } else { alert(result); } } catch (e) { alert("Network Error."); } finally { btn.innerText = oldText; btn.disabled = false; }
-    }
-
-    function unlockApp() { 
-        document.getElementById('loginOverlay').classList.add('hidden'); 
-        document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
-        document.querySelector('.app-container').style.opacity = '1'; 
-        document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        renderUnitSelection(); playWelcomeAnimation(); 
-    }
-
-    function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); studentName = ""; location.reload(); } }
-    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">Synchronizing records...</div>'; }
-    function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
-    function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
-    function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
-    function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
-    
-    async function syncSessionToSheet(mode, score) { 
-        if (studentName === "Guest") return; 
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }) }); 
-    }
-    
-    function setStudyMode(mode) { 
-        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); 
-        document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); 
-        ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
-        document.getElementById(mode + 'Mode').classList.remove('hidden'); 
-        const list = units[currentUnit][currentClass]; 
-        if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
-        if (mode === 'flash') { cardIdx = 0; updateCard(list); } 
-        if (mode === 'quiz') resetQuizUI();
-        if (mode === 'match') resetMatchUI();
-    }
-
-    function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
-    function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
-    function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
-
-    function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
-    function initQuiz(diff) {
-        currentDifficulty = diff; const list = units[currentUnit][currentClass];
-        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
-        qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-        qScore = 0; qIdx = 0;
-        document.getElementById('quizDifficultyArea').classList.add('hidden'); document.getElementById('quizPlayArea').classList.remove('hidden');
-        document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();
-    }
-    function renderQuiz() { 
-        if (qIdx >= qPool.length) { endQuiz(); return; } 
-        const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; 
-        const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
-        document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`; 
-        document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
-        document.getElementById('nextQuizBtn').classList.add('hidden'); 
-    }
-    function checkQuiz(el, isCorrect) { 
-        if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
-        if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } 
-        else { el.style.background = 'var(--danger)'; } 
-        qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; 
-        document.getElementById('nextQuizBtn').classList.remove('hidden'); 
-    }
-    function endQuiz() { 
-        document.getElementById('quizPlayArea').classList.add('hidden'); 
-        const pct = Math.round((qScore/qPool.length)*100) + "%"; 
-        document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct} (${currentDifficulty})</h3><button class="main-btn" onclick="resetQuizUI()">Restart</button>`; 
-        document.getElementById('quizEnd').classList.remove('hidden'); 
-        addHistory(`Quiz (${currentDifficulty})`, pct); syncSessionToSheet(`Quiz (${currentDifficulty})`, pct); 
-    }
-
-    function resetMatchUI() { document.getElementById('matchDifficultyArea').classList.remove('hidden'); document.getElementById('matchPlayArea').classList.add('hidden'); document.getElementById('matchEnd').classList.add('hidden'); }
-    function initMatch(diff) {
-        currentDifficulty = diff; const list = units[currentUnit][currentClass];
-        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
-        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-        mGoal = sub.length; mCorrect = 0; mTotal = 0;
-        document.getElementById('matchDifficultyArea').classList.add('hidden'); document.getElementById('matchPlayArea').classList.remove('hidden');
-        document.getElementById('matchStats').innerText = "Accuracy: 0%";
-        let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
-        let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
-        document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`;
-    }
-    function drag(e) { draggedItem = e.target; }
-    function drop(e) { 
-        const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; 
-        mTotal++; 
-        if (draggedItem.dataset.id === target.dataset.id) { 
-            mCorrect++; target.style.background = 'var(--accent)'; 
-            draggedItem.style.visibility = 'hidden'; target.draggable = false; 
-        } else { 
-            target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); 
-        } 
-        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
-        document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
-        if (mCorrect === mGoal) { 
-            document.getElementById('matchPlayArea').classList.add('hidden'); 
-            document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc} (${currentDifficulty})</h3><button class="main-btn" onclick="resetMatchUI()">Restart</button>`; 
-            document.getElementById('matchEnd').classList.remove('hidden'); 
-            addHistory(`Match (${currentDifficulty})`, acc); syncSessionToSheet(`Match (${currentDifficulty})`, acc); 
-        } 
-    }
-
-    function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
-    function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
-    
-    function protectedToggle() { 
-        const adminView = document.getElementById('adminView'); 
-        if (adminView.classList.contains('hidden')) { 
-            if (prompt("Password:") === ADMIN_PASS) { 
-                document.getElementById('studyView').classList.add('hidden'); 
-                document.getElementById('loginOverlay').classList.add('hidden'); 
-                adminView.classList.remove('hidden'); 
-                document.querySelector('.app-container').style.opacity = '1'; 
-                document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-                renderAdminUnitSelection(); 
-            } 
-        } else { location.reload(); } 
-    }
-    
-    function switchAdminTab(tab) { 
-        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
-        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
-        if (tab === 'analytics') fetchResultsAnalytics(); 
-    }
-    
-    async function fetchResultsAnalytics() { 
-        try { 
-            const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
-            const data = await response.json(); 
-            rawAnalytics = data.map(row => { 
-                let u = 'N/A', l = 'N/A', name = 'Anonymous', m = 'N/A', s = '0%', t = 'No Date';
-                if (Array.isArray(row)) { t = row[0] || t; name = row[1] || name; u = row[2] || u; l = row[3] || l; m = row[4] || m; s = row[5] || s; } 
-                if (t !== 'No Date') { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-                if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
-                return { student: name, unit: u, list: l, mode: m, score: s, timestamp: t }; 
-            }); 
-            renderStudentList(); 
-        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
-    }
-
-    function renderStudentList() { 
-        const grid = document.getElementById('studentListGrid'); 
-        document.getElementById('individualStudentView').classList.add('hidden'); 
-        grid.classList.remove('hidden'); 
-        let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        if (studentSet.length > 1 && studentSet.includes('Anonymous')) studentSet = studentSet.filter(s => s !== 'Anonymous');
-        if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records found.</div>'; return; }
-        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
-    }
-
-    function viewStudentDetail(name) { 
-        currentViewingStudent = name;
-        document.getElementById('studentListGrid').classList.add('hidden'); 
-        const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); 
-        document.getElementById('viewingStudentName').innerText = "History for: " + name; 
-        const filtered = rawAnalytics.filter(r => r.student === name); 
-        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
-        filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); 
-        html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; 
-    }
-
-    // NEW LOGIC FOR CLEARING RESULTS
-    async function clearResultsPrompt() {
-        if (!confirm(`Are you absolutely sure you want to PERMANENTLY delete all results for ${currentViewingStudent}?`)) return;
-        
-        const btn = document.getElementById('clearAllBtn');
-        const oldText = btn.innerText;
-        btn.innerText = "Clearing...";
-        btn.disabled = true;
-
-        try {
-            await fetch(EXPORT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent })
-            });
-            alert("Results cleared successfully from the database.");
-            fetchResultsAnalytics(); // Refresh the list
-        } catch (e) {
-            alert("Failed to clear results. Check network.");
-        } finally {
-            btn.innerText = oldText;
-            btn.disabled = false;
-        }
-    }
-
-    function backToStudentList() { renderStudentList(); }
-    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
-    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
-    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
-    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
-    function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
-</script>
+<p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
+<p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
+<p class="p1"><span class="s1">&lt;head&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;title&gt;Vocabulary Sojourn&lt;/title&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;style&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>:root {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>--primary: #6366f1;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>--primary-hover: #4f46e5;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>--bg: #0f172a;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>--text: #f8fafc;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>--accent: #10b981;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>--danger: #ef4444;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>--glass: rgba(255, 255, 255, 0.05);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>--glass-border: rgba(255, 255, 255, 0.1);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>body {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: #0f172a;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: radial-gradient(circle at top left, #1e293b, #0f172a);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>color: var(--text);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 0; margin: 0;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>display: flex; flex-direction: column; align-items: center;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>min-height: 100vh; position: relative; overflow-x: hidden;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>#matrixCanvas {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>position: fixed;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>top: 0; left: 0;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>width: 100%; height: 100%;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>z-index: -1;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>pointer-events: none;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transition: opacity 0.8s ease;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.app-container {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 40px 20px 40px 20px;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>width: 100%; max-width: 650px;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>display: flex; flex-direction: column;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>position: relative; z-index: 10;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>opacity: 0; pointer-events: none; transition: opacity 0.5s ease;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>#typingTitleContainer {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>margin-bottom: 25px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>min-height: 3.5em;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-size: 1.6rem;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-weight: 700;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>color: var(--primary);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>text-align: center;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>text-shadow: 0 0 15px rgba(99, 102, 241, 0.4);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>letter-spacing: 0.5px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>line-height: 1.4;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>white-space: pre-wrap;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.blinking-cursor {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>display: inline-block;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>width: 3px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>height: 1.1em;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background-color: var(--primary);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>margin-left: 6px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>vertical-align: middle;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>animation: blink 1s step-end infinite;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>@keyframes blink {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>from, to { background-color: transparent; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>50% { background-color: var(--primary); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.panel {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: var(--glass);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>backdrop-filter: blur(12px);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>-webkit-backdrop-filter: blur(12px);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 30px;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border-radius: 24px;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border: 1px solid var(--glass-border);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>margin-bottom: 25px; width: 100%; box-sizing: border-box;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.nav-btn {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: var(--glass);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border: 1px solid var(--glass-border);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>color: white;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 20px; border-radius: 16px;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>cursor: pointer; font-weight: 600;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-size: 1rem;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.nav-btn:hover {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: var(--primary);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transform: translateY(-3px);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.main-btn {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: linear-gradient(135deg, var(--primary), #a855f7);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>color: white; border: none; font-weight: 700; cursor: pointer;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 14px; border-radius: 12px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transition: all 0.3s ease;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>#syncIndicator {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>position: fixed;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>bottom: 20px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>right: 20px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: var(--accent);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>color: white;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 12px 24px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border-radius: 12px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-weight: 600;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-size: 0.9rem;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 25px rgba(0,0,0,0.3);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>z-index: 10000;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transform: translateY(100px);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>#syncIndicator.show { transform: translateY(0); }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.breadcrumb {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>cursor: pointer; text-transform: uppercase; letter-spacing: 1px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transition: color 0.3s; font-weight: 600;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.study-tabs button {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>flex: 1; padding: 12px; font-size: 0.8rem; border: none;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border-radius: 10px; cursor: pointer; font-weight: 600;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: var(--glass); color: #94a3b8; transition: 0.3s;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.study-tabs button.active {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: white; color: var(--bg);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>box-shadow: 0 0 15px rgba(255,255,255,0.2);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.diff-selector {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>display: grid;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>grid-template-columns: 1fr 1fr 1fr;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>gap: 10px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>margin-bottom: 20px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.diff-btn {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>padding: 10px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border-radius: 10px;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>border: 1px solid var(--glass-border);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>background: var(--glass);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>color: white;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>cursor: pointer;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-size: 0.75rem;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>font-weight: bold;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>transition: 0.3s;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.diff-btn:hover { background: rgba(255,255,255,0.1); }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; border-radius: 24px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.flipped .inner { transform: rotateY(180deg); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>input { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; width: 100%; box-sizing: border-box; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>#landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.welcome-title { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>#loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.mode-toggle { position: absolute; top: 20px; left: 20px; z-index: 1000; background: var(--glass); color: #94a3b8; border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 16px; font-size: 0.7rem; cursor: pointer; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.hidden { display: none !important; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.auth-switch { color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.85rem; margin-top: 10px; display: inline-block; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>#logoutBtn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-left: 10px; transition: 0.3s; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>#logoutBtn:hover { background: var(--danger); color: white; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.loading-text { text-align: center; color: var(--primary); font-style: italic; letter-spacing: 1px; animation: pulse 1.5s infinite; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>@keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.analytics-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.analytics-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--glass-border); color: var(--primary); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>.analytics-table td { padding: 10px; border-bottom: 1px solid var(--glass-border); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
+<p class="p1"><span class="s1">&lt;body&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div id="syncIndicator"&gt;Syncing with Database...&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;canvas id="matrixCanvas"&gt;&lt;/canvas&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div id="landingPage"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;h1 class="welcome-title"&gt;VOCABULARY SOJOURN&lt;/h1&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="sojourn-def" style="color: #94a3b8; margin-bottom: 30px; font-style: italic;"&gt;so-journ (n): a temporary stay in a place.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button class="start-btn" id="landingStartBtn" onclick="enterApp()"&gt;BEGIN JOURNEY&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div id="loginOverlay" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="loginForm"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h2 style="margin-top: 0;"&gt;Student Login&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;input type="text" id="userIn" placeholder="Username"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;input type="password" id="passIn" placeholder="Password"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;button class="main-btn" id="loginSubmit" onclick="handleAuth('login')" style="width: 100%; margin-top: 15px;"&gt;Enter Journey&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="auth-switch" onclick="toggleAuthMode(true)"&gt;New here? Create an account&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;"&gt;Continue as Guest&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="registerForm" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h2 style="margin-top: 0;"&gt;Create Account&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;input type="text" id="regUser" placeholder="Choose Username"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;input type="password" id="regPass" placeholder="Choose Password"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;button class="main-btn" id="regSubmit" onclick="handleAuth('register')" style="width: 100%; margin-top: 15px;"&gt;Register&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="auth-switch" onclick="toggleAuthMode(false)"&gt;Already have an account? Log in&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;button class="mode-toggle" onclick="protectedToggle()"&gt;Manager Mode&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="app-container"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div id="typingTitleContainer"&gt;&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="session-info-bar"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;"&gt;Explorer: Guest&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;button id="logoutBtn" onclick="logout()"&gt;Logout&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;"&gt;• Sync Online&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div id="studyView" class="panel"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="unitSelection"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h2 style="margin: 5px 0 20px 0;"&gt;Select Unit&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div class="loading-text"&gt;Preparing your journey...&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="listSelection" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h2 style="margin: 5px 0 20px 0;"&gt;Select List&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="studyInterface" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="backToListsBtn" class="breadcrumb" onclick="backToLists()"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h3 id="activeListName" style="margin:5px 0; color: var(--primary);"&gt;&lt;/h3&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div class="study-tabs"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;button id="tabList" class="active" onclick="setStudyMode('list')"&gt;List&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;button id="tabFlash" onclick="setStudyMode('flash')"&gt;Flashcards&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;button id="tabQuiz" onclick="setStudyMode('quiz')"&gt;Quiz&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;button id="tabMatch" onclick="setStudyMode('match')"&gt;Matching&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="listMode"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="fullListArea"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="historyLogArea" style="margin-top:30px; border-top: 1px solid var(--glass-border); padding-top: 20px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;h4 style="margin:0 0 15px 0; font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;"&gt;Session Records&lt;/h4&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div id="historyEntries" style="font-size: 0.85rem;"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="flashMode" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div class="inner"&gt;&lt;div class="front" id="displayFront"&gt;&lt;/div&gt;&lt;div class="back" id="displayBack"&gt;&lt;/div&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div style="display:flex; gap:15px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="main-btn" onclick="changeCard(-1)" style="flex:1; background: var(--glass);"&gt;Previous&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="main-btn" onclick="changeCard(1)" style="flex:1;"&gt;Next Card&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="quizMode" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="quizDifficultyArea" class="diff-selector"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="diff-btn" onclick="initQuiz('Easy')"&gt;Easy (5)&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="diff-btn" onclick="initQuiz('Medium')"&gt;Medium (10)&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="diff-btn" onclick="initQuiz('Expert')"&gt;Expert (All)&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="quizPlayArea" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;"&gt;Accuracy: 0%&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div id="quizContent"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;div id="quizOptions"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                            </span>&lt;button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()"&gt;Continue&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="quizEnd" class="hidden"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="matchMode" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="matchDifficultyArea" class="diff-selector"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="diff-btn" onclick="initMatch('Easy')"&gt;Easy (5)&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="diff-btn" onclick="initMatch('Medium')"&gt;Medium (10)&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="diff-btn" onclick="initMatch('Expert')"&gt;Expert (All)&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="matchPlayArea" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;"&gt;Accuracy: 0%&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;div id="matchContainer"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="matchEnd" class="hidden"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div class="breadcrumb" onclick="protectedToggle()"&gt;&amp;larr; Exit Management&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div style="display: flex; gap: 10px; margin-bottom: 25px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;button class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')"&gt;Content Manager&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;button class="main-btn" style="flex: 1; background: var(--accent);" onclick="switchAdminTab('analytics')"&gt;Student Results&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="adminContentArea"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h3 id="adminHeader" style="margin-top: 0;"&gt;System Control&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="adminUnitSelection"&gt;&lt;div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"&gt;&lt;/div&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="adminListSelection" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="adminEditArea" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;h4 style="margin-top:0;"&gt;New Entry&lt;/h4&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;input type="text" id="newT" placeholder="Term"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;input type="text" id="newD" placeholder="Definition"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;input type="text" id="newI" placeholder="Image URL (Optional)"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;"&gt;Commit to Database&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="adminWordList"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;div id="adminAnalyticsArea" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;h3 style="margin-top: 0;"&gt;Student Insights&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="studentListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div class="loading-text"&gt;Fetching records...&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;div id="individualStudentView" class="hidden"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div class="breadcrumb" onclick="backToStudentList()"&gt;&amp;larr; Back to All Students&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">                    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;h4 id="viewingStudentName" style="color: var(--accent); margin: 0;"&gt;&lt;/h4&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                        </span>&lt;button id="clearAllBtn" onclick="clearResultsPrompt()" style="background: var(--danger); border: none; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer;"&gt;Clear All Results&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>&lt;div id="studentDetailTable"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">&lt;script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxRECypxNPnNPP93-HP0mNJmcl6ZEnrD2GEOkNzIa9_sjsHsxmEQqSEmmKMkCYeJjTE4Q/exec";<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const ADMIN_PASS = "science123";</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"];<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let adminSelectedUnit = "", adminSelectedList = "";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let hasAnimatedWelcome = false;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let currentViewingStudent = ""; // Helper for deletion</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let mGoal = 0, mCorrect = 0, mTotal = 0;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const canvas = document.getElementById('matrixCanvas');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const ctx = canvas.getContext('2d');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>let columns = [];</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function resizeCanvas() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>canvas.width = window.innerWidth; canvas.height = window.innerHeight;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>columns = Array(Math.floor(canvas.width / 25)).fill(0).map(() =&gt; Math.random() * -canvas.height);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function updateMatrixWords() {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let terms = [];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>for (let u in units) for (let l in units[u]) units[u][l].forEach(i =&gt; terms.push(i.t));</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (terms.length &gt; 0) allTerms = terms;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function drawMatrix() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>ctx.fillStyle = "#3b82f6"; ctx.font = "bold 15px monospace";<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>columns.forEach((y, i) =&gt; {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const word = allTerms[Math.floor(Math.random() * allTerms.length)];<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>ctx.fillText(word, i * 28, y);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (y &gt; canvas.height &amp;&amp; Math.random() &gt; 0.975) columns[i] = 0; else columns[i] = y + 25;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>});<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>window.onload = () =&gt; {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const stored = localStorage.getItem('vocabSojournName');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (stored) { studentName = stored; document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>};</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>window.addEventListener('resize', resizeCanvas);</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function fetchTeacherData(force = false) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>try {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const url = force ? `${SHEET_CSV_URL}&amp;cachebust=${Date.now()}` : SHEET_CSV_URL;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const response = await fetch(url); const csvText = await response.text();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const rows = csvText.split(/\r?\n/).filter(r =&gt; r.trim().length &gt; 0);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const newUnits = {};<span class="Apple-converted-space"> </span></span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">            </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>rows.slice(1).forEach(row =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c =&gt; c.replace(/^"|"$/g, '').trim());</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (cols.length &gt;= 5) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const term = cols[0]; const def = cols[1]; const img = cols[2];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>const listName = cols[3]; const unitName = cols[4];<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>if (!newUnits[unitName]) newUnits[unitName] = {};<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>if (!newUnits[unitName][listName]) newUnits[unitName][listName] = [];<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                    </span>newUnits[unitName][listName].push({t: term, d: def, img: img});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>} catch (e) { console.error("Fetch Error:", e); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function playWelcomeAnimation() {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const text = "Welcome to your Vocabulary Journey.\nPlease select a unit...";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const container = document.getElementById('typingTitleContainer');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (hasAnimatedWelcome) { container.innerText = text; return; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>container.innerHTML = '&lt;span id="typingContent"&gt;&lt;/span&gt;&lt;span class="blinking-cursor"&gt;&lt;/span&gt;';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const target = document.getElementById('typingContent');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let i = 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>function type() {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (i &lt; text.length) { target.innerText += text.charAt(i); i++; setTimeout(type, 40); }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>else { hasAnimatedWelcome = true; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>type();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function triggerSyncIndicator() {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const toast = document.getElementById('syncIndicator');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>toast.classList.add('show');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>setTimeout(() =&gt; toast.classList.remove('show'), 2000);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function submitNewWord() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if(!t || !d) return alert("Fill fields");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>units[u][l].push({t, d, img: i});<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>renderAdminWordList(); triggerSyncIndicator();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }) });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function saveEdit(u, l, idx) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const oldTerm = units[u][l][idx].t;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>units[u][l][idx] = {t: nt, d: nd, img: ni};<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>triggerSyncIndicator();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni }) });<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function deleteWord(u, l, idx) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if(!confirm("Are you sure?")) return;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const termToDelete = units[u][l][idx].t;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>units[u][l].splice(idx, 1);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>renderAdminWordList(); triggerSyncIndicator();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete }) });</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function enterApp() { document.getElementById('landingPage').style.opacity = '0'; if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; setTimeout(() =&gt; { document.getElementById('landingPage').classList.add('hidden'); if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); renderUnitSelection(); }, 800); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function continueAsGuest() { studentName = "Guest"; unlockApp(); }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function handleAuth(type) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let payload = {}; const fullNameInput = document.getElementById('regFull').value;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (type === 'login') payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>else { if(!fullNameInput) return alert("Please enter your full name."); payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value }; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>try { const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await response.text(); if (result.startsWith("Success:")) { studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", ""); localStorage.setItem('vocabSojournName', studentName); unlockApp(); } else { alert(result); } } catch (e) { alert("Network Error."); } finally { btn.innerText = oldText; btn.disabled = false; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function unlockApp() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('loginOverlay').classList.add('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('studentWelcome').innerText = "Explorer: " + studentName;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.querySelector('.app-container').style.opacity = '1';<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.querySelector('.app-container').style.pointerEvents = 'auto';<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>renderUnitSelection(); playWelcomeAnimation();<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); studentName = ""; location.reload(); } }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u =&gt; `&lt;button class="nav-btn" onclick="selectUnit('${u}')"&gt;${u}&lt;/button&gt;`).join('') : '&lt;div class="loading-text"&gt;Synchronizing records...&lt;/div&gt;'; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&amp;larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l =&gt; `&lt;button class="nav-btn" onclick="selectList('${l}')"&gt;${l}&lt;/button&gt;`).join(''); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&amp;larr; ${currentUnit}`; setStudyMode('list'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function syncSessionToSheet(mode, score) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (studentName === "Guest") return;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }) });<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function setStudyMode(mode) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t =&gt; document.getElementById(t).classList.remove('active'));<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m =&gt; document.getElementById(m).classList.add('hidden'));<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById(mode + 'Mode').classList.remove('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const list = units[currentUnit][currentClass];<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (mode === 'list') { renderFullList(list); updateHistoryUI(); }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (mode === 'flash') { cardIdx = 0; updateCard(list); }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (mode === 'quiz') resetQuizUI();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (mode === 'match') resetMatchUI();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i =&gt; `&lt;div class="list-item"&gt;${i.img ? `&lt;img src="${i.img}" class="list-img" onerror="this.style.display='none'"&gt;` : ''}&lt;div&gt;&lt;strong&gt;${i.t}&lt;/strong&gt;: ${i.d}&lt;/div&gt;&lt;/div&gt;`).join(''); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `&lt;img src="${card.img}" class="vocab-img" onerror="this.style.display='none'"&gt;` : ''}&lt;div&gt;${card.t}&lt;/div&gt;`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function initQuiz(diff) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>currentDifficulty = diff; const list = units[currentUnit][currentClass];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>qPool = [...list].sort(() =&gt; 0.5 - Math.random()).slice(0, count);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>qScore = 0; qIdx = 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('quizDifficultyArea').classList.add('hidden'); document.getElementById('quizPlayArea').classList.remove('hidden');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function renderQuiz() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (qIdx &gt;= qPool.length) { endQuiz(); return; }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const list = units[currentUnit][currentClass]; const correct = qPool[qIdx];<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const options = [correct, ...list.filter(i =&gt; i.t !== correct.t).sort(() =&gt; 0.5 - Math.random()).slice(0, 3)].sort(() =&gt; 0.5 - Math.random());<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('quizOptions').innerHTML = options.map(o =&gt; `&lt;div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})"&gt;${o.d}&lt;/div&gt;`).join('');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('nextQuizBtn').classList.add('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function checkQuiz(el, isCorrect) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>else { el.style.background = 'var(--danger)'; }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('nextQuizBtn').classList.remove('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function endQuiz() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('quizPlayArea').classList.add('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const pct = Math.round((qScore/qPool.length)*100) + "%";<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('quizEnd').innerHTML = `&lt;h3&gt;Result: ${pct} (${currentDifficulty})&lt;/h3&gt;&lt;button class="main-btn" onclick="resetQuizUI()"&gt;Restart&lt;/button&gt;`;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('quizEnd').classList.remove('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>addHistory(`Quiz (${currentDifficulty})`, pct); syncSessionToSheet(`Quiz (${currentDifficulty})`, pct);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function resetMatchUI() { document.getElementById('matchDifficultyArea').classList.remove('hidden'); document.getElementById('matchPlayArea').classList.add('hidden'); document.getElementById('matchEnd').classList.add('hidden'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function initMatch(diff) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>currentDifficulty = diff; const list = units[currentUnit][currentClass];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const sub = [...list].sort(() =&gt; 0.5 - Math.random()).slice(0, count);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>mGoal = sub.length; mCorrect = 0; mTotal = 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('matchDifficultyArea').classList.add('hidden'); document.getElementById('matchPlayArea').classList.remove('hidden');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('matchStats').innerText = "Accuracy: 0%";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let words = sub.map((x, i) =&gt; ({t: x.t, id: i, type: 'w'})).sort(() =&gt; 0.5 - Math.random());<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let defs = sub.map((x, i) =&gt; ({t: x.d, id: i, type: 'd'})).sort(() =&gt; 0.5 - Math.random());<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('matchContainer').innerHTML = `&lt;div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"&gt;&lt;div&gt;${words.map(i =&gt; `&lt;div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;"&gt;${i.t}&lt;/div&gt;`).join('')}&lt;/div&gt;&lt;div&gt;${defs.map(i =&gt; `&lt;div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;"&gt;${i.t}&lt;/div&gt;`).join('')}&lt;/div&gt;&lt;/div&gt;`;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function drag(e) { draggedItem = e.target; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function drop(e) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>mTotal++;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (draggedItem.dataset.id === target.dataset.id) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>mCorrect++; target.style.background = 'var(--accent)';<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>draggedItem.style.visibility = 'hidden'; target.draggable = false;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>} else {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>target.style.background = 'var(--danger)'; setTimeout(() =&gt; target.style.background = 'var(--glass)', 500);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const acc = Math.round((mCorrect / mTotal) * 100) + "%";<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('matchStats').innerText = `Accuracy: ${acc}`;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (mCorrect === mGoal) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>document.getElementById('matchPlayArea').classList.add('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>document.getElementById('matchEnd').innerHTML = `&lt;h3&gt;Result: ${acc} (${currentDifficulty})&lt;/h3&gt;&lt;button class="main-btn" onclick="resetMatchUI()"&gt;Restart&lt;/button&gt;`;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>document.getElementById('matchEnd').classList.remove('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>addHistory(`Match (${currentDifficulty})`, acc); syncSessionToSheet(`Match (${currentDifficulty})`, acc);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h =&gt; `&lt;div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"&gt;&lt;span&gt;${h.mode} &lt;span style="color: #64748b;"&gt;(${h.list})&lt;/span&gt;&lt;/span&gt;&lt;span style="font-weight: bold; color: var(--accent);"&gt;${h.score}&lt;/span&gt;&lt;/div&gt;`).join('') : "No attempts yet."; }</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function protectedToggle() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const adminView = document.getElementById('adminView');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (adminView.classList.contains('hidden')) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>if (prompt("Password:") === ADMIN_PASS) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>document.getElementById('studyView').classList.add('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>document.getElementById('loginOverlay').classList.add('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>adminView.classList.remove('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>document.querySelector('.app-container').style.opacity = '1';<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>document.querySelector('.app-container').style.pointerEvents = 'auto';<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>renderAdminUnitSelection();<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>}<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>} else { location.reload(); }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function switchAdminTab(tab) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (tab === 'analytics') fetchResultsAnalytics();<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">    </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function fetchResultsAnalytics() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>try {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const response = await fetch(EXPORT_URL + "?action=getAnalytics&amp;cb=" + Date.now());<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>const data = await response.json();<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>rawAnalytics = data.map(row =&gt; {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>let u = 'N/A', l = 'N/A', name = 'Anonymous', m = 'N/A', s = '0%', t = 'No Date';</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (Array.isArray(row)) { t = row[0] || t; name = row[1] || name; u = row[2] || u; l = row[3] || l; m = row[4] || m; s = row[5] || s; }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (t !== 'No Date') { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>if (!isNaN(s) &amp;&amp; s !== '' &amp;&amp; !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>return { student: name, unit: u, list: l, mode: m, score: s, timestamp: t };<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>});<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>renderStudentList();<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>} catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; }<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function renderStudentList() {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const grid = document.getElementById('studentListGrid');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('individualStudentView').classList.add('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>grid.classList.remove('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let studentSet = [...new Set(rawAnalytics.map(r =&gt; r.student))];</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (studentSet.length &gt; 1 &amp;&amp; studentSet.includes('Anonymous')) studentSet = studentSet.filter(s =&gt; s !== 'Anonymous');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (studentSet.length === 0) { grid.innerHTML = '&lt;div class="loading-text"&gt;No records found.&lt;/div&gt;'; return; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>grid.innerHTML = studentSet.map(s =&gt; `&lt;button class="nav-btn" onclick="viewStudentDetail('${s}')"&gt;${s}&lt;/button&gt;`).join('');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function viewStudentDetail(name) {<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>currentViewingStudent = name;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('studentListGrid').classList.add('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const view = document.getElementById('individualStudentView'); view.classList.remove('hidden');<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>document.getElementById('viewingStudentName').innerText = "History for: " + name;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const filtered = rawAnalytics.filter(r =&gt; r.student === name);<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>let html = `&lt;table class="analytics-table"&gt;&lt;tr&gt;&lt;th&gt;Date/Time&lt;/th&gt;&lt;th&gt;Unit&lt;/th&gt;&lt;th&gt;List&lt;/th&gt;&lt;th&gt;Mode&lt;/th&gt;&lt;th&gt;Score&lt;/th&gt;&lt;/tr&gt;`;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>filtered.reverse().forEach(r =&gt; { html += `&lt;tr&gt;&lt;td&gt;${r.timestamp}&lt;/td&gt;&lt;td&gt;${r.unit}&lt;/td&gt;&lt;td&gt;${r.list}&lt;/td&gt;&lt;td&gt;${r.mode}&lt;/td&gt;&lt;td&gt;${r.score}&lt;/td&gt;&lt;/tr&gt;`; });<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>html += `&lt;/table&gt;`; document.getElementById('studentDetailTable').innerHTML = html;<span class="Apple-converted-space"> </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>// LOGIC FOR CLEARING RESULTS</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>async function clearResultsPrompt() {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>if (!confirm(`Are you absolutely sure you want to PERMANENTLY delete all results for ${currentViewingStudent}?`)) return;</span></p>
+<p class="p2"><span class="s1"><span class="Apple-converted-space">        </span></span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const btn = document.getElementById('clearAllBtn');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>const oldText = btn.innerText;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>btn.innerText = "Clearing...";</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>btn.disabled = true;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>try {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>await fetch(EXPORT_URL, {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>method: 'POST',</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>mode: 'no-cors',</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">                </span>body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent })</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>});</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>alert("Results cleared successfully from the database.");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>fetchResultsAnalytics(); // Refresh the list</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>} catch (e) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>alert("Failed to clear results. Check network.");</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>} finally {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>btn.innerText = oldText;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>btn.disabled = false;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>}</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function backToStudentList() { renderStudentList(); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u =&gt; `&lt;button class="nav-btn" onclick="adminSelectUnit('${u}')"&gt;${u}&lt;/button&gt;`).join(''); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&amp;larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l =&gt; `&lt;button class="nav-btn" onclick="adminSelectList('${l}')"&gt;${l}&lt;/button&gt;`).join(''); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&amp;larr; ${adminSelectedUnit}`; renderAdminWordList(); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} &gt; ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) =&gt; `&lt;div class="admin-entry"&gt;&lt;input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"&gt;&lt;input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"&gt;&lt;input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"&gt;&lt;div style="display:flex; gap:10px; margin-top:10px;"&gt;&lt;button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);"&gt;Update Word&lt;/button&gt;&lt;button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);"&gt;Delete&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;`).join(''); }</span></p>
+<p class="p1"><span class="s1">&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
 </body>
 </html>
