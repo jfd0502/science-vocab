@@ -391,6 +391,9 @@
 
     let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
     let mGoal = 0, mCorrect = 0, mTotal = 0;
+    
+    // New variable to store a shuffled version of the list for flashcards
+    let flashcardList = [];
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -546,18 +549,31 @@
         document.getElementById(mode + 'Mode').classList.remove('hidden'); 
         const list = units[currentUnit][currentClass]; 
         if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
-        if (mode === 'flash') { cardIdx = 0; updateCard(list); } 
+        if (mode === 'flash') { 
+            cardIdx = 0; 
+            // Shuffle the list every time flashcards is selected
+            flashcardList = [...list].sort(() => 0.5 - Math.random());
+            updateCard(); 
+        } 
         if (mode === 'quiz') resetQuizUI();
         if (mode === 'match') resetMatchUI();
     }
 
-    // MODIFIED THIS FUNCTION ONLY
     function renderFullList(list) { 
         document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong style="color: var(--primary); font-size: 1.05rem; margin-right: 5px;">${i.t}</strong> ${i.d}</div></div>`).join(''); 
     }
     
-    function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
-    function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
+    // Now uses flashcardList
+    function updateCard() { 
+        const card = flashcardList[cardIdx]; 
+        document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; 
+        document.getElementById('displayBack').innerText = card.d; 
+        document.getElementById('cardContainer').classList.remove('flipped'); 
+    }
+    function changeCard(dir) { 
+        cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; 
+        updateCard(); 
+    }
 
     function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
     function initQuiz(diff) {
@@ -569,12 +585,11 @@
         document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();
     }
     
-    // MODIFIED THIS FUNCTION ONLY
     function renderQuiz() { 
         if (qIdx >= qPool.length) { endQuiz(); return; } 
         const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; 
         const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
-        document.getElementById('quizQuestion').innerText = `Definition of: ${correct.t}?`; // Changed here
+        document.getElementById('quizQuestion').innerText = `Definition of: ${correct.t}?`;
         document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
         document.getElementById('nextQuizBtn').classList.add('hidden'); 
     }
@@ -631,7 +646,6 @@
     
     function protectedToggle() { 
         if (prompt("Password:") === ADMIN_PASS) { 
-            // Also stop matrix if teacher logs in directly from the start screen
             if (matrixInterval) clearInterval(matrixInterval); 
             canvas.style.display = 'none'; 
             document.getElementById('studyView').classList.add('hidden'); 
