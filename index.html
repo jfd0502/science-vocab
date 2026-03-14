@@ -386,13 +386,16 @@
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
     let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
     let adminSelectedUnit = "", adminSelectedList = "";
-    let hasAnimatedWelcome = false; 
+    
+    // Updated logic to track both animations uniquely
+    let hasAnimatedStudentWelcome = false;
+    let hasAnimatedTeacherWelcome = false; 
+    
     let currentViewingStudent = ""; 
 
     let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
     let mGoal = 0, mCorrect = 0, mTotal = 0;
     
-    // New variable to store a shuffled version of the list for flashcards
     let flashcardList = [];
 
     const canvas = document.getElementById('matrixCanvas');
@@ -448,16 +451,31 @@
         } catch (e) { console.error("Fetch Error:", e); }
     }
 
-    function playWelcomeAnimation() {
-        const text = "Welcome to your Vocabulary Journey.\nPlease select a unit...";
+    // UPDATED TYPING LOGIC: Handles Teacher mode & Student mode seamlessly
+    function playWelcomeAnimation(mode = 'student') {
+        const text = mode === 'teacher' 
+            ? "Welcome to Teacher Mode.\nBelow you can edit vocabulary lists, and view student results."
+            : "Welcome to your Vocabulary Journey.\nPlease select a unit...";
+            
         const container = document.getElementById('typingTitleContainer');
-        if (hasAnimatedWelcome) { container.innerText = text; return; }
+        
+        // If we've already animated this mode before, just display it instantly
+        if ((mode === 'teacher' && hasAnimatedTeacherWelcome) || (mode === 'student' && hasAnimatedStudentWelcome)) { 
+            container.innerText = text; 
+            return; 
+        }
+        
         container.innerHTML = '<span id="typingContent"></span><span class="blinking-cursor"></span>';
         const target = document.getElementById('typingContent');
         let i = 0;
         function type() {
-            if (i < text.length) { target.innerText += text.charAt(i); i++; setTimeout(type, 40); } 
-            else { hasAnimatedWelcome = true; }
+            if (i < text.length) { 
+                target.innerText += text.charAt(i); i++; 
+                setTimeout(type, 40); 
+            } else { 
+                if (mode === 'teacher') hasAnimatedTeacherWelcome = true;
+                else hasAnimatedStudentWelcome = true;
+            }
         }
         type();
     }
@@ -526,7 +544,7 @@
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
         document.querySelector('.app-container').style.opacity = '1'; 
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        renderUnitSelection(); playWelcomeAnimation(); 
+        renderUnitSelection(); playWelcomeAnimation('student'); 
     }
 
     function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); studentName = ""; location.reload(); } }
@@ -551,7 +569,6 @@
         if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
         if (mode === 'flash') { 
             cardIdx = 0; 
-            // Shuffle the list every time flashcards is selected
             flashcardList = [...list].sort(() => 0.5 - Math.random());
             updateCard(); 
         } 
@@ -563,7 +580,6 @@
         document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong style="color: var(--primary); font-size: 1.05rem; margin-right: 5px;">${i.t}</strong> ${i.d}</div></div>`).join(''); 
     }
     
-    // Now uses flashcardList
     function updateCard() { 
         const card = flashcardList[cardIdx]; 
         document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; 
@@ -589,7 +605,7 @@
         if (qIdx >= qPool.length) { endQuiz(); return; } 
         const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; 
         const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
-        document.getElementById('quizQuestion').innerText = `Definition of: ${correct.t}?`;
+        document.getElementById('quizQuestion').innerText = `Definition of: ${correct.t}?`; 
         document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
         document.getElementById('nextQuizBtn').classList.add('hidden'); 
     }
@@ -644,20 +660,39 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
+    // UPDATED TOGGLE LOGIC: Swaps views and controls the typing modes!
     function protectedToggle() { 
-        if (prompt("Password:") === ADMIN_PASS) { 
-            if (matrixInterval) clearInterval(matrixInterval); 
-            canvas.style.display = 'none'; 
-            document.getElementById('studyView').classList.add('hidden'); 
-            document.getElementById('landingPage').classList.add('hidden'); 
-            document.getElementById('loginOverlay').classList.add('hidden'); 
-            document.getElementById('teacherLoginBtn').classList.add('hidden'); 
-            
-            const adminView = document.getElementById('adminView');
-            adminView.classList.remove('hidden'); 
-            document.querySelector('.app-container').style.opacity = '1'; 
-            document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-            renderAdminUnitSelection(); 
+        const adminView = document.getElementById('adminView');
+        
+        // Entering Teacher Mode
+        if (adminView.classList.contains('hidden')) {
+            if (prompt("Password:") === ADMIN_PASS) { 
+                if (matrixInterval) clearInterval(matrixInterval); 
+                canvas.style.display = 'none'; 
+                document.getElementById('studyView').classList.add('hidden'); 
+                document.getElementById('landingPage').classList.add('hidden'); 
+                document.getElementById('loginOverlay').classList.add('hidden'); 
+                document.getElementById('teacherLoginBtn').classList.add('hidden'); 
+                
+                adminView.classList.remove('hidden'); 
+                document.querySelector('.app-container').style.opacity = '1'; 
+                document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+                renderAdminUnitSelection(); 
+                playWelcomeAnimation('teacher');
+            }
+        } 
+        // Exiting Teacher Mode
+        else { 
+            // Only gracefully swap back to student mode if they were already logged in as a student
+            if (studentName) {
+                adminView.classList.add('hidden');
+                document.getElementById('studyView').classList.remove('hidden');
+                document.getElementById('teacherLoginBtn').classList.remove('hidden');
+                playWelcomeAnimation('student');
+            } else {
+                // If they bypassed the student login completely from start screen, just reload back home
+                location.reload(); 
+            }
         } 
     }
     
