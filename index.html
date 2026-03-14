@@ -32,6 +32,7 @@
             width: 100%; height: 100%; 
             z-index: -1; 
             pointer-events: none;
+            transition: opacity 0.8s ease;
         }
 
         .app-container { 
@@ -54,6 +55,19 @@
             line-height: 1.4;
             white-space: pre-wrap;
         }
+        .blinking-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.1em;
+            background-color: var(--primary);
+            margin-left: 6px;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { background-color: transparent; }
+            50% { background-color: var(--primary); }
+        }
 
         .panel { 
             background: var(--glass);
@@ -66,79 +80,138 @@
             margin-bottom: 25px; width: 100%; box-sizing: border-box; 
         }
 
-        /* Standardized Professional Inputs */
-        input { 
-            background: rgba(0, 0, 0, 0.3); 
-            border: 1px solid var(--glass-border); 
-            color: white; 
-            padding: 14px 18px; 
-            border-radius: 12px; 
-            margin: 10px 0; 
-            width: 100%; 
-            box-sizing: border-box; 
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: rgba(0, 0, 0, 0.5);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-        }
-
         .nav-btn { 
             background: var(--glass);
             border: 1px solid var(--glass-border);
             color: white;
-            padding: 18px; border-radius: 16px; 
-            cursor: pointer; transition: all 0.3s ease;
-            font-weight: 600;
+            padding: 20px; border-radius: 16px; 
+            cursor: pointer; font-weight: 600; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
         }
-        .nav-btn:hover { background: var(--primary); transform: translateY(-2px); }
+        .nav-btn:hover { 
+            background: var(--primary); 
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
 
         .main-btn { 
             background: linear-gradient(135deg, var(--primary), #a855f7); 
             color: white; border: none; font-weight: 700; cursor: pointer; 
-            padding: 16px; border-radius: 14px; transition: 0.3s;
-            font-size: 1rem;
-            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+            padding: 14px; border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
-        .main-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 25px -5px rgba(99, 102, 241, 0.5); }
+
+        #syncIndicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            z-index: 10000;
+            transform: translateY(100px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #syncIndicator.show { transform: translateY(0); }
+
+        .breadcrumb { 
+            font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            transition: color 0.3s; font-weight: 600;
+        }
+
+        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
+        .study-tabs button { 
+            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
+            border-radius: 10px; cursor: pointer; font-weight: 600;
+            background: var(--glass); color: #94a3b8; transition: 0.3s;
+        }
+        .study-tabs button.active { 
+            background: white; color: var(--bg);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+
+        .diff-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .diff-btn {
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            color: white;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .diff-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
+        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; border-radius: 24px; }
+        .flipped .inner { transform: rotateY(180deg); }
+        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
+        .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); }
+        .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }
+
+        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
+        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
+
+        input { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; width: 100%; box-sizing: border-box; }
 
         #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
-        .welcome-title { font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); letter-spacing: -1px; }
-        .start-btn { background: white; color: black; border: none; padding: 22px 50px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .start-btn:hover { transform: scale(1.05); box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
-
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); }
+        .welcome-title { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); }
+        .start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }
         
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); }
+        
+        /* Teacher Login Button Fixed */
         .mode-toggle { 
-            position: fixed; top: 20px; left: 20px; z-index: 10005; 
-            background: rgba(255, 255, 255, 0.08); 
-            color: #94a3b8; border: 1px solid var(--glass-border); 
-            border-radius: 12px; padding: 12px 20px; 
-            font-size: 0.85rem; font-weight: 600; cursor: pointer; 
-            backdrop-filter: blur(10px); transition: 0.3s;
+            position: fixed; 
+            top: 20px; 
+            left: 20px; 
+            z-index: 10002; 
+            background: var(--glass); 
+            color: #94a3b8; 
+            border: 1px solid var(--glass-border); 
+            border-radius: 10px; 
+            padding: 8px 16px; 
+            font-size: 0.7rem; 
+            cursor: pointer; 
         }
-        .mode-toggle:hover { background: var(--primary); color: white; border-color: var(--primary); }
-
-        .hidden { display: none !important; }
-        .auth-switch { color: var(--primary); cursor: pointer; text-decoration: none; font-size: 0.9rem; margin-top: 15px; display: inline-block; font-weight: 500; }
-        .auth-switch:hover { text-decoration: underline; }
         
-        .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: var(--glass); padding: 12px 20px; border-radius: 18px; border: 1px solid var(--glass-border); }
-        #logoutBtn { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; }
+        .hidden { display: none !important; }
+        .auth-switch { color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.85rem; margin-top: 10px; display: inline-block; }
+        
+        #logoutBtn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-left: 10px; transition: 0.3s; }
         #logoutBtn:hover { background: var(--danger); color: white; }
 
-        .flashcard { height: 380px; perspective: 1200px; cursor: pointer; margin: 25px 0; }
-        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
-        .flipped .inner { transform: rotateY(180deg); }
-        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; border-radius: 30px; border: 1px solid var(--glass-border); box-sizing: border-box; }
-        .front { background: rgba(255, 255, 255, 0.03); font-size: 2.2rem; font-weight: 800; }
-        .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.4rem; line-height: 1.5; }
+        .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
+        
+        .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); }
+
+        .loading-text { text-align: center; color: var(--primary); font-style: italic; letter-spacing: 1px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
+        .analytics-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
+        .analytics-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--glass-border); color: var(--primary); }
+        .analytics-table td { padding: 10px; border-bottom: 1px solid var(--glass-border); }
     </style>
 </head>
 <body>
+
+    <div id="syncIndicator">Syncing with Database...</div>
 
     <canvas id="matrixCanvas"></canvas>
 
@@ -146,30 +219,28 @@
 
     <div id="landingPage">
         <h1 class="welcome-title">VOCABULARY SOJOURN</h1>
-        <div style="color: #94a3b8; margin-bottom: 35px; font-style: italic; font-size: 1.1rem;">so-journ (n): a temporary stay in a place.</div>
-        <button class="start-btn" onclick="enterApp()">BEGIN JOURNEY</button>
+        <div class="sojourn-def" style="color: #94a3b8; margin-bottom: 30px; font-style: italic;">so-journ (n): a temporary stay in a place.</div>
+        <button class="start-btn" id="landingStartBtn" onclick="enterApp()">BEGIN JOURNEY</button>
     </div>
 
     <div id="loginOverlay" class="hidden">
-        <div class="panel" style="max-width: 420px; text-align: center; background: rgba(30, 41, 59, 0.98); border: 1px solid rgba(255,255,255,0.15);">
+        <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
             <div id="loginForm">
-                <h2 style="margin-top: 0; font-size: 1.8rem; margin-bottom: 10px;">Explorer Login</h2>
-                <p style="color: #94a3b8; margin-bottom: 25px; font-size: 0.9rem;">Welcome back, please enter your details.</p>
+                <h2 style="margin-top: 0;">Student Login</h2>
                 <input type="text" id="userIn" placeholder="Username">
                 <input type="password" id="passIn" placeholder="Password">
-                <button class="main-btn" onclick="handleAuth('login')" style="width: 100%; margin-top: 15px;">Enter Journey</button>
+                <button class="main-btn" id="loginSubmit" onclick="handleAuth('login')" style="width: 100%; margin-top: 15px;">Enter Journey</button>
                 <div class="auth-switch" onclick="toggleAuthMode(true)">New here? Create an account</div>
-                <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 25px 0;">
-                <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.9rem; padding: 14px;">Continue as Guest</button>
+                <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+                <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
             </div>
 
             <div id="registerForm" class="hidden">
-                <h2 style="margin-top: 0; font-size: 1.8rem; margin-bottom: 10px;">Create Account</h2>
-                <p style="color: #94a3b8; margin-bottom: 25px; font-size: 0.9rem;">Join the journey and track your progress.</p>
-                <input type="text" id="regFull" placeholder="Your Full Name">
-                <input type="text" id="regUser" placeholder="Choose a Username">
-                <input type="password" id="regPass" placeholder="Choose a Password">
-                <button class="main-btn" onclick="handleAuth('register')" style="width: 100%; margin-top: 15px;">Register & Begin</button>
+                <h2 style="margin-top: 0;">Create Account</h2>
+                <input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)">
+                <input type="text" id="regUser" placeholder="Choose Username">
+                <input type="password" id="regPass" placeholder="Choose Password">
+                <button class="main-btn" id="regSubmit" onclick="handleAuth('register')" style="width: 100%; margin-top: 15px;">Register</button>
                 <div class="auth-switch" onclick="toggleAuthMode(false)">Already have an account? Log in</div>
             </div>
         </div>
@@ -179,33 +250,43 @@
         <div id="typingTitleContainer"></div>
 
         <div class="session-info-bar">
-            <div id="studentWelcome" style="font-weight: 600; color: #cbd5e1;">Explorer: Guest</div>
+            <div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Explorer: Guest</div>
             <button id="logoutBtn" onclick="logout()">Logout</button>
         </div>
 
+        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">• Sync Online</div>
+        
         <div id="studyView" class="panel">
             <div id="unitSelection">
-                <h2 style="margin-bottom: 20px;">Select Unit</h2>
-                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
+                <h2 style="margin: 5px 0 20px 0;">Select Unit</h2>
+                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="loading-text">Preparing your journey...</div>
+                </div>
             </div>
             
             <div id="listSelection" class="hidden">
-                <div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()" style="color: var(--primary); cursor: pointer; margin-bottom: 10px;">&larr; Back to Units</div>
-                <h2 style="margin-bottom: 20px;">Select List</h2>
-                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
+                <div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()"></div>
+                <h2 style="margin: 5px 0 20px 0;">Select List</h2>
+                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             </div>
 
             <div id="studyInterface" class="hidden">
-                <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()" style="color: var(--primary); cursor: pointer; margin-bottom: 10px;">&larr; Back to Lists</div>
-                <h3 id="activeListName" style="margin-bottom: 20px; font-size: 1.5rem;"></h3>
+                <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()"></div>
+                <h3 id="activeListName" style="margin:5px 0; color: var(--primary);"></h3>
                 
-                <div class="study-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button id="tabList" class="nav-btn active" style="flex: 1; padding: 12px;" onclick="setStudyMode('list')">List</button>
-                    <button id="tabFlash" class="nav-btn" style="flex: 1; padding: 12px;" onclick="setStudyMode('flash')">Flashcards</button>
+                <div class="study-tabs">
+                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
+                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
+                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
+                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
                 </div>
 
                 <div id="listMode">
                     <div id="fullListArea"></div>
+                    <div id="historyLogArea" style="margin-top:30px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+                        <h4 style="margin:0 0 15px 0; font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">Session Records</h4>
+                        <div id="historyEntries" style="font-size: 0.85rem;"></div>
+                    </div>
                 </div>
 
                 <div id="flashMode" class="hidden">
@@ -217,16 +298,81 @@
                         <button class="main-btn" onclick="changeCard(1)" style="flex:1;">Next Card</button>
                     </div>
                 </div>
+
+                <div id="quizMode" class="hidden">
+                    <div id="quizDifficultyArea" class="diff-selector">
+                        <button class="diff-btn" onclick="initQuiz('Easy')">Easy (5)</button>
+                        <button class="diff-btn" onclick="initQuiz('Medium')">Medium (10)</button>
+                        <button class="diff-btn" onclick="initQuiz('Expert')">Expert (All)</button>
+                    </div>
+                    <div id="quizPlayArea" class="hidden">
+                        <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                        <div id="quizContent">
+                            <div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div>
+                            <div id="quizOptions"></div>
+                            <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
+                        </div>
+                    </div>
+                    <div id="quizEnd" class="hidden"></div>
+                </div>
+
+                <div id="matchMode" class="hidden">
+                    <div id="matchDifficultyArea" class="diff-selector">
+                        <button class="diff-btn" onclick="initMatch('Easy')">Easy (5)</button>
+                        <button class="diff-btn" onclick="initMatch('Medium')">Medium (10)</button>
+                        <button class="diff-btn" onclick="initMatch('Expert')">Expert (All)</button>
+                    </div>
+                    <div id="matchPlayArea" class="hidden">
+                        <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                        <div id="matchContainer"></div>
+                    </div>
+                    <div id="matchEnd" class="hidden"></div>
+                </div>
             </div>
         </div>
 
-        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.98); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20000; overflow-y: auto; border-radius: 0;">
-            <div style="padding: 40px; max-width: 800px; margin: 0 auto;">
-                <button class="nav-btn" onclick="location.reload()" style="margin-bottom: 30px;">&larr; Exit Teacher Mode</button>
-                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Teacher Dashboard</h1>
-                <p style="color: #94a3b8; margin-bottom: 40px;">Manage vocabulary units, lists, and student progress.</p>
-                <div id="adminContent">
-                    <p>Dashboard logic remains connected to your Google Sheet.</p>
+        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
+            <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+                <button class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content Manager</button>
+                <button class="main-btn" style="flex: 1; background: var(--accent);" onclick="switchAdminTab('analytics')">Student Results</button>
+            </div>
+
+            <div id="adminContentArea">
+                <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
+                <div id="adminUnitSelection"><div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
+                <div id="adminListSelection" class="hidden">
+                    <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
+                    <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+                </div>
+                <div id="adminEditArea" class="hidden">
+                    <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
+                    <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                        <h4 style="margin-top:0;">New Entry</h4>
+                        <input type="text" id="newT" placeholder="Term">
+                        <input type="text" id="newD" placeholder="Definition">
+                        <input type="text" id="newI" placeholder="Image URL (Optional)">
+                        <button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;">Commit to Database</button>
+                    </div>
+                    <div id="adminWordList"></div>
+                </div>
+            </div>
+
+            <div id="adminAnalyticsArea" class="hidden">
+                <h3 style="margin-top: 0;">Student Insights</h3>
+                <div id="studentListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="loading-text">Fetching records...</div>
+                </div>
+                <div id="individualStudentView" class="hidden">
+                    <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to All Students</div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 id="viewingStudentName" style="color: var(--accent); margin: 0;"></h4>
+                        <button id="clearAllBtn" onclick="clearResultsPrompt()" style="background: var(--danger); border: none; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Clear All Results</button>
+                    </div>
+
+                    <div id="studentDetailTable"></div>
                 </div>
             </div>
         </div>
@@ -237,8 +383,15 @@
     const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwWczyvE2N4X6Rk8aSfLPdreAMRfR5fwJ03ldrYwKfdh4tGGjB87XARsaGEcPUOngxYUA/exec"; 
     const ADMIN_PASS = "science123";
 
-    let units = {}, studentName = "", matrixInterval = null;
-    let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge", "Adventure", "Quest"]; 
+    let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
+    let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
+    let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
+    let adminSelectedUnit = "", adminSelectedList = "";
+    let hasAnimatedWelcome = false; 
+    let currentViewingStudent = ""; 
+
+    let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
+    let mGoal = 0, mCorrect = 0, mTotal = 0;
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -247,6 +400,12 @@
     function resizeCanvas() { 
         canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
         columns = Array(Math.floor(canvas.width / 25)).fill(0).map(() => Math.random() * -canvas.height); 
+    }
+
+    function updateMatrixWords() {
+        let terms = [];
+        for (let u in units) for (let l in units[u]) units[u][l].forEach(i => terms.push(i.t));
+        if (terms.length > 0) allTerms = terms;
     }
 
     function drawMatrix() { 
@@ -264,108 +423,295 @@
         const stored = localStorage.getItem('vocabSojournName');
         if (stored) { studentName = stored; document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; }
     };
+    window.addEventListener('resize', resizeCanvas);
 
-    function enterApp() { 
-        document.getElementById('landingPage').style.opacity = '0'; 
-        setTimeout(() => { 
-            document.getElementById('landingPage').classList.add('hidden'); 
-            if (studentName) unlockApp(); 
-            else document.getElementById('loginOverlay').classList.remove('hidden'); 
-        }, 800); 
-    }
-
-    function protectedToggle() { 
-        if (prompt("Teacher Password:") === ADMIN_PASS) { 
-            if (matrixInterval) clearInterval(matrixInterval);
-            canvas.style.display = 'none';
-            document.getElementById('landingPage').classList.add('hidden');
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('adminView').classList.remove('hidden'); 
-            document.getElementById('teacherLoginBtn').classList.add('hidden');
-        } 
-    }
-
-    async function fetchTeacherData() {
+    async function fetchTeacherData(force = false) {
         try {
-            const response = await fetch(SHEET_CSV_URL); 
-            const csvText = await response.text();
+            const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
+            const response = await fetch(url); const csvText = await response.text();
             const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
+            const newUnits = {}; 
+            
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length >= 5) {
-                    const term = cols[0], def = cols[1], img = cols[2], listName = cols[3], unitName = cols[4]; 
-                    if (!units[unitName]) units[unitName] = {}; 
-                    if (!units[unitName][listName]) units[unitName][listName] = []; 
-                    units[unitName][listName].push({t: term, d: def, img: img});
+                    const term = cols[0]; const def = cols[1]; const img = cols[2];
+                    const listName = cols[3]; const unitName = cols[4]; 
+                    if (!newUnits[unitName]) newUnits[unitName] = {}; 
+                    if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
+                    newUnits[unitName][listName].push({t: term, d: def, img: img});
                 }
             });
-            renderUnitSelection();
-        } catch (e) { console.error(e); }
+            units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
+        } catch (e) { console.error("Fetch Error:", e); }
     }
 
-    function unlockApp() { 
-        document.getElementById('loginOverlay').classList.add('hidden'); 
-        document.querySelector('.app-container').style.opacity = '1'; 
-        document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        document.getElementById('studentWelcome').innerText = "Explorer: " + studentName;
-    }
-
-    function continueAsGuest() { studentName = "Guest"; unlockApp(); }
-
-    async function handleAuth(type) {
-        let payload = {}; 
-        if (type === 'login') {
-            payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };
-        } else {
-            payload = { action: 'register', fullname: document.getElementById('regFull').value, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value };
+    function playWelcomeAnimation() {
+        const text = "Welcome to your Vocabulary Journey.\nPlease select a unit...";
+        const container = document.getElementById('typingTitleContainer');
+        if (hasAnimatedWelcome) { container.innerText = text; return; }
+        container.innerHTML = '<span id="typingContent"></span><span class="blinking-cursor"></span>';
+        const target = document.getElementById('typingContent');
+        let i = 0;
+        function type() {
+            if (i < text.length) { target.innerText += text.charAt(i); i++; setTimeout(type, 40); } 
+            else { hasAnimatedWelcome = true; }
         }
+        type();
+    }
+
+    function triggerSyncIndicator() {
+        const toast = document.getElementById('syncIndicator');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    async function submitNewWord() { 
+        const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
+        if(!t || !d) return alert("Fill fields");
+        units[u][l].push({t, d, img: i}); 
+        renderAdminWordList(); triggerSyncIndicator();
+        document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i }) });
+    }
+
+    async function saveEdit(u, l, idx) { 
+        const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
+        const oldTerm = units[u][l][idx].t;
+        units[u][l][idx] = {t: nt, d: nd, img: ni}; 
+        triggerSyncIndicator();
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni }) }); 
+    }
+
+    async function deleteWord(u, l, idx) {
+        if(!confirm("Are you sure?")) return;
+        const termToDelete = units[u][l][idx].t;
+        units[u][l].splice(idx, 1); 
+        renderAdminWordList(); triggerSyncIndicator();
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete }) });
+    }
+
+    // FIX APPLIED HERE: Restored the logic to STOP the Matrix!
+    function enterApp() { 
+        document.getElementById('landingPage').style.opacity = '0'; 
+        if (matrixInterval) clearInterval(matrixInterval); 
+        canvas.style.display = 'none'; 
         
-        try { 
-            const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }); 
-            const result = await response.text(); 
-            if (result.startsWith("Success:")) { 
-                studentName = (type === 'register') ? document.getElementById('regFull').value : result.replace("Success: ", ""); 
-                localStorage.setItem('vocabSojournName', studentName); 
-                unlockApp(); 
-            } else { alert(result); } 
-        } catch (e) { alert("Error connecting to server."); }
+        setTimeout(() => { 
+            document.getElementById('landingPage').classList.add('hidden'); 
+            if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); 
+            renderUnitSelection(); 
+        }, 800); 
     }
 
     function toggleAuthMode(isReg) { 
         document.getElementById('loginForm').classList.toggle('hidden', isReg); 
         document.getElementById('registerForm').classList.toggle('hidden', !isReg); 
     }
+    
+    function continueAsGuest() { studentName = "Guest"; unlockApp(); }
 
-    function logout() { localStorage.removeItem('vocabSojournName'); location.reload(); }
-
-    function renderUnitSelection() { 
-        const grid = document.getElementById('unitBtnGrid'); 
-        grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join(''); 
+    async function handleAuth(type) {
+        let payload = {}; const fullNameInput = document.getElementById('regFull').value;
+        if (type === 'login') payload = { action: 'login', username: document.getElementById('userIn').value, password: document.getElementById('passIn').value };
+        else { if(!fullNameInput) return alert("Please enter your full name."); payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value }; }
+        const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
+        const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
+        try { const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await response.text(); if (result.startsWith("Success:")) { studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", ""); localStorage.setItem('vocabSojournName', studentName); unlockApp(); } else { alert(result); } } catch (e) { alert("Network Error."); } finally { btn.innerText = oldText; btn.disabled = false; }
     }
 
-    function selectUnit(u) { 
-        currentUnit = u; 
-        document.getElementById('unitSelection').classList.add('hidden'); 
-        document.getElementById('listSelection').classList.remove('hidden'); 
-        document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); 
+    function unlockApp() { 
+        document.getElementById('loginOverlay').classList.add('hidden'); 
+        document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
+        document.querySelector('.app-container').style.opacity = '1'; 
+        document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+        renderUnitSelection(); playWelcomeAnimation(); 
     }
 
-    function selectList(l) { 
-        currentClass = l; 
-        document.getElementById('listSelection').classList.add('hidden'); 
-        document.getElementById('studyInterface').classList.remove('hidden'); 
-        document.getElementById('activeListName').innerText = l; 
-        setStudyMode('list'); 
-    }
-
-    function setStudyMode(mode) {
-        document.getElementById('listMode').classList.toggle('hidden', mode !== 'list');
-        document.getElementById('flashMode').classList.toggle('hidden', mode !== 'flash');
-        if(mode === 'list') renderList();
-        else renderFlash();
+    function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); studentName = ""; location.reload(); } }
+    
+    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">Synchronizing records...</div>'; }
+    function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
+    function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
+    function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
+    function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
+    
+    async function syncSessionToSheet(mode, score) { 
+        if (studentName === "Guest") return; 
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score }) }); 
     }
     
-    // Additional UI functions...
+    function setStudyMode(mode) { 
+        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); 
+        document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); 
+        ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
+        document.getElementById(mode + 'Mode').classList.remove('hidden'); 
+        const list = units[currentUnit][currentClass]; 
+        if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
+        if (mode === 'flash') { cardIdx = 0; updateCard(list); } 
+        if (mode === 'quiz') resetQuizUI();
+        if (mode === 'match') resetMatchUI();
+    }
+
+    function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong>${i.t}</strong>: ${i.d}</div></div>`).join(''); }
+    function updateCard(list) { const card = list[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
+    function changeCard(dir) { const list = units[currentUnit][currentClass]; cardIdx = (cardIdx + dir + list.length) % list.length; updateCard(list); }
+
+    function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
+    function initQuiz(diff) {
+        currentDifficulty = diff; const list = units[currentUnit][currentClass];
+        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
+        qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        qScore = 0; qIdx = 0;
+        document.getElementById('quizDifficultyArea').classList.add('hidden'); document.getElementById('quizPlayArea').classList.remove('hidden');
+        document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();
+    }
+    function renderQuiz() { 
+        if (qIdx >= qPool.length) { endQuiz(); return; } 
+        const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; 
+        const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
+        document.getElementById('quizQuestion').innerText = `Def of: ${correct.t}?`; 
+        document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
+        document.getElementById('nextQuizBtn').classList.add('hidden'); 
+    }
+    function checkQuiz(el, isCorrect) { 
+        if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
+        if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } 
+        else { el.style.background = 'var(--danger)'; } 
+        qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; 
+        document.getElementById('nextQuizBtn').classList.remove('hidden'); 
+    }
+    function endQuiz() { 
+        document.getElementById('quizPlayArea').classList.add('hidden'); 
+        const pct = Math.round((qScore/qPool.length)*100) + "%"; 
+        document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct} (${currentDifficulty})</h3><button class="main-btn" onclick="resetQuizUI()">Restart</button>`; 
+        document.getElementById('quizEnd').classList.remove('hidden'); 
+        addHistory(`Quiz (${currentDifficulty})`, pct); syncSessionToSheet(`Quiz (${currentDifficulty})`, pct); 
+    }
+
+    function resetMatchUI() { document.getElementById('matchDifficultyArea').classList.remove('hidden'); document.getElementById('matchPlayArea').classList.add('hidden'); document.getElementById('matchEnd').classList.add('hidden'); }
+    function initMatch(diff) {
+        currentDifficulty = diff; const list = units[currentUnit][currentClass];
+        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
+        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        mGoal = sub.length; mCorrect = 0; mTotal = 0;
+        document.getElementById('matchDifficultyArea').classList.add('hidden'); document.getElementById('matchPlayArea').classList.remove('hidden');
+        document.getElementById('matchStats').innerText = "Accuracy: 0%";
+        let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
+        let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
+        document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`;
+    }
+    function drag(e) { draggedItem = e.target; }
+    function drop(e) { 
+        const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; 
+        mTotal++; 
+        if (draggedItem.dataset.id === target.dataset.id) { 
+            mCorrect++; target.style.background = 'var(--accent)'; 
+            draggedItem.style.visibility = 'hidden'; target.draggable = false; 
+        } else { 
+            target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); 
+        } 
+        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
+        document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
+        if (mCorrect === mGoal) { 
+            document.getElementById('matchPlayArea').classList.add('hidden'); 
+            document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc} (${currentDifficulty})</h3><button class="main-btn" onclick="resetMatchUI()">Restart</button>`; 
+            document.getElementById('matchEnd').classList.remove('hidden'); 
+            addHistory(`Match (${currentDifficulty})`, acc); syncSessionToSheet(`Match (${currentDifficulty})`, acc); 
+        } 
+    }
+
+    function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
+    function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
+    
+    function protectedToggle() { 
+        if (prompt("Password:") === ADMIN_PASS) { 
+            // Also stop matrix if teacher logs in directly from the start screen
+            if (matrixInterval) clearInterval(matrixInterval); 
+            canvas.style.display = 'none'; 
+            document.getElementById('studyView').classList.add('hidden'); 
+            document.getElementById('landingPage').classList.add('hidden'); 
+            document.getElementById('loginOverlay').classList.add('hidden'); 
+            document.getElementById('teacherLoginBtn').classList.add('hidden'); 
+            
+            const adminView = document.getElementById('adminView');
+            adminView.classList.remove('hidden'); 
+            document.querySelector('.app-container').style.opacity = '1'; 
+            document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+            renderAdminUnitSelection(); 
+        } 
+    }
+    
+    function switchAdminTab(tab) { 
+        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
+        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
+        if (tab === 'analytics') fetchResultsAnalytics(); 
+    }
+    
+    async function fetchResultsAnalytics() { 
+        try { 
+            const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
+            const data = await response.json(); 
+            rawAnalytics = data.map(row => { 
+                let u = 'N/A', l = 'N/A', name = 'Anonymous', m = 'N/A', s = '0%', t = 'No Date';
+                if (Array.isArray(row)) { t = row[0] || t; name = row[1] || name; u = row[2] || u; l = row[3] || l; m = row[4] || m; s = row[5] || s; } 
+                if (t !== 'No Date') { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+                if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
+                return { student: name, unit: u, list: l, mode: m, score: s, timestamp: t }; 
+            }); 
+            renderStudentList(); 
+        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
+    }
+
+    function renderStudentList() { 
+        const grid = document.getElementById('studentListGrid'); 
+        document.getElementById('individualStudentView').classList.add('hidden'); 
+        grid.classList.remove('hidden'); 
+        let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
+        if (studentSet.length > 1 && studentSet.includes('Anonymous')) studentSet = studentSet.filter(s => s !== 'Anonymous');
+        if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records found.</div>'; return; }
+        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
+    }
+
+    function viewStudentDetail(name) { 
+        currentViewingStudent = name;
+        document.getElementById('studentListGrid').classList.add('hidden'); 
+        const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); 
+        document.getElementById('viewingStudentName').innerText = "History for: " + name; 
+        const filtered = rawAnalytics.filter(r => r.student === name); 
+        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
+        filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); 
+        html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; 
+    }
+
+    async function clearResultsPrompt() {
+        if (!confirm(`Are you absolutely sure you want to PERMANENTLY delete all results for ${currentViewingStudent}?`)) return;
+        const btn = document.getElementById('clearAllBtn');
+        const oldText = btn.innerText;
+        btn.innerText = "Clearing..."; btn.disabled = true;
+        try {
+            await fetch(EXPORT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent })
+            });
+            alert("Results cleared successfully from the database.");
+            fetchResultsAnalytics(); 
+        } catch (e) {
+            alert("Failed to clear results. Check network.");
+        } finally {
+            btn.innerText = oldText;
+            btn.disabled = false;
+        }
+    }
+
+    function backToStudentList() { renderStudentList(); }
+    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
+    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
+    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
+    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
+    function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
+    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
 </script>
 </body>
 </html>
