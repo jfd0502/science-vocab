@@ -363,19 +363,47 @@
 
             <div id="adminContentArea">
                 <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
+                
                 <div id="adminUnitSelection">
                     <div style="display:flex; gap:10px; margin-bottom:15px;">
-                        <button class="main-btn" onclick="createNewUnitPrompt()" style="flex:1; background:var(--accent);">+ Create New Unit</button>
+                        <button class="main-btn" onclick="showCreateUnitForm()" style="flex:1; background:var(--accent);">+ Create New Unit</button>
                     </div>
                     <div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
                 </div>
+                
                 <div id="adminListSelection" class="hidden">
                     <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
                     <div style="display:flex; gap:10px; margin-bottom:15px;">
-                        <button class="main-btn" onclick="createNewListPrompt()" style="flex:1; background:var(--accent);">+ Create New List</button>
+                        <button class="main-btn" onclick="showCreateListForm()" style="flex:1; background:var(--accent);">+ Create New List</button>
                     </div>
                     <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
                 </div>
+
+                <div id="adminCreateUnitArea" class="hidden panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                    <div class="breadcrumb" onclick="cancelCreate()">? Cancel</div>
+                    <h4 style="margin-top:0;">Create New Unit</h4>
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">To securely save a new Unit, you must add its first List and vocabulary word.</p>
+                    <input type="text" id="newUnitName" placeholder="New Unit Name (e.g., Biology)">
+                    <input type="text" id="newUnitListName" placeholder="First List Name (e.g., Chapter 1)" value="List 1">
+                    <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 15px 0;">
+                    <input type="text" id="newUnitTerm" placeholder="First Term">
+                    <input type="text" id="newUnitDef" placeholder="Definition">
+                    <input type="text" id="newUnitImg" placeholder="Image URL (Optional)">
+                    <button class="main-btn" onclick="submitNewUnit()" style="width:100%; margin-top: 10px; background: var(--accent);">Create Unit & Save Word</button>
+                </div>
+
+                <div id="adminCreateListArea" class="hidden panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                    <div class="breadcrumb" onclick="cancelCreate()">? Cancel</div>
+                    <h4 style="margin-top:0;">Create New List for <span id="createListUnitLabel" style="color: var(--primary);"></span></h4>
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">To securely save a new List, you must add its first vocabulary word.</p>
+                    <input type="text" id="newListName" placeholder="New List Name (e.g., Week 2)">
+                    <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 15px 0;">
+                    <input type="text" id="newListTerm" placeholder="First Term">
+                    <input type="text" id="newListDef" placeholder="Definition">
+                    <input type="text" id="newListImg" placeholder="Image URL (Optional)">
+                    <button class="main-btn" onclick="submitNewList()" style="width:100%; margin-top: 10px; background: var(--accent);">Create List & Save Word</button>
+                </div>
+
                 <div id="adminEditArea" class="hidden">
                     <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
                     <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
@@ -414,7 +442,7 @@
     
     // MAKE SURE TO KEEP YOUR URLs HERE:
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbw641JVtWiP4q802RFgTpxptKikzrFzEAvn09KrjpQAPDDktVB0M6j4qkcaj0V23mnuZA/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbz-GPPR6r83WwdDEQtyul7Tjvgx-cBJ13625LG662DcSslEuiiBkIgS6LuNY9Bly0wdyw/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -529,95 +557,92 @@
         setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
-    // --- UPDATED: Forces the user to enter the first word to save the Unit ---
-    function createNewUnitPrompt() {
-        const unitName = prompt("Enter New Unit Name:");
-        if (!unitName) return;
-        
-        const listName = prompt("Enter the first List Name for this unit (e.g., Week 1, Chapter 1):", "List 1");
-        if (!listName) return;
+    // --- UI-BASED CREATION LOGIC ---
+    function showCreateUnitForm() {
+        document.getElementById('adminUnitSelection').classList.add('hidden');
+        document.getElementById('adminCreateUnitArea').classList.remove('hidden');
+        document.getElementById('newUnitName').value = "";
+        document.getElementById('newUnitListName').value = "List 1";
+        document.getElementById('newUnitTerm').value = "";
+        document.getElementById('newUnitDef').value = "";
+        document.getElementById('newUnitImg').value = "";
+    }
 
-        alert("To securely save this new Unit to the database, you must add its first vocabulary word.");
-        
-        const term = prompt("Enter the first Term:");
-        if (!term) return alert("Creation cancelled: A term is required to save a new Unit.");
+    function submitNewUnit() {
+        const unitName = document.getElementById('newUnitName').value.trim();
+        const listName = document.getElementById('newUnitListName').value.trim();
+        const term = document.getElementById('newUnitTerm').value.trim();
+        const def = document.getElementById('newUnitDef').value.trim();
+        const img = document.getElementById('newUnitImg').value.trim();
 
-        const def = prompt("Enter the definition for '" + term + "':");
-        if (!def) return alert("Creation cancelled: A definition is required.");
+        if (!unitName || !listName || !term || !def) {
+            return alert("Unit Name, List Name, Term, and Definition are all required to create a new Unit.");
+        }
 
-        const img = prompt("Enter an Image URL (Optional) or leave blank:");
-
-        // Create the structure locally
         if (!units[unitName]) units[unitName] = {};
         if (!units[unitName][listName]) units[unitName][listName] = [];
         
-        // Push the new word locally
-        units[unitName][listName].push({ t: term, d: def, img: img || "" });
+        units[unitName][listName].push({ t: term, d: def, img: img });
         
-        // Sync the actual word to the database
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            mode: 'no-cors', 
-            body: JSON.stringify({ 
-                action: "addWord", 
-                unit: unitName, 
-                list: listName, 
-                term: term, 
-                def: def, 
-                img: img || "", 
-                teacherID: TEACHER_ID 
-            }) 
+            method: 'POST', mode: 'no-cors', 
+            body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
         });
 
-        // Update UI and take them directly into the new list
+        document.getElementById('adminCreateUnitArea').classList.add('hidden');
         renderAdminUnitSelection();
         adminSelectUnit(unitName);
         adminSelectList(listName);
     }
 
-    // --- UPDATED: Forces the user to enter the first word to save the List ---
-    function createNewListPrompt() {
-        const listName = prompt("Enter New List Name for " + adminSelectedUnit + ":");
-        if (!listName) return;
-
-        alert("To securely save this new List to the database, you must add its first vocabulary word.");
+    function showCreateListForm() {
+        document.getElementById('adminListSelection').classList.add('hidden');
+        document.getElementById('adminCreateListArea').classList.remove('hidden');
+        document.getElementById('createListUnitLabel').innerText = adminSelectedUnit;
         
-        const term = prompt("Enter the first Term:");
-        if (!term) return alert("Creation cancelled: A term is required to save a new List.");
+        document.getElementById('newListName').value = "";
+        document.getElementById('newListTerm').value = "";
+        document.getElementById('newListDef').value = "";
+        document.getElementById('newListImg').value = "";
+    }
 
-        const def = prompt("Enter the definition for '" + term + "':");
-        if (!def) return alert("Creation cancelled: A definition is required.");
+    function submitNewList() {
+        const listName = document.getElementById('newListName').value.trim();
+        const term = document.getElementById('newListTerm').value.trim();
+        const def = document.getElementById('newListDef').value.trim();
+        const img = document.getElementById('newListImg').value.trim();
 
-        const img = prompt("Enter an Image URL (Optional) or leave blank:");
+        if (!listName || !term || !def) {
+            return alert("List Name, Term, and Definition are required to create a new List.");
+        }
 
-        // Create the structure locally
         if (!units[adminSelectedUnit][listName]) {
             units[adminSelectedUnit][listName] = [];
         }
         
-        // Push the new word locally
-        units[adminSelectedUnit][listName].push({ t: term, d: def, img: img || "" });
+        units[adminSelectedUnit][listName].push({ t: term, d: def, img: img });
 
-        // Sync the actual word to the database
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            mode: 'no-cors', 
-            body: JSON.stringify({ 
-                action: "addWord", 
-                unit: adminSelectedUnit, 
-                list: listName, 
-                term: term, 
-                def: def, 
-                img: img || "", 
-                teacherID: TEACHER_ID 
-            }) 
+            method: 'POST', mode: 'no-cors', 
+            body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
         });
 
-        // Update UI and take them directly into the new list
+        document.getElementById('adminCreateListArea').classList.add('hidden');
         adminSelectUnit(adminSelectedUnit); 
         adminSelectList(listName);
+    }
+
+    function cancelCreate() {
+        document.getElementById('adminCreateUnitArea').classList.add('hidden');
+        document.getElementById('adminCreateListArea').classList.add('hidden');
+        
+        if (adminSelectedUnit && document.getElementById('adminEditArea').classList.contains('hidden')) {
+            document.getElementById('adminListSelection').classList.remove('hidden');
+        } else {
+            document.getElementById('adminUnitSelection').classList.remove('hidden');
+        }
     }
 
     async function submitNewWord() { 
