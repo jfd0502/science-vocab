@@ -400,15 +400,12 @@
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     let columns = [];
-    let frameCounter = 0;
 
     function resizeCanvas() { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight; 
-        // Consistent spacing: space words out more horizontally (120px)
-        const columnCount = Math.floor(canvas.width / 120);
-        columns = Array(columnCount).fill(0).map(() => ({
-            y: Math.random() * -canvas.height,
+        columns = Array(Math.floor(canvas.width/20)).fill(0).map(() => ({
+            y: Math.random() * canvas.height,
             word: allTerms[Math.floor(Math.random() * allTerms.length)]
         })); 
     }
@@ -420,28 +417,17 @@
     }
 
     function drawMatrix() { 
-        ctx.fillStyle = "rgba(10, 15, 28, 0.2)"; // Slightly darker trail
+        ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height); 
         ctx.fillStyle = "#3b82f6"; 
-        ctx.font = "bold 14px monospace"; 
-        
-        frameCounter++;
-        
+        ctx.font = "bold 15px monospace"; 
         columns.forEach((col, i) => { 
-            ctx.fillText(col.word, i * 120, col.y); 
-            
-            // Slower vertical movement: only update every 2 frames
-            if (frameCounter % 2 === 0) {
-                col.y += 15; 
-                
-                // If it goes off screen, reset with a new word and space it out
-                if (col.y > canvas.height) {
-                    if (Math.random() > 0.98) { // Slower re-entry for consistent density
-                        col.y = -50; 
-                        col.word = allTerms[Math.floor(Math.random() * allTerms.length)];
-                    }
-                }
-            }
+            ctx.fillText(col.word, i * 20, col.y); 
+            col.y += 35; 
+            if (col.y > canvas.height && Math.random() > 0.9) { 
+                col.y = 0; 
+                col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
+            } 
         }); 
     }
     
@@ -729,7 +715,6 @@
         if (tab === 'analytics') fetchResultsAnalytics(); 
     }
     
-    // STRICT DIRECT READING - No fancy mapping, just read the sheet directly
     async function fetchResultsAnalytics() { 
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
@@ -739,32 +724,23 @@
             
             for (let i = 0; i < data.length; i++) {
                 let row = data[i];
-                
-                // Skip if row is completely empty
                 if (!row || row.length < 6) continue;
                 
-                let t = row[0]; // Timestamp
-                let name = row[1]; // Student Name
-                let u = row[2]; // Unit
-                let l = row[3]; // List
-                let m = row[4]; // Mode
-                let s = row[5]; // Score
+                let t = row[0]; 
+                let name = row[1]; 
+                let u = row[2]; 
+                let l = row[3]; 
+                let m = row[4]; 
+                let s = row[5]; 
                 
-                // Set name fallback if blank
                 if (!name || String(name).trim() === "") name = "Anonymous";
-                
-                // Format timestamp
                 if (t) {
                     const dateObj = new Date(t);
                     if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 }
-                
-                // Format score
                 if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
-                
                 rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
             }
-
             renderStudentList(); 
         } catch (e) { 
             document.getElementById('studentListGrid').innerText = "Unable to load analytics. Error: " + e.message; 
@@ -775,9 +751,7 @@
         const grid = document.getElementById('studentListGrid'); 
         document.getElementById('individualStudentView').classList.add('hidden'); 
         grid.classList.remove('hidden'); 
-        
         let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        
         if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records found.</div>'; return; }
         grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
     }
