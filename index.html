@@ -412,8 +412,9 @@
     // --- MULTI-TEACHER CONFIGURATION ---
     let TEACHER_ID = "Teacher 1"; // Default; updated via dropdown
     
+    // MAKE SURE TO KEEP YOUR URLs HERE:
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyiOurJXKNVZq66Cx3zO6FO7F4E28SB3bNK7SUF3vI3voq51mwt9ftSIhv4ESoNVo4-wQ/execc"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbx628jGjbbFTebtfka5l-qKfgJkFEcxpOrWURIAXzyYGaYMqJmW6jRmA5q5AzAyPlzaVQ/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -531,7 +532,7 @@
     /**
      * Syncs the creation of a Unit or List structure to the database.
      */
-    async function syncNewStructure(unit, list = "General") {
+    async function syncNewStructure(unit, list = "New List") {
         triggerSyncIndicator();
         try {
             await fetch(EXPORT_URL, {
@@ -550,13 +551,19 @@
         } catch (e) { console.error("Sync Error:", e); }
     }
 
+    // --- THIS IS THE UPDATED FUNCTION ---
     function createNewUnitPrompt() {
         const name = prompt("Enter New Unit Name:");
         if (!name) return;
+        
+        const listName = prompt("Enter the first List Name for this unit (e.g., Week 1, Chapter 1):", "List 1");
+        if (!listName) return;
+
         if (!units[name]) {
-            units[name] = { "General": [] };
+            units[name] = {};
+            units[name][listName] = [];
             renderAdminUnitSelection();
-            syncNewStructure(name, "General"); 
+            syncNewStructure(name, listName); // Writes the new custom list to the database
         }
     }
 
