@@ -455,13 +455,14 @@
     }
     
     window.onload = () => { 
-        fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
+        resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
         const stored = localStorage.getItem('vocabSojournName');
         const storedT = localStorage.getItem('vocabSojournTeacher');
         if (stored) { 
             studentName = stored; 
             if(storedT) TEACHER_ID = storedT;
             document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
+            unlockApp();
         }
     };
     window.addEventListener('resize', resizeCanvas);
@@ -562,7 +563,6 @@
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
             if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); 
-            renderUnitSelection(); 
         }, 800); 
     }
 
@@ -578,35 +578,35 @@
     }
 
     async function handleAuth(type) {
-        // Set the active Teacher ID from the dropdown selection
         TEACHER_ID = document.getElementById('teacherSelect').value;
-        
         let payload = {}; 
         const fullNameInput = document.getElementById('regFull').value;
-        const userInput = document.getElementById('userIn').value;
+        const userInput = document.getElementById(type === 'login' ? 'userIn' : 'regUser').value;
         
         if (type === 'login') {
             payload = { action: 'login', username: userInput, password: document.getElementById('passIn').value };
         } else { 
             if(!fullNameInput) return alert("Please enter your full name."); 
-            payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value }; 
+            payload = { action: 'register', fullname: fullNameInput, username: userInput, password: document.getElementById('regPass').value }; 
         }
         
         const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
-        const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
+        btn.innerText = "Verifying..."; btn.disabled = true;
         
         try { 
             const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }); 
             const result = await response.text(); 
             if (result.startsWith("Success:")) { 
-                studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "").trim(); 
-                if (!studentName || studentName === "") studentName = userInput; 
+                let parts = result.replace("Success: ", "").split("|");
+                studentName = parts[0]; 
+                // Use the teacherID returned from server if available
+                if(parts[1]) TEACHER_ID = parts[1];
                 
                 localStorage.setItem('vocabSojournName', studentName); 
                 localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
                 unlockApp(); 
             } else { alert(result); } 
-        } catch (e) { alert("Network Error."); } finally { btn.innerText = oldText; btn.disabled = false; }
+        } catch (e) { alert("Network Error."); } finally { btn.innerText = type === 'login' ? "Enter Journey" : "Register"; btn.disabled = false; }
     }
 
     function unlockApp() { 
@@ -614,13 +614,11 @@
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
         document.querySelector('.app-container').style.opacity = '1'; 
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        
-        // Refresh data to ensure we have the correct teacher's units
         fetchTeacherData(true); 
         playWelcomeAnimation('student'); 
     }
 
-    function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); localStorage.removeItem('vocabSojournTeacher'); studentName = ""; location.reload(); } }
+    function logout() { if(confirm("Logout?")) { localStorage.clear(); location.reload(); } }
     
     function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">No units found for this teacher.</div>'; }
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
@@ -644,11 +642,7 @@
         document.getElementById(mode + 'Mode').classList.remove('hidden'); 
         const list = units[currentUnit][currentClass]; 
         if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
-        if (mode === 'flash') { 
-            cardIdx = 0; 
-            flashcardList = [...list].sort(() => 0.5 - Math.random());
-            updateCard(); 
-        } 
+        if (mode === 'flash') { cardIdx = 0; flashcardList = [...list].sort(() => 0.5 - Math.random()); updateCard(); } 
         if (mode === 'quiz') resetQuizUI();
         if (mode === 'match') resetMatchUI();
     }
@@ -663,10 +657,7 @@
         document.getElementById('displayBack').innerText = card.d; 
         document.getElementById('cardContainer').classList.remove('flipped'); 
     }
-    function changeCard(dir) { 
-        cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; 
-        updateCard(); 
-    }
+    function changeCard(dir) { cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; updateCard(); }
 
     function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
     function initQuiz(diff) {
@@ -689,8 +680,8 @@
     
     function checkQuiz(el, isCorrect) { 
         if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
-        if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } 
-        else { el.style.background = 'var(--danger)'; } 
+        el.style.background = isCorrect ? 'var(--accent)' : 'var(--danger)';
+        if (isCorrect) qScore++;
         qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; 
         document.getElementById('nextQuizBtn').classList.remove('hidden'); 
     }
@@ -719,8 +710,7 @@
         const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; 
         mTotal++; 
         if (draggedItem.dataset.id === target.dataset.id) { 
-            mCorrect++; target.style.background = 'var(--accent)'; 
-            draggedItem.style.visibility = 'hidden'; target.draggable = false; 
+            mCorrect++; target.style.background = 'var(--accent)'; draggedItem.style.visibility = 'hidden'; 
         } else { 
             target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); 
         } 
@@ -742,20 +732,14 @@
         if (adminView.classList.contains('hidden')) {
             const pass = prompt("Password:");
             if (pass === ADMIN_PASS) { 
-                // In admin mode, let the teacher choose which Class ID they want to manage
-                const choice = prompt("Enter Class ID to manage (e.g. Teacher 1, Teacher 2, etc):", TEACHER_ID);
+                const choice = prompt("Enter Class ID to manage:", TEACHER_ID);
                 if(choice) TEACHER_ID = choice;
-
                 if (matrixInterval) clearInterval(matrixInterval); 
                 canvas.style.display = 'none'; 
                 document.getElementById('studyView').classList.add('hidden'); 
                 document.getElementById('landingPage').classList.add('hidden'); 
                 document.getElementById('loginOverlay').classList.add('hidden'); 
-                document.getElementById('teacherLoginBtn').classList.add('hidden'); 
                 adminView.classList.remove('hidden'); 
-                document.querySelector('.app-container').style.opacity = '1'; 
-                document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-                
                 fetchTeacherData(true);
                 playWelcomeAnimation('teacher');
             }
@@ -763,7 +747,6 @@
             if (studentName) {
                 adminView.classList.add('hidden');
                 document.getElementById('studyView').classList.remove('hidden');
-                document.getElementById('teacherLoginBtn').classList.remove('hidden');
                 playWelcomeAnimation('student');
             } else { location.reload(); }
         } 
@@ -779,23 +762,11 @@
         try { 
             const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
             const data = await response.json(); 
-            rawAnalytics = [];
-            for (let i = 0; i < data.length; i++) {
-                let row = data[i];
-                if (!row || row.length < 6) continue;
-                
-                // Only load results for the currently active TEACHER_ID
-                if (row[6] === TEACHER_ID) {
-                    let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
-                    if (!name || String(name).trim() === "") name = "Anonymous";
-                    if (t) {
-                        const dateObj = new Date(t);
-                        if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    }
-                    if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
-                    rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
-                }
-            }
+            rawAnalytics = data.filter(r => r[6] === TEACHER_ID).map(row => ({
+                student: row[1] || "Anonymous", unit: row[2], list: row[3], mode: row[4], 
+                score: !isNaN(row[5]) ? Math.round(parseFloat(row[5]) * 100) + "%" : row[5],
+                timestamp: row[0]
+            }));
             renderStudentList(); 
         } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
     }
@@ -805,14 +776,13 @@
         document.getElementById('individualStudentView').classList.add('hidden'); 
         grid.classList.remove('hidden'); 
         let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records for ' + TEACHER_ID + '</div>'; return; }
-        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
+        grid.innerHTML = studentSet.length ? studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join('') : '<div class="loading-text">No records for ' + TEACHER_ID + '</div>'; 
     }
 
     function viewStudentDetail(name) { 
         currentViewingStudent = name;
         document.getElementById('studentListGrid').classList.add('hidden'); 
-        const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); 
+        document.getElementById('individualStudentView').classList.remove('hidden'); 
         document.getElementById('viewingStudentName').innerText = "History for: " + name; 
         const filtered = rawAnalytics.filter(r => r.student === name); 
         let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
@@ -822,17 +792,12 @@
 
     async function clearResultsPrompt() {
         if (!confirm(`Clear all results for ${currentViewingStudent}?`)) return;
-        const btn = document.getElementById('clearAllBtn');
-        btn.innerText = "Clearing..."; btn.disabled = true;
-        try {
-            await fetch(EXPORT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
-            });
-            alert("Results cleared.");
-            fetchResultsAnalytics(); 
-        } catch (e) { alert("Error clearing results."); } finally { btn.innerText = "Clear All Results"; btn.disabled = false; }
+        await fetch(EXPORT_URL, { 
+            method: 'POST', mode: 'no-cors', 
+            body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID }) 
+        });
+        alert("Results cleared.");
+        fetchResultsAnalytics(); 
     }
 
     function backToStudentList() { renderStudentList(); }
