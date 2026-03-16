@@ -414,7 +414,7 @@
     
     // MAKE SURE TO KEEP YOUR URLs HERE:
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbyYmK7jz53GSre3NMyGwvcW6LW7R2wsvhRh-a02KL1_KB0TAkh7t76K9gXUj7AIT7sbJQ/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbw641JVtWiP4q802RFgTpxptKikzrFzEAvn09KrjpQAPDDktVB0M6j4qkcaj0V23mnuZA/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -529,52 +529,95 @@
         setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
-    /**
-     * Syncs the creation of a Unit or List structure to the database.
-     */
-    async function syncNewStructure(unit, list = "New List") {
-        triggerSyncIndicator();
-        try {
-            await fetch(EXPORT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    action: "addWord",
-                    unit: unit,
-                    list: list,
-                    term: "Initialization", 
-                    def: "Entry created for " + unit,
-                    img: "",
-                    teacherID: TEACHER_ID
-                })
-            });
-        } catch (e) { console.error("Sync Error:", e); }
-    }
-
-    // --- THIS IS THE UPDATED FUNCTION ---
+    // --- UPDATED: Forces the user to enter the first word to save the Unit ---
     function createNewUnitPrompt() {
-        const name = prompt("Enter New Unit Name:");
-        if (!name) return;
+        const unitName = prompt("Enter New Unit Name:");
+        if (!unitName) return;
         
         const listName = prompt("Enter the first List Name for this unit (e.g., Week 1, Chapter 1):", "List 1");
         if (!listName) return;
 
-        if (!units[name]) {
-            units[name] = {};
-            units[name][listName] = [];
-            renderAdminUnitSelection();
-            syncNewStructure(name, listName); // Writes the new custom list to the database
-        }
+        alert("To securely save this new Unit to the database, you must add its first vocabulary word.");
+        
+        const term = prompt("Enter the first Term:");
+        if (!term) return alert("Creation cancelled: A term is required to save a new Unit.");
+
+        const def = prompt("Enter the definition for '" + term + "':");
+        if (!def) return alert("Creation cancelled: A definition is required.");
+
+        const img = prompt("Enter an Image URL (Optional) or leave blank:");
+
+        // Create the structure locally
+        if (!units[unitName]) units[unitName] = {};
+        if (!units[unitName][listName]) units[unitName][listName] = [];
+        
+        // Push the new word locally
+        units[unitName][listName].push({ t: term, d: def, img: img || "" });
+        
+        // Sync the actual word to the database
+        triggerSyncIndicator();
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ 
+                action: "addWord", 
+                unit: unitName, 
+                list: listName, 
+                term: term, 
+                def: def, 
+                img: img || "", 
+                teacherID: TEACHER_ID 
+            }) 
+        });
+
+        // Update UI and take them directly into the new list
+        renderAdminUnitSelection();
+        adminSelectUnit(unitName);
+        adminSelectList(listName);
     }
 
+    // --- UPDATED: Forces the user to enter the first word to save the List ---
     function createNewListPrompt() {
-        const name = prompt("Enter New List Name for " + adminSelectedUnit + ":");
-        if (!name) return;
-        if (!units[adminSelectedUnit][name]) {
-            units[adminSelectedUnit][name] = [];
-            adminSelectUnit(adminSelectedUnit); 
-            syncNewStructure(adminSelectedUnit, name); 
+        const listName = prompt("Enter New List Name for " + adminSelectedUnit + ":");
+        if (!listName) return;
+
+        alert("To securely save this new List to the database, you must add its first vocabulary word.");
+        
+        const term = prompt("Enter the first Term:");
+        if (!term) return alert("Creation cancelled: A term is required to save a new List.");
+
+        const def = prompt("Enter the definition for '" + term + "':");
+        if (!def) return alert("Creation cancelled: A definition is required.");
+
+        const img = prompt("Enter an Image URL (Optional) or leave blank:");
+
+        // Create the structure locally
+        if (!units[adminSelectedUnit][listName]) {
+            units[adminSelectedUnit][listName] = [];
         }
+        
+        // Push the new word locally
+        units[adminSelectedUnit][listName].push({ t: term, d: def, img: img || "" });
+
+        // Sync the actual word to the database
+        triggerSyncIndicator();
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ 
+                action: "addWord", 
+                unit: adminSelectedUnit, 
+                list: listName, 
+                term: term, 
+                def: def, 
+                img: img || "", 
+                teacherID: TEACHER_ID 
+            }) 
+        });
+
+        // Update UI and take them directly into the new list
+        adminSelectUnit(adminSelectedUnit); 
+        adminSelectList(listName);
     }
 
     async function submitNewWord() { 
