@@ -218,6 +218,7 @@
         .analytics-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
         .analytics-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--glass-border); color: var(--primary); }
         .analytics-table td { padding: 10px; border-bottom: 1px solid var(--glass-border); }
+        .unit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     </style>
 </head>
 <body>
@@ -363,7 +364,12 @@
 
             <div id="adminContentArea">
                 <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
-                <div id="adminUnitSelection"><div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div></div>
+                <div id="adminUnitSelection">
+                    <div id="adminUnitGrid" class="unit-grid"></div>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="main-btn" style="background: var(--accent); width: auto; padding: 10px 30px;" onclick="createNewUnitPrompt()">+ Create New Unit</button>
+                    </div>
+                </div>
                 <div id="adminListSelection" class="hidden">
                     <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
                     <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
@@ -405,7 +411,7 @@
     let TEACHER_ID = "Teacher 1"; // Default; updated via dropdown
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbx1vwjik2h3ftskdaggWypHHJqpCAl4QfHhKKIInSZ3dukqq3w4J0EG1ZH66y7MA_Kgiw/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbx628jGjbbFTebtfka5l-qKfgJkFEcxpOrWURIAXzyYGaYMqJmW6jRmA5q5AzAyPlzaVQ/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -555,6 +561,32 @@
         });
     }
 
+    async function createNewUnitPrompt() {
+        const u = prompt("Enter New Unit Name (e.g., Biology 101):");
+        if (!u) return;
+        const l = prompt("Enter New List Name (e.g., Cell Structures):");
+        if (!l) return;
+        const t = prompt("Enter First Vocabulary Term:");
+        if (!t) return;
+        const d = prompt("Enter Definition for " + t + ":");
+        if (!d) return;
+        const img = prompt("Enter Image URL (optional):") || "";
+
+        if (!units[u]) units[u] = {};
+        units[u][l] = [{t: t, d: d, img: img}];
+        
+        renderAdminUnitSelection();
+        triggerSyncIndicator();
+        
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: img, teacherID: TEACHER_ID }) 
+        });
+        
+        alert("Unit '" + u + "' created successfully!");
+    }
+
     function enterApp() { 
         document.getElementById('landingPage').style.opacity = '0'; 
         if (matrixInterval) clearInterval(matrixInterval); 
@@ -578,7 +610,6 @@
     }
 
     async function handleAuth(type) {
-        // Set the active Teacher ID from the dropdown selection
         TEACHER_ID = document.getElementById('teacherSelect').value;
         
         let payload = {}; 
@@ -586,21 +617,10 @@
         const userInput = document.getElementById('userIn').value;
         
         if (type === 'login') {
-            payload = { 
-                action: 'login', 
-                username: userInput, 
-                password: document.getElementById('passIn').value 
-            };
+            payload = { action: 'login', username: userInput, password: document.getElementById('passIn').value };
         } else { 
             if(!fullNameInput) return alert("Please enter your full name."); 
-            // Fix: Added teacherID to the registration payload so accounts are linked correctly
-            payload = { 
-                action: 'register', 
-                fullname: fullNameInput, 
-                username: document.getElementById('regUser').value, 
-                password: document.getElementById('regPass').value,
-                teacherID: TEACHER_ID
-            }; 
+            payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value, teacherID: TEACHER_ID }; 
         }
         
         const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
@@ -625,8 +645,6 @@
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
         document.querySelector('.app-container').style.opacity = '1'; 
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        
-        // Refresh data to ensure we have the correct teacher's units
         fetchTeacherData(true); 
         playWelcomeAnimation('student'); 
     }
@@ -655,11 +673,7 @@
         document.getElementById(mode + 'Mode').classList.remove('hidden'); 
         const list = units[currentUnit][currentClass]; 
         if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
-        if (mode === 'flash') { 
-            cardIdx = 0; 
-            flashcardList = [...list].sort(() => 0.5 - Math.random());
-            updateCard(); 
-        } 
+        if (mode === 'flash') { cardIdx = 0; flashcardList = [...list].sort(() => 0.5 - Math.random()); updateCard(); } 
         if (mode === 'quiz') resetQuizUI();
         if (mode === 'match') resetMatchUI();
     }
@@ -674,10 +688,7 @@
         document.getElementById('displayBack').innerText = card.d; 
         document.getElementById('cardContainer').classList.remove('flipped'); 
     }
-    function changeCard(dir) { 
-        cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; 
-        updateCard(); 
-    }
+    function changeCard(dir) { cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; updateCard(); }
 
     function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
     function initQuiz(diff) {
@@ -732,9 +743,7 @@
         if (draggedItem.dataset.id === target.dataset.id) { 
             mCorrect++; target.style.background = 'var(--accent)'; 
             draggedItem.style.visibility = 'hidden'; target.draggable = false; 
-        } else { 
-            target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); 
-        } 
+        } else { target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); } 
         const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
         document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
         if (mCorrect === mGoal) { 
@@ -753,10 +762,8 @@
         if (adminView.classList.contains('hidden')) {
             const pass = prompt("Password:");
             if (pass === ADMIN_PASS) { 
-                // In admin mode, let the teacher choose which Class ID they want to manage
                 const choice = prompt("Enter Class ID to manage (e.g. Teacher 1, Teacher 2, etc):", TEACHER_ID);
                 if(choice) TEACHER_ID = choice;
-
                 if (matrixInterval) clearInterval(matrixInterval); 
                 canvas.style.display = 'none'; 
                 document.getElementById('studyView').classList.add('hidden'); 
@@ -766,7 +773,6 @@
                 adminView.classList.remove('hidden'); 
                 document.querySelector('.app-container').style.opacity = '1'; 
                 document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-                
                 fetchTeacherData(true);
                 playWelcomeAnimation('teacher');
             }
@@ -794,15 +800,10 @@
             for (let i = 0; i < data.length; i++) {
                 let row = data[i];
                 if (!row || row.length < 6) continue;
-                
-                // Only load results for the currently active TEACHER_ID
                 if (row[6] === TEACHER_ID) {
                     let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
                     if (!name || String(name).trim() === "") name = "Anonymous";
-                    if (t) {
-                        const dateObj = new Date(t);
-                        if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    }
+                    if (t) { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
                     if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
                     rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
                 }
@@ -836,18 +837,23 @@
         const btn = document.getElementById('clearAllBtn');
         btn.innerText = "Clearing..."; btn.disabled = true;
         try {
-            await fetch(EXPORT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
-            });
-            alert("Results cleared.");
-            fetchResultsAnalytics(); 
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID }) });
+            alert("Results cleared."); fetchResultsAnalytics(); 
         } catch (e) { alert("Error clearing results."); } finally { btn.innerText = "Clear All Results"; btn.disabled = false; }
     }
 
     function backToStudentList() { renderStudentList(); }
-    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
+    
+    function renderAdminUnitSelection() { 
+        const grid = document.getElementById('adminUnitGrid'); 
+        const keys = Object.keys(units);
+        if (keys.length === 0) {
+            grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Click below to create your first one!</div>`;
+        } else {
+            grid.innerHTML = keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); 
+        }
+    }
+    
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
