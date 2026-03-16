@@ -582,26 +582,24 @@
         TEACHER_ID = document.getElementById('teacherSelect').value;
         
         let payload = {}; 
+        const fullNameInput = document.getElementById('regFull').value;
+        const userInput = document.getElementById('userIn').value;
         
         if (type === 'login') {
-            const userInput = document.getElementById('userIn').value;
             payload = { 
                 action: 'login', 
                 username: userInput, 
                 password: document.getElementById('passIn').value 
             };
         } else { 
-            const fullNameInput = document.getElementById('regFull').value;
-            const regUserInput = document.getElementById('regUser').value;
             if(!fullNameInput) return alert("Please enter your full name."); 
-            
-            // Fix: Include teacherID in the registration payload
+            // Fix: Added teacherID to the registration payload so accounts are linked correctly
             payload = { 
                 action: 'register', 
                 fullname: fullNameInput, 
-                username: regUserInput, 
+                username: document.getElementById('regUser').value, 
                 password: document.getElementById('regPass').value,
-                teacherID: TEACHER_ID 
+                teacherID: TEACHER_ID
             }; 
         }
         
@@ -612,9 +610,8 @@
             const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }); 
             const result = await response.text(); 
             if (result.startsWith("Success:")) { 
-                // Set the student name based on result or full name input
-                studentName = (type === 'register') ? document.getElementById('regFull').value : result.replace("Success: ", "").trim(); 
-                if (!studentName || studentName === "") studentName = "Explorer"; 
+                studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "").trim(); 
+                if (!studentName || studentName === "") studentName = userInput; 
                 
                 localStorage.setItem('vocabSojournName', studentName); 
                 localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
