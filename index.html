@@ -455,7 +455,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbw_BVe0BuLNFrfNtWXSq_fKr6yr-4LxXcr8i5oWQ2MfRcIK6W2XraTV-xT1HbWy_Mubww/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwsCpBS1fpqK7BJPYcF14hLI4qpINv2X2th7k9NGJRSzh5AzuAfwMtt6yXQDNOkUemTyA/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -510,7 +510,13 @@
         if (stored) { 
             studentName = stored; 
             if(storedT) TEACHER_ID = storedT;
-            document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
+            
+            // Re-apply correct naming upon refresh
+            if (studentName.startsWith("Teacher") || studentName === TEACHER_ID) {
+                document.getElementById('studentWelcome').innerText = "Educator: " + studentName; 
+            } else {
+                document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
+            }
         }
     };
     window.addEventListener('resize', resizeCanvas);
@@ -524,7 +530,8 @@
             
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                if (cols.length >= 6 && cols[5] === TEACHER_ID) {
+                // FIX: Added .trim() to ensure hidden spaces don't make units blank
+                if (cols.length >= 6 && cols[5].trim() === TEACHER_ID.trim()) {
                     const term = cols[0]; const def = cols[1]; const img = cols[2];
                     const listName = cols[3]; const unitName = cols[4]; 
                     if (!newUnits[unitName]) newUnits[unitName] = {}; 
@@ -709,7 +716,6 @@
         unlockApp(); 
     }
 
-    // FIX: Using normal CORS now that the backend doesn't crash from invalid addHeader calls
     async function handleAuth(type) {
         TEACHER_ID = document.getElementById('teacherSelect').value;
         let payload = {}; 
@@ -785,6 +791,13 @@
             
             if (result.startsWith("Success:")) { 
                 TEACHER_ID = result.replace("Success: ", "").trim(); 
+                
+                // FIX 1: Override any leftover student data completely
+                studentName = TEACHER_ID;
+                document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
+                localStorage.setItem('vocabSojournName', TEACHER_ID);
+                localStorage.setItem('vocabSojournTeacher', TEACHER_ID);
+                
                 enterTeacherMode();
             } else { 
                 alert(result); 
@@ -819,15 +832,8 @@
     }
 
     function exitTeacherMode() {
-        const adminView = document.getElementById('adminView');
-        if (studentName) {
-            adminView.classList.add('hidden');
-            document.getElementById('studyView').classList.remove('hidden');
-            document.getElementById('teacherLoginBtn').classList.remove('hidden');
-            playWelcomeAnimation('student');
-        } else { 
-            location.reload(); 
-        } 
+        // FIX 2: Do a hard reload to completely scrub the session UI and avoid weird mixed states
+        location.reload();
     }
 
     function unlockApp() { 
@@ -989,7 +995,8 @@
         document.getElementById('individualStudentView').classList.add('hidden'); 
         grid.classList.remove('hidden'); 
         let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        if (studentSet.length === 0) { grid.innerHTML = `<div class="loading-text">No records for ${TEACHER_ID}</div>`; return; }
+        // FIX 3: Clean error state if units list is completely empty
+        if (studentSet.length === 0) { grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">No records found for ${TEACHER_ID}.</div>`; return; }
         grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
     }
 
@@ -1020,7 +1027,15 @@
     }
 
     function backToStudentList() { renderStudentList(); }
-    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
+    
+    // FIX 4: Inform user cleanly if there are literally zero units stored instead of staring at a blank space
+    function renderAdminUnitSelection() { 
+        const grid = document.getElementById('adminUnitGrid'); 
+        if (!isDataLoaded) return; 
+        const keys = Object.keys(units); 
+        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; 
+    }
+    
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
