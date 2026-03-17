@@ -455,7 +455,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxL87b03ZiT5G7CN9if3npiW_kIxsZSHf9KoDruiXs9pdjOrW1s2nhuJRU2VKZLcm0L/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwhTj6EMQhbQZIjBB0mNV9mqtpJ_ufYz8pHyEKdTgYWszNhbv2mMOLfV8xYgT4atXN3Yg/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -511,7 +511,6 @@
             studentName = stored; 
             if(storedT) TEACHER_ID = storedT;
             
-            // Re-apply correct naming upon refresh
             if (studentName.startsWith("Teacher") || studentName === TEACHER_ID) {
                 document.getElementById('studentWelcome').innerText = "Educator: " + studentName; 
             } else {
@@ -530,7 +529,6 @@
             
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                // FIX: Added .trim() to ensure hidden spaces don't make units blank
                 if (cols.length >= 6 && cols[5].trim() === TEACHER_ID.trim()) {
                     const term = cols[0]; const def = cols[1]; const img = cols[2];
                     const listName = cols[3]; const unitName = cols[4]; 
@@ -774,6 +772,7 @@
         document.getElementById('teacherLoginOverlay').classList.add('hidden');
     }
 
+    // FIX: Using POST to completely mirror student authentication and bypass redirect blocks
     async function handleTeacherAuth() {
         const user = document.getElementById('teacherUserIn').value;
         const pass = document.getElementById('teacherPassIn').value;
@@ -785,14 +784,16 @@
         btn.innerText = "Authenticating..."; btn.disabled = true;
 
         try {
-            const url = `${EXPORT_URL}?action=teacherLogin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-            const response = await fetch(url); 
+            const response = await fetch(EXPORT_URL, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'teacherLogin', username: user, password: pass }) 
+            }); 
             const result = await response.text(); 
             
             if (result.startsWith("Success:")) { 
                 TEACHER_ID = result.replace("Success: ", "").trim(); 
                 
-                // FIX 1: Override any leftover student data completely
                 studentName = TEACHER_ID;
                 document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
                 localStorage.setItem('vocabSojournName', TEACHER_ID);
@@ -832,7 +833,6 @@
     }
 
     function exitTeacherMode() {
-        // FIX 2: Do a hard reload to completely scrub the session UI and avoid weird mixed states
         location.reload();
     }
 
@@ -995,7 +995,6 @@
         document.getElementById('individualStudentView').classList.add('hidden'); 
         grid.classList.remove('hidden'); 
         let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        // FIX 3: Clean error state if units list is completely empty
         if (studentSet.length === 0) { grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">No records found for ${TEACHER_ID}.</div>`; return; }
         grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
     }
@@ -1027,15 +1026,12 @@
     }
 
     function backToStudentList() { renderStudentList(); }
-    
-    // FIX 4: Inform user cleanly if there are literally zero units stored instead of staring at a blank space
     function renderAdminUnitSelection() { 
         const grid = document.getElementById('adminUnitGrid'); 
         if (!isDataLoaded) return; 
         const keys = Object.keys(units); 
         grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; 
     }
-    
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
