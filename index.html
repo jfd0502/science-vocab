@@ -440,9 +440,8 @@
     // --- MULTI-TEACHER CONFIGURATION ---
     let TEACHER_ID = "Teacher 1"; // Default; updated via dropdown
     
-    // MAKE SURE TO KEEP YOUR URLs HERE:
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxA-22DpfpGSeORdjLePAR73zlsy0t2iiw-qYLggcEEnLTFN4T9nUYaPRBKeVLfGI5PbQ/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxJykbGvlwv9oi18CmNq3JrpCkgkcAtkxokd20I7xVkv_rxdZG0YfcNvIicW7t79Cnyig/exec"; 
     const ADMIN_PASS = "science123";
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
@@ -557,7 +556,6 @@
         setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
-    // --- UI-BASED CREATION LOGIC ---
     function showCreateUnitForm() {
         document.getElementById('adminUnitSelection').classList.add('hidden');
         document.getElementById('adminCreateUnitArea').classList.remove('hidden');
@@ -576,12 +574,11 @@
         const img = document.getElementById('newUnitImg').value.trim();
 
         if (!unitName || !listName || !term || !def) {
-            return alert("Unit Name, List Name, Term, and Definition are all required to create a new Unit.");
+            return alert("Unit Name, List Name, Term, and Definition are all required.");
         }
 
         if (!units[unitName]) units[unitName] = {};
         if (!units[unitName][listName]) units[unitName][listName] = [];
-        
         units[unitName][listName].push({ t: term, d: def, img: img });
         
         triggerSyncIndicator();
@@ -600,7 +597,6 @@
         document.getElementById('adminListSelection').classList.add('hidden');
         document.getElementById('adminCreateListArea').classList.remove('hidden');
         document.getElementById('createListUnitLabel').innerText = adminSelectedUnit;
-        
         document.getElementById('newListName').value = "";
         document.getElementById('newListTerm').value = "";
         document.getElementById('newListDef').value = "";
@@ -613,14 +609,9 @@
         const def = document.getElementById('newListDef').value.trim();
         const img = document.getElementById('newListImg').value.trim();
 
-        if (!listName || !term || !def) {
-            return alert("List Name, Term, and Definition are required to create a new List.");
-        }
+        if (!listName || !term || !def) return alert("All fields except image required.");
 
-        if (!units[adminSelectedUnit][listName]) {
-            units[adminSelectedUnit][listName] = [];
-        }
-        
+        if (!units[adminSelectedUnit][listName]) units[adminSelectedUnit][listName] = [];
         units[adminSelectedUnit][listName].push({ t: term, d: def, img: img });
 
         triggerSyncIndicator();
@@ -637,7 +628,6 @@
     function cancelCreate() {
         document.getElementById('adminCreateUnitArea').classList.add('hidden');
         document.getElementById('adminCreateListArea').classList.add('hidden');
-        
         if (adminSelectedUnit && document.getElementById('adminEditArea').classList.contains('hidden')) {
             document.getElementById('adminListSelection').classList.remove('hidden');
         } else {
@@ -704,7 +694,6 @@
         unlockApp(); 
     }
 
-    // UPDATED AUTH FUNCTION TO FIX NETWORK ERROR
     async function handleAuth(type) {
         TEACHER_ID = document.getElementById('teacherSelect').value;
         let payload = {}; 
@@ -713,16 +702,14 @@
         
         if (type === 'login') {
             payload = { 
-                action: 'login', 
-                username: userInput, 
+                action: 'login', username: userInput, 
                 password: document.getElementById('passIn').value,
                 teacherID: TEACHER_ID 
             };
         } else { 
             if(!fullNameInput) return alert("Please enter your full name."); 
             payload = { 
-                action: 'register', 
-                fullname: fullNameInput, 
+                action: 'register', fullname: fullNameInput, 
                 username: document.getElementById('regUser').value, 
                 password: document.getElementById('regPass').value,
                 teacherID: TEACHER_ID 
@@ -733,25 +720,18 @@
         const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
         
         try { 
-            // FIX: Sending as text/plain + no-cors to bypass Preflight/Network Error issues
             await fetch(EXPORT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors',
+                method: 'POST', mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(payload) 
             }); 
             
-            // Because no-cors prevents reading the response body directly, 
-            // we proceed assuming success and let the app unlock.
             studentName = (type === 'register') ? fullNameInput : (userInput || "Explorer"); 
             localStorage.setItem('vocabSojournName', studentName); 
             localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
-            
-            // Slight delay to allow Google Sheet processing
             setTimeout(() => { unlockApp(); }, 1200);
-
         } catch (e) { 
-            alert("Network Error. Check console."); 
+            alert("Network Error."); 
             console.error(e);
         } finally { 
             btn.innerText = oldText; btn.disabled = false; 
@@ -769,7 +749,7 @@
 
     function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); localStorage.removeItem('vocabSojournTeacher'); studentName = ""; location.reload(); } }
     
-    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">No units found for this teacher.</div>'; }
+    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">No units found.</div>'; }
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
@@ -778,8 +758,7 @@
     async function syncSessionToSheet(mode, score) { 
         if (studentName === "Guest") return; 
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            mode: 'no-cors', 
+            method: 'POST', mode: 'no-cors', 
             body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) 
         }); 
     }
@@ -791,11 +770,7 @@
         document.getElementById(mode + 'Mode').classList.remove('hidden'); 
         const list = units[currentUnit][currentClass]; 
         if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
-        if (mode === 'flash') { 
-            cardIdx = 0; 
-            flashcardList = [...list].sort(() => 0.5 - Math.random());
-            updateCard(); 
-        } 
+        if (mode === 'flash') { cardIdx = 0; flashcardList = [...list].sort(() => 0.5 - Math.random()); updateCard(); } 
         if (mode === 'quiz') resetQuizUI();
         if (mode === 'match') resetMatchUI();
     }
@@ -813,8 +788,7 @@
     }
     function changeCard(dir) { 
         if (!flashcardList.length) return;
-        cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; 
-        updateCard(); 
+        cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; updateCard(); 
     }
 
     function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
@@ -913,7 +887,7 @@
                 document.getElementById('studyView').classList.remove('hidden');
                 document.getElementById('teacherLoginBtn').classList.remove('hidden');
                 playWelcomeAnimation('student');
-            } else { location.reload(); }
+            } else location.reload();
         } 
     }
     
@@ -925,12 +899,14 @@
     
     async function fetchResultsAnalytics() { 
         try { 
-            const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
+            // FIX: Added teacherID to the request URL
+            const response = await fetch(`${EXPORT_URL}?action=getAnalytics&teacherID=${TEACHER_ID}&cb=${Date.now()}`); 
             const data = await response.json(); 
             rawAnalytics = [];
             for (let i = 0; i < data.length; i++) {
                 let row = data[i];
                 if (!row || row.length < 6) continue;
+                // Double check the teacherID matching in the frontend loop just in case
                 if (row[6] === TEACHER_ID) {
                     let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
                     if (!name || String(name).trim() === "") name = "Anonymous";
@@ -951,7 +927,7 @@
         document.getElementById('individualStudentView').classList.add('hidden'); 
         grid.classList.remove('hidden'); 
         let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records for ' + TEACHER_ID + '</div>'; return; }
+        if (studentSet.length === 0) { grid.innerHTML = `<div class="loading-text">No records for ${TEACHER_ID}</div>`; return; }
         grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
     }
 
@@ -972,14 +948,13 @@
         btn.innerText = "Clearing..."; btn.disabled = true;
         try {
             await fetch(EXPORT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
+                method: 'POST', mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
             });
             alert("Results cleared.");
             fetchResultsAnalytics(); 
-        } catch (e) { alert("Error clearing results."); } finally { btn.innerText = "Clear All Results"; btn.disabled = false; }
+        } catch (e) { alert("Error."); } finally { btn.innerText = "Clear All Results"; btn.disabled = false; }
     }
 
     function backToStudentList() { renderStudentList(); }
