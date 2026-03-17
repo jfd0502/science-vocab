@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DO<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -505,16 +505,22 @@
     
     window.onload = () => { 
         fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
+        
         const stored = localStorage.getItem('vocabSojournName');
         const storedT = localStorage.getItem('vocabSojournTeacher');
+        const storedRole = localStorage.getItem('vocabSojournRole');
+
+        // Restore correct session state upon refresh
         if (stored) { 
             studentName = stored; 
             if(storedT) TEACHER_ID = storedT;
             
-            if (studentName.startsWith("Teacher") || studentName === TEACHER_ID) {
+            if (storedRole === 'educator') {
                 document.getElementById('studentWelcome').innerText = "Educator: " + studentName; 
+                enterTeacherMode(true); // Jump straight to Teacher Dashboard
             } else {
                 document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
+                unlockApp(true); // Jump straight to Student Dashboard
             }
         }
     };
@@ -601,8 +607,7 @@
         
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
+            method: 'POST', mode: 'no-cors', 
             body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
         });
 
@@ -635,8 +640,7 @@
 
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
+            method: 'POST', mode: 'no-cors', 
             body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
         });
 
@@ -662,8 +666,7 @@
         renderAdminWordList(); triggerSyncIndicator();
         document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
+            method: 'POST', mode: 'no-cors', 
             body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i, teacherID: TEACHER_ID }) 
         });
     }
@@ -674,8 +677,7 @@
         units[u][l][idx] = {t: nt, d: nd, img: ni}; 
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
+            method: 'POST', mode: 'no-cors', 
             body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni, teacherID: TEACHER_ID }) 
         }); 
     }
@@ -686,8 +688,7 @@
         units[u][l].splice(idx, 1); 
         renderAdminWordList(); triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
+            method: 'POST', mode: 'no-cors', 
             body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) 
         });
     }
@@ -698,7 +699,15 @@
         canvas.style.display = 'none'; 
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
-            if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); 
+            if (studentName) {
+                if (localStorage.getItem('vocabSojournRole') === 'educator') {
+                    enterTeacherMode();
+                } else {
+                    unlockApp(); 
+                }
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden'); 
+            }
             renderUnitSelection(); 
         }, 800); 
     }
@@ -750,8 +759,14 @@
             if (result.startsWith("Success:")) { 
                 studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "").trim(); 
                 if (!studentName || studentName === "") studentName = userInput; 
+                
+                // Clear any potential ghosts
+                localStorage.clear(); 
+                
                 localStorage.setItem('vocabSojournName', studentName); 
                 localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
+                localStorage.setItem('vocabSojournRole', 'student');
+                
                 unlockApp(); 
             } else { 
                 alert(result); 
@@ -765,6 +780,10 @@
     }
 
     function showTeacherLogin() {
+        // FIX: Force clear all local storage to completely banish "Jim Bob" ghosts 
+        localStorage.clear();
+        studentName = "";
+        
         document.getElementById('teacherLoginOverlay').classList.remove('hidden');
     }
 
@@ -772,7 +791,6 @@
         document.getElementById('teacherLoginOverlay').classList.add('hidden');
     }
 
-    // FIX: Using POST to completely mirror student authentication and bypass redirect blocks
     async function handleTeacherAuth() {
         const user = document.getElementById('teacherUserIn').value;
         const pass = document.getElementById('teacherPassIn').value;
@@ -784,11 +802,8 @@
         btn.innerText = "Authenticating..."; btn.disabled = true;
 
         try {
-            const response = await fetch(EXPORT_URL, { 
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: 'teacherLogin', username: user, password: pass }) 
-            }); 
+            const url = `${EXPORT_URL}?action=teacherLogin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+            const response = await fetch(url); 
             const result = await response.text(); 
             
             if (result.startsWith("Success:")) { 
@@ -796,8 +811,10 @@
                 
                 studentName = TEACHER_ID;
                 document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
+                
                 localStorage.setItem('vocabSojournName', TEACHER_ID);
                 localStorage.setItem('vocabSojournTeacher', TEACHER_ID);
+                localStorage.setItem('vocabSojournRole', 'educator');
                 
                 enterTeacherMode();
             } else { 
@@ -811,7 +828,7 @@
         }
     }
 
-    function enterTeacherMode() {
+    function enterTeacherMode(skipAnim = false) {
         document.getElementById('teacherLoginOverlay').classList.add('hidden');
         
         if (matrixInterval) clearInterval(matrixInterval); 
@@ -829,23 +846,43 @@
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         
         fetchTeacherData(true);
-        playWelcomeAnimation('teacher');
+        
+        if (!skipAnim) {
+            playWelcomeAnimation('teacher');
+        } else {
+            document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID;
+        }
     }
 
     function exitTeacherMode() {
         location.reload();
     }
 
-    function unlockApp() { 
+    function unlockApp(skipAnim = false) { 
         document.getElementById('loginOverlay').classList.add('hidden'); 
+        document.getElementById('landingPage').classList.add('hidden');
+        document.getElementById('teacherLoginBtn').classList.add('hidden');
+        
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
         document.querySelector('.app-container').style.opacity = '1'; 
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+        
         fetchTeacherData(true); 
-        playWelcomeAnimation('student'); 
+        
+        if (!skipAnim) {
+            playWelcomeAnimation('student'); 
+        } else {
+            document.getElementById('typingTitleContainer').innerText = "Welcome to your Vocabulary Journey.\nPlease select a unit...";
+        }
     }
 
-    function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); localStorage.removeItem('vocabSojournTeacher'); studentName = ""; location.reload(); } }
+    function logout() { 
+        if(confirm("Logout?")) { 
+            localStorage.clear(); 
+            studentName = ""; 
+            location.reload(); 
+        } 
+    }
     
     function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">No units found.</div>'; }
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
@@ -856,8 +893,7 @@
     async function syncSessionToSheet(mode, score) { 
         if (studentName === "Guest") return; 
         fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
+            method: 'POST', mode: 'no-cors', 
             body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) 
         }); 
     }
@@ -1016,8 +1052,7 @@
         btn.innerText = "Clearing..."; btn.disabled = true;
         try {
             await fetch(EXPORT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
+                method: 'POST', mode: 'no-cors',
                 body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
             });
             alert("Results cleared.");
