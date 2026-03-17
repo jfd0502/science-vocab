@@ -187,6 +187,9 @@
         
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); }
         
+        /* New Teacher Overlay Styling */
+        #teacherLoginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20000; display: flex; align-items: center; justify-content: center; background: #0f172a; transition: opacity 0.4s ease; }
+        
         .mode-toggle { 
             position: fixed; 
             top: 20px; 
@@ -226,7 +229,7 @@
 
     <canvas id="matrixCanvas"></canvas>
 
-    <button class="mode-toggle" id="teacherLoginBtn" onclick="protectedToggle()">Teacher Login</button>
+    <button class="mode-toggle" id="teacherLoginBtn" onclick="showTeacherLogin()">Teacher Login</button>
 
     <div id="landingPage">
         <h1 class="welcome-title">VOCABULARY SOJOURN</h1>
@@ -265,6 +268,19 @@
                 <button class="main-btn" id="regSubmit" onclick="handleAuth('register')" style="width: 100%; margin-top: 15px;">Register</button>
                 <div class="auth-switch" onclick="toggleAuthMode(false)">Already have an account? Log in</div>
             </div>
+        </div>
+    </div>
+
+    <div id="teacherLoginOverlay" class="hidden">
+        <div class="panel" style="max-width: 420px; text-align: center; position: relative; background: #1e293b; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);">
+            <h2 style="color: #cbd5e1; font-weight: 300; letter-spacing: 2px; margin-bottom: 5px; font-size: 0.9rem;">ADMINISTRATION</h2>
+            <h1 style="margin-top: 0; margin-bottom: 25px; color: white;">Educator Portal</h1>
+            
+            <input type="text" id="teacherUserIn" placeholder="Teacher Username (e.g. teacher1)" style="background: #0f172a; border-color: #475569;">
+            <input type="password" id="teacherPassIn" placeholder="Password" style="background: #0f172a; border-color: #475569;">
+            
+            <button class="main-btn" id="teacherLoginSubmit" onclick="handleTeacherAuth()" style="width: 100%; margin-top: 20px; background: #475569; box-shadow: none;">Authenticate</button>
+            <button class="nav-btn" onclick="cancelTeacherLogin()" style="width: 100%; margin-top: 15px; background: transparent; border: none; font-size: 0.85rem; padding: 10px; color: #94a3b8;">&larr; Return to Application</button>
         </div>
     </div>
 
@@ -354,7 +370,7 @@
         </div>
 
         <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
-            <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
+            <div class="breadcrumb" onclick="exitTeacherMode()">&larr; Exit Management</div>
             
             <div style="display: flex; gap: 10px; margin-bottom: 25px;">
                 <button class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content Manager</button>
@@ -437,12 +453,10 @@
     </div>
 
 <script>
-    // --- MULTI-TEACHER CONFIGURATION ---
-    let TEACHER_ID = "Teacher 1"; // Default; updated via dropdown
+    let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxJykbGvlwv9oi18CmNq3JrpCkgkcAtkxokd20I7xVkv_rxdZG0YfcNvIicW7t79Cnyig/exec"; 
-    const ADMIN_PASS = "science123";
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwUpSZpfNx-l298jhc7XmbXN2HS4JdF9tjEhnSBvxRmCc2iAYzU3hWU4wxcCMYWmX5ZuA/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -738,6 +752,82 @@
         }
     }
 
+    // --- NEW TEACHER AUTHENTICATION FLOW ---
+    function showTeacherLogin() {
+        document.getElementById('teacherLoginOverlay').classList.remove('hidden');
+    }
+
+    function cancelTeacherLogin() {
+        document.getElementById('teacherLoginOverlay').classList.add('hidden');
+    }
+
+    async function handleTeacherAuth() {
+        const user = document.getElementById('teacherUserIn').value;
+        const pass = document.getElementById('teacherPassIn').value;
+        
+        if (!user || !pass) return alert("Please enter both username and password.");
+
+        const btn = document.getElementById('teacherLoginSubmit');
+        const oldText = btn.innerText; 
+        btn.innerText = "Authenticating..."; btn.disabled = true;
+
+        try {
+            // Standard CORS request to actually read the Success/Fail response
+            const response = await fetch(EXPORT_URL, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'teacherLogin', username: user, password: pass }) 
+            }); 
+            const result = await response.text(); 
+            
+            if (result.startsWith("Success:")) { 
+                // Set the specific Teacher's ID based on what the DB returned
+                TEACHER_ID = result.replace("Success: ", "").trim(); 
+                enterTeacherMode();
+            } else { 
+                alert(result); // Will show "Invalid educator credentials."
+            } 
+        } catch (e) { 
+            alert("Network Error. Check console."); 
+            console.error(e);
+        } finally { 
+            btn.innerText = oldText; btn.disabled = false; 
+        }
+    }
+
+    function enterTeacherMode() {
+        document.getElementById('teacherLoginOverlay').classList.add('hidden');
+        
+        if (matrixInterval) clearInterval(matrixInterval); 
+        canvas.style.display = 'none'; 
+        
+        document.getElementById('studyView').classList.add('hidden'); 
+        document.getElementById('landingPage').classList.add('hidden'); 
+        document.getElementById('loginOverlay').classList.add('hidden'); 
+        document.getElementById('teacherLoginBtn').classList.add('hidden'); 
+        
+        const adminView = document.getElementById('adminView');
+        adminView.classList.remove('hidden'); 
+        
+        document.querySelector('.app-container').style.opacity = '1'; 
+        document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+        
+        fetchTeacherData(true);
+        playWelcomeAnimation('teacher');
+    }
+
+    function exitTeacherMode() {
+        const adminView = document.getElementById('adminView');
+        if (studentName) {
+            adminView.classList.add('hidden');
+            document.getElementById('studyView').classList.remove('hidden');
+            document.getElementById('teacherLoginBtn').classList.remove('hidden');
+            playWelcomeAnimation('student');
+        } else { 
+            location.reload(); 
+        } 
+    }
+
     function unlockApp() { 
         document.getElementById('loginOverlay').classList.add('hidden'); 
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
@@ -862,35 +952,6 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
-    function protectedToggle() { 
-        const adminView = document.getElementById('adminView');
-        if (adminView.classList.contains('hidden')) {
-            const pass = prompt("Password:");
-            if (pass === ADMIN_PASS) { 
-                const choice = prompt("Enter Class ID to manage:", TEACHER_ID);
-                if(choice) TEACHER_ID = choice;
-                if (matrixInterval) clearInterval(matrixInterval); 
-                canvas.style.display = 'none'; 
-                document.getElementById('studyView').classList.add('hidden'); 
-                document.getElementById('landingPage').classList.add('hidden'); 
-                document.getElementById('loginOverlay').classList.add('hidden'); 
-                document.getElementById('teacherLoginBtn').classList.add('hidden'); 
-                adminView.classList.remove('hidden'); 
-                document.querySelector('.app-container').style.opacity = '1'; 
-                document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-                fetchTeacherData(true);
-                playWelcomeAnimation('teacher');
-            }
-        } else { 
-            if (studentName) {
-                adminView.classList.add('hidden');
-                document.getElementById('studyView').classList.remove('hidden');
-                document.getElementById('teacherLoginBtn').classList.remove('hidden');
-                playWelcomeAnimation('student');
-            } else location.reload();
-        } 
-    }
-    
     function switchAdminTab(tab) { 
         document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
         document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
@@ -899,14 +960,12 @@
     
     async function fetchResultsAnalytics() { 
         try { 
-            // FIX: Added teacherID to the request URL
             const response = await fetch(`${EXPORT_URL}?action=getAnalytics&teacherID=${TEACHER_ID}&cb=${Date.now()}`); 
             const data = await response.json(); 
             rawAnalytics = [];
             for (let i = 0; i < data.length; i++) {
                 let row = data[i];
                 if (!row || row.length < 6) continue;
-                // Double check the teacherID matching in the frontend loop just in case
                 if (row[6] === TEACHER_ID) {
                     let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
                     if (!name || String(name).trim() === "") name = "Anonymous";
