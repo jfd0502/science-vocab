@@ -30,956 +30,939 @@
             position: fixed; 
             top: 0; left: 0; 
             width: 100%; height: 100%; 
-            z-index: -1; opacity: 0.4; pointer-events: none; 
-        }
-
-        .landing-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            transition: opacity 0.8s ease;
-            z-index: 10;
-        }
-
-        .hero-title {
-            font-size: 4.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            background: linear-gradient(to right, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -2px;
-        }
-
-        .hero-subtitle {
-            font-size: 1.25rem;
-            color: #94a3b8;
-            margin-bottom: 2.5rem;
-            max-width: 600px;
-        }
-
-        .main-btn {
-            background: var(--primary);
-            color: white;
-            padding: 1rem 2.5rem;
-            border-radius: 99px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
-        }
-
-        .main-btn:hover {
-            transform: translateY(-2px);
-            background: var(--primary-hover);
-            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.5);
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 1000px;
-            margin-top: 2rem;
-            padding: 20px;
-            box-sizing: border-box;
-            opacity: 0;
+            z-index: -1; 
             pointer-events: none;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.8s ease;
         }
 
-        .glass-panel {
+        .app-container { 
+            padding: 40px 20px 40px 20px; 
+            width: 100%; max-width: 650px; 
+            display: flex; flex-direction: column; 
+            position: relative; z-index: 10;
+            opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
+        }
+
+        #typingTitleContainer {
+            margin-bottom: 25px;
+            min-height: 3.5em;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            text-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .blinking-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.1em;
+            background-color: var(--primary);
+            margin-left: 6px;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { background-color: transparent; }
+            50% { background-color: var(--primary); }
+        }
+
+        .panel { 
             background: var(--glass);
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 30px; 
+            border-radius: 24px; 
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 25px; width: 100%; box-sizing: border-box; 
+        }
+
+        .nav-btn { 
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 20px; border-radius: 16px; 
+            cursor: pointer; font-weight: 600; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
+        }
+        .nav-btn:hover { 
+            background: var(--primary); 
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .main-btn { 
+            background: linear-gradient(135deg, var(--primary), #a855f7); 
+            color: white; border: none; font-weight: 700; cursor: pointer; 
+            padding: 14px; border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        #syncIndicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            z-index: 10000;
+            transform: translateY(100px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #syncIndicator.show { transform: translateY(0); }
+
+        .breadcrumb { 
+            font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            transition: color 0.3s; font-weight: 600;
+        }
+
+        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
+        .study-tabs button { 
+            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
+            border-radius: 10px; cursor: pointer; font-weight: 600;
+            background: var(--glass); color: #94a3b8; transition: 0.3s;
+        }
+        .study-tabs button.active { 
+            background: white; color: var(--bg);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+
+        .diff-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
-        /* Overlays */
-        .overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 1000; backdrop-filter: blur(10px);
-        }
-
-        .auth-card {
-            background: #1e293b;
-            padding: 40px;
-            border-radius: 24px;
-            width: 100%;
-            max-width: 400px;
+        .diff-btn {
+            padding: 10px;
+            border-radius: 10px;
             border: 1px solid var(--glass-border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .auth-card h2 { margin-top: 0; font-size: 1.75rem; color: #f1f5f9; }
-        .auth-card input, .auth-card select {
-            width: 100%; padding: 12px; margin: 10px 0;
-            background: #0f172a; border: 1px solid #334155;
-            border-radius: 12px; color: white; box-sizing: border-box;
-        }
-
-        /* Navigation Grid */
-        .nav-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .nav-btn {
             background: var(--glass);
-            border: 1px solid var(--glass-border);
-            padding: 20px;
-            border-radius: 16px;
             color: white;
-            font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: 0.3s;
         }
+        .diff-btn:hover { background: rgba(255,255,255,0.1); }
 
-        .nav-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.02); border-color: var(--primary); }
+        .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
+        .inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; border-radius: 24px; }
+        .flipped .inner { transform: rotateY(180deg); }
+        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; box-sizing: border-box; border-radius: 24px; border: 1px solid var(--glass-border); }
+        .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); }
+        .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }
 
-        /* Tabs */
-        .tab-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab-btn {
-            padding: 10px 20px; border-radius: 12px;
-            background: var(--glass); border: 1px solid var(--glass-border);
-            color: #94a3b8; cursor: pointer; white-space: nowrap; transition: 0.3s;
-        }
-        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
+        .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
 
-        /* Study Modes */
-        .flashcard-container {
-            perspective: 1000px; width: 100%; max-width: 500px; height: 300px; margin: 20px auto;
+        input, select { 
+            background: rgba(0,0,0,0.2); 
+            border: 1px solid var(--glass-border); 
+            color: white; 
+            padding: 14px; 
+            border-radius: 12px; 
+            margin: 8px 0; 
+            width: 100%; 
+            box-sizing: border-box; 
+            font-size: 1rem;
         }
-        .flashcard {
-            position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-style: preserve-3d; cursor: pointer;
-        }
-        .flashcard.flipped { transform: rotateY(180deg); }
-        .card-face {
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            border-radius: 24px; font-size: 1.5rem; font-weight: 600; padding: 20px;
-            background: var(--glass); border: 1px solid var(--glass-border); box-sizing: border-box; text-align: center;
-        }
-        .card-back { transform: rotateY(180deg); background: rgba(99, 102, 241, 0.1); border-color: var(--primary); }
+        select option { background: #1e293b; color: white; }
+
+        #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
+        .welcome-title { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); }
+        .start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }
         
-        .vocab-img { max-width: 150px; max-height: 120px; border-radius: 12px; margin-bottom: 15px; object-fit: cover; }
-
-        /* Result Tables */
-        .analytics-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .analytics-table th { text-align: left; padding: 12px; color: #64748b; font-size: 0.85rem; text-transform: uppercase; border-bottom: 1px solid #334155; }
-        .analytics-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.95rem; }
-
-        .admin-entry { background: rgba(0,0,0,0.2); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
-        .admin-entry input { width: 100%; background: #0f172a; border: 1px solid #334155; padding: 10px; color: white; border-radius: 8px; margin-bottom: 10px; }
-
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); }
+        
+        .mode-toggle { 
+            position: fixed; 
+            top: 20px; 
+            left: 20px; 
+            z-index: 10002; 
+            background: var(--glass); 
+            color: #94a3b8; 
+            border: 1px solid var(--glass-border); 
+            border-radius: 10px; 
+            padding: 8px 16px; 
+            font-size: 0.7rem; 
+            cursor: pointer; 
+        }
+        
+        .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; }
         .hidden { display: none !important; }
-
-        /* Animations */
-        @keyframes blink { 50% { opacity: 0; } }
-        .blinking-cursor { width: 10px; height: 20px; background: var(--primary); display: inline-block; vertical-align: middle; animation: blink 1s step-end infinite; }
+        .auth-switch { color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.85rem; margin-top: 10px; display: inline-block; }
         
-        .sync-indicator {
-            position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: white;
-            padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: 0.85rem;
-            transform: translateY(100px); transition: 0.5s; z-index: 5000;
-        }
-        .sync-indicator.show { transform: translateY(0); }
+        #logoutBtn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-left: 10px; transition: 0.3s; }
+        #logoutBtn:hover { background: var(--danger); color: white; }
 
-        .list-item { 
-            display: flex; align-items: center; gap: 15px; background: var(--glass); 
-            padding: 15px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 10px;
-        }
-        .list-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: #0f172a; }
+        .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
+        
+        .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); }
 
-        .teacher-badge {
-            background: #334155; color: #94a3b8; padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 600;
-        }
+        .loading-text { text-align: center; color: var(--primary); font-style: italic; letter-spacing: 1px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
-        #teacherLoginBtn {
-            position: fixed; bottom: 20px; left: 20px; background: transparent; border: none; color: #475569; cursor: pointer; font-size: 0.8rem;
-        }
+        .analytics-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
+        .analytics-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--glass-border); color: var(--primary); }
+        .analytics-table td { padding: 10px; border-bottom: 1px solid var(--glass-border); }
     </style>
 </head>
 <body>
 
+    <div id="syncIndicator">Syncing with Database...</div>
+
     <canvas id="matrixCanvas"></canvas>
 
-    <div id="landingPage" class="landing-container">
-        <h1 class="hero-title">Vocabulary Sojourn</h1>
-        <p class="hero-subtitle">Embark on a digital voyage across language and science. Master your terminology through interactive challenges.</p>
-        <button class="main-btn" onclick="enterApp()">Begin Exploration</button>
+    <button class="mode-toggle" id="teacherLoginBtn" onclick="protectedToggle()">Teacher Login</button>
+
+    <div id="landingPage">
+        <h1 class="welcome-title">VOCABULARY SOJOURN</h1>
+        <div class="sojourn-def" style="color: #94a3b8; margin-bottom: 30px; font-style: italic;">so-journ (n): a temporary stay in a place.</div>
+        <button class="start-btn" id="landingStartBtn" onclick="enterApp()">BEGIN JOURNEY</button>
     </div>
 
-    <div id="loginOverlay" class="overlay hidden">
-        <div class="auth-card">
-            <div id="loginForm">
-                <h2>Welcome Back</h2>
+    <div id="loginOverlay" class="hidden">
+        <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
+            
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Select Your Teacher</label>
                 <select id="teacherSelect">
                     <option value="Teacher 1">Teacher 1</option>
                     <option value="Teacher 2">Teacher 2</option>
                     <option value="Teacher 3">Teacher 3</option>
+                    <option value="Teacher 4">Teacher 4</option>
                 </select>
+            </div>
+
+            <div id="loginForm">
+                <h2 style="margin-top: 0;">Student Login</h2>
                 <input type="text" id="userIn" placeholder="Username">
                 <input type="password" id="passIn" placeholder="Password">
-                <button class="main-btn" style="width:100%" id="loginSubmit" onclick="handleAuth('login')">Unlock Portal</button>
-                <p style="text-align:center; font-size:0.85rem; color:#94a3b8; margin-top:20px;">
-                    New Explorer? <a href="#" onclick="toggleAuthMode(true)" style="color:var(--primary); text-decoration:none;">Create Credentials</a>
-                </p>
-                <button onclick="continueAsGuest()" style="width:100%; margin-top:10px; background:transparent; border:1px solid #334155; color:#94a3b8;" class="main-btn">Guest Mode</button>
+                <button class="main-btn" id="loginSubmit" onclick="handleAuth('login')" style="width: 100%; margin-top: 15px;">Enter Journey</button>
+                <div class="auth-switch" onclick="toggleAuthMode(true)">New here? Create an account</div>
+                <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+                <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
             </div>
-            
+
             <div id="registerForm" class="hidden">
-                <h2>New Account</h2>
-                <input type="text" id="regFull" placeholder="Full Name">
-                <input type="text" id="regUser" placeholder="Username">
-                <input type="password" id="regPass" placeholder="Password">
-                <button class="main-btn" style="width:100%" id="regSubmit" onclick="handleAuth('register')">Register Explorer</button>
-                <p style="text-align:center; font-size:0.85rem; color:#94a3b8; margin-top:20px;">
-                    Have an account? <a href="#" onclick="toggleAuthMode(false)" style="color:var(--primary); text-decoration:none;">Sign In</a>
-                </p>
+                <h2 style="margin-top: 0;">Create Account</h2>
+                <input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)">
+                <input type="text" id="regUser" placeholder="Choose Username">
+                <input type="password" id="regPass" placeholder="Choose Password">
+                <button class="main-btn" id="regSubmit" onclick="handleAuth('register')" style="width: 100%; margin-top: 15px;">Register</button>
+                <div class="auth-switch" onclick="toggleAuthMode(false)">Already have an account? Log in</div>
             </div>
         </div>
     </div>
 
     <div class="app-container">
-        
-        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 25px;">
-            <div>
-                <h3 id="studentWelcome" style="margin:0; font-weight:700; color:var(--text);">Explorer: Login Required</h3>
-                <div id="typingTitleContainer" style="color:var(--primary); font-size:0.9rem; min-height:1.2rem; margin-top:4px;"></div>
-            </div>
-            <button class="nav-btn" onclick="logout()" style="padding: 10px 15px; font-size: 0.8rem;">Logout</button>
+        <div id="typingTitleContainer"></div>
+
+        <div class="session-info-bar">
+            <div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Explorer: Guest</div>
+            <button id="logoutBtn" onclick="logout()">Logout</button>
         </div>
 
-        <div id="studyView">
-            
-            <div id="unitSelection" class="glass-panel">
-                <h2 style="margin-top:0;">Available Units</h2>
-                <div id="unitBtnGrid" class="nav-grid">
-                    <div class="loading-text">Scanning database...</div>
+        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">• Sync Online</div>
+        
+        <div id="studyView" class="panel">
+            <div id="unitSelection">
+                <h2 style="margin: 5px 0 20px 0;">Select Unit</h2>
+                <div id="unitBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="loading-text">Preparing your journey...</div>
                 </div>
             </div>
-
-            <div id="listSelection" class="glass-panel hidden">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2 style="margin:0;">Lists</h2>
-                    <button id="backToUnitsBtn" class="nav-btn" style="padding:8px 15px;" onclick="backToUnits()">&larr; Back</button>
-                </div>
-                <div id="listBtnGrid" class="nav-grid" style="margin-top:20px;"></div>
+            
+            <div id="listSelection" class="hidden">
+                <div id="backToUnitsBtn" class="breadcrumb" onclick="backToUnits()"></div>
+                <h2 style="margin: 5px 0 20px 0;">Select List</h2>
+                <div id="listBtnGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             </div>
 
             <div id="studyInterface" class="hidden">
-                <div class="tab-bar">
-                    <button id="tabList" class="tab-btn active" onclick="setStudyMode('list')">Reference</button>
-                    <button id="tabFlash" class="tab-btn" onclick="setStudyMode('flash')">Flashcards</button>
-                    <button id="tabQuiz" class="tab-btn" onclick="setStudyMode('quiz')">Challenge</button>
-                    <button id="tabMatch" class="tab-btn" onclick="setStudyMode('match')">Grid Match</button>
-                    <button id="backToListsBtn" class="tab-btn" style="margin-left:auto; color:var(--danger);" onclick="backToLists()">Close</button>
+                <div id="backToListsBtn" class="breadcrumb" onclick="backToLists()"></div>
+                <h3 id="activeListName" style="margin:5px 0; color: var(--primary);"></h3>
+                
+                <div class="study-tabs">
+                    <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
+                    <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
+                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
+                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
                 </div>
 
-                <h2 id="activeListName" style="margin-top:0;">Loading List...</h2>
-
-                <div id="listMode" class="glass-panel">
+                <div id="listMode">
                     <div id="fullListArea"></div>
-                    <div style="margin-top:40px; border-top: 1px solid var(--glass-border); padding-top:20px;">
-                        <h3 style="color:#64748b; font-size:0.9rem;">Your Recent Attempts</h3>
-                        <div id="historyEntries" style="font-size:0.85rem;">No attempts recorded this session.</div>
+                    <div id="historyLogArea" style="margin-top:30px; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+                        <h4 style="margin:0 0 15px 0; font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">Session Records</h4>
+                        <div id="historyEntries" style="font-size: 0.85rem;"></div>
                     </div>
                 </div>
 
                 <div id="flashMode" class="hidden">
-                    <div class="flashcard-container" onclick="this.querySelector('.flashcard').classList.toggle('flipped')">
-                        <div id="cardContainer" class="flashcard">
-                            <div class="card-face" id="displayFront">Front</div>
-                            <div class="card-face card-back" id="displayBack">Back</div>
-                        </div>
+                    <div class="flashcard" id="cardContainer" onclick="this.classList.toggle('flipped')">
+                        <div class="inner"><div class="front" id="displayFront"></div><div class="back" id="displayBack"></div></div>
                     </div>
-                    <div style="display:flex; justify-content:center; gap:20px;">
-                        <button class="nav-btn" onclick="changeCard(-1)">Previous</button>
-                        <button class="nav-btn" onclick="changeCard(1)">Next Explorer</button>
+                    <div style="display:flex; gap:15px;">
+                        <button class="main-btn" onclick="changeCard(-1)" style="flex:1; background: var(--glass);">Previous</button>
+                        <button class="main-btn" onclick="changeCard(1)" style="flex:1;">Next Card</button>
                     </div>
                 </div>
 
-                <div id="quizMode" class="hidden glass-panel">
-                    <div id="quizDifficultyArea" style="text-align:center;">
-                        <h3>Select Difficulty</h3>
-                        <div class="nav-grid">
-                            <button class="nav-btn" onclick="initQuiz('Easy')">Easy (5 Words)</button>
-                            <button class="nav-btn" onclick="initQuiz('Medium')">Standard (10 Words)</button>
-                            <button class="nav-btn" onclick="initQuiz('Hard')">Full Mastery (All)</button>
-                        </div>
+                <div id="quizMode" class="hidden">
+                    <div id="quizDifficultyArea" class="diff-selector">
+                        <button class="diff-btn" onclick="initQuiz('Easy')">Easy (5)</button>
+                        <button class="diff-btn" onclick="initQuiz('Medium')">Medium (10)</button>
+                        <button class="diff-btn" onclick="initQuiz('Expert')">Expert (All)</button>
                     </div>
                     <div id="quizPlayArea" class="hidden">
-                        <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--accent);">Accuracy: 0%</div>
-                        <h3 id="quizQuestion" style="min-height:3rem;">Question?</h3>
-                        <div id="quizOptions"></div>
-                        <button id="nextQuizBtn" class="main-btn hidden" style="width:100%; margin-top:20px;" onclick="renderQuiz()">Continue Voyage &rarr;</button>
-                    </div>
-                    <div id="quizEnd" class="hidden" style="text-align:center;"></div>
-                </div>
-
-                <div id="matchMode" class="hidden glass-panel">
-                    <div id="matchDifficultyArea" style="text-align:center;">
-                        <h3>Grid Match Density</h3>
-                        <div class="nav-grid">
-                            <button class="nav-btn" onclick="initMatch('Easy')">Small (5 Pair)</button>
-                            <button class="nav-btn" onclick="initMatch('Medium')">Normal (10 Pair)</button>
+                        <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                        <div id="quizContent">
+                            <div id="quizQuestion" style="font-size: 1.2rem; margin-bottom:20px;"></div>
+                            <div id="quizOptions"></div>
+                            <button id="nextQuizBtn" class="hidden main-btn" style="width:100%;" onclick="renderQuiz()">Continue</button>
                         </div>
                     </div>
-                    <div id="matchPlayArea" class="hidden">
-                        <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--accent);">Accuracy: 0%</div>
-                        <p style="font-size:0.8rem; color:#94a3b8; text-align:center;">Drag Terms to their matching Definitions</p>
-                        <div id="matchContainer" style="margin-top:20px;"></div>
+                    <div id="quizEnd" class="hidden"></div>
+                </div>
+
+                <div id="matchMode" class="hidden">
+                    <div id="matchDifficultyArea" class="diff-selector">
+                        <button class="diff-btn" onclick="initMatch('Easy')">Easy (5)</button>
+                        <button class="diff-btn" onclick="initMatch('Medium')">Medium (10)</button>
+                        <button class="diff-btn" onclick="initMatch('Expert')">Expert (All)</button>
                     </div>
-                    <div id="matchEnd" class="hidden" style="text-align:center;"></div>
+                    <div id="matchPlayArea" class="hidden">
+                        <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
+                        <div id="matchContainer"></div>
+                    </div>
+                    <div id="matchEnd" class="hidden"></div>
                 </div>
             </div>
         </div>
 
-        <div id="adminView" class="hidden">
-            <div class="tab-bar">
-                <button class="tab-btn active" onclick="switchAdminTab('content')">Database Management</button>
-                <button class="tab-btn" onclick="switchAdminTab('analytics')">Student Results</button>
-                <button class="tab-btn" onclick="protectedToggle()" style="margin-left:auto;">Return to Study</button>
+        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
+            <div class="breadcrumb" onclick="protectedToggle()">&larr; Exit Management</div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+                <button class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content Manager</button>
+                <button class="main-btn" style="flex: 1; background: var(--accent);" onclick="switchAdminTab('analytics')">Student Results</button>
             </div>
 
             <div id="adminContentArea">
+                <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
                 
-                <div id="adminUnitSelection" class="glass-panel">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h2 style="margin:0;">Select Unit to Edit</h2>
-                        <button class="main-btn" onclick="showCreateUnitForm()" style="padding:8px 15px; font-size:0.8rem;">+ Create New Unit</button>
+                <div id="adminUnitSelection">
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <button class="main-btn" onclick="showCreateUnitForm()" style="flex:1; background:var(--accent);">+ Create New Unit</button>
                     </div>
-                    <div id="adminUnitGrid" class="nav-grid" style="margin-top:20px;"></div>
+                    <div id="adminUnitGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+                </div>
+                
+                <div id="adminListSelection" class="hidden">
+                    <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <button class="main-btn" onclick="showCreateListForm()" style="flex:1; background:var(--accent);">+ Create New List</button>
+                    </div>
+                    <div id="adminListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
                 </div>
 
-                <div id="adminCreateUnitArea" class="glass-panel hidden">
-                    <h2>Create New Unit</h2>
-                    <input type="text" id="newUnitName" placeholder="Unit Name (e.g. Unit 4: Space)">
-                    <p style="font-size:0.8rem; color:#94a3b8;">Add the first word to initialize this unit:</p>
-                    <input type="text" id="newUnitListName" value="List 1" placeholder="Initial List Name">
+                <div id="adminCreateUnitArea" class="hidden panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                    <div class="breadcrumb" onclick="cancelCreate()">? Cancel</div>
+                    <h4 style="margin-top:0;">Create New Unit</h4>
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">To securely save a new Unit, you must add its first List and vocabulary word.</p>
+                    <input type="text" id="newUnitName" placeholder="New Unit Name (e.g., Biology)">
+                    <input type="text" id="newUnitListName" placeholder="First List Name (e.g., Chapter 1)" value="List 1">
+                    <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 15px 0;">
                     <input type="text" id="newUnitTerm" placeholder="First Term">
                     <input type="text" id="newUnitDef" placeholder="Definition">
                     <input type="text" id="newUnitImg" placeholder="Image URL (Optional)">
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="main-btn" onclick="submitNewUnit()" style="flex:1;">Initialize Unit</button>
-                        <button class="main-btn" onclick="cancelCreate()" style="flex:1; background:#334155;">Cancel</button>
-                    </div>
+                    <button class="main-btn" onclick="submitNewUnit()" style="width:100%; margin-top: 10px; background: var(--accent);">Create Unit & Save Word</button>
                 </div>
 
-                <div id="adminListSelection" class="glass-panel hidden">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h2 style="margin:0;">Select List</h2>
-                        <div style="display:flex; gap:10px;">
-                            <button class="main-btn" onclick="showCreateListForm()" style="padding:8px 15px; font-size:0.8rem;">+ New List</button>
-                            <button id="adminBackToUnits" class="nav-btn" style="padding:8px 15px;" onclick="resetAdminView()">&larr; Units</button>
-                        </div>
-                    </div>
-                    <div id="adminListGrid" class="nav-grid" style="margin-top:20px;"></div>
-                </div>
-
-                <div id="adminCreateListArea" class="glass-panel hidden">
-                    <h2>Add List to <span id="createListUnitLabel" style="color:var(--primary);">Unit</span></h2>
-                    <input type="text" id="newListName" placeholder="List Name (e.g. Quiz 1 Review)">
-                    <p style="font-size:0.8rem; color:#94a3b8;">Add the first word to initialize this list:</p>
+                <div id="adminCreateListArea" class="hidden panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                    <div class="breadcrumb" onclick="cancelCreate()">? Cancel</div>
+                    <h4 style="margin-top:0;">Create New List for <span id="createListUnitLabel" style="color: var(--primary);"></span></h4>
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">To securely save a new List, you must add its first vocabulary word.</p>
+                    <input type="text" id="newListName" placeholder="New List Name (e.g., Week 2)">
+                    <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 15px 0;">
                     <input type="text" id="newListTerm" placeholder="First Term">
                     <input type="text" id="newListDef" placeholder="Definition">
                     <input type="text" id="newListImg" placeholder="Image URL (Optional)">
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="main-btn" onclick="submitNewList()" style="flex:1;">Initialize List</button>
-                        <button class="main-btn" onclick="cancelCreate()" style="flex:1; background:#334155;">Cancel</button>
-                    </div>
+                    <button class="main-btn" onclick="submitNewList()" style="width:100%; margin-top: 10px; background: var(--accent);">Create List & Save Word</button>
                 </div>
 
                 <div id="adminEditArea" class="hidden">
-                    <div class="glass-panel">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h2 id="adminHeader" style="margin:0;">Unit > List</h2>
-                            <button id="adminBackToLists" class="nav-btn" style="padding:8px 15px;" onclick="backToAdminLists()">&larr; Lists</button>
-                        </div>
-                        <div style="margin-top:25px; padding:20px; border: 2px dashed #334155; border-radius:16px;">
-                            <h4 style="margin-top:0;">Quick Add New Word</h4>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                                <input type="text" id="newT" placeholder="New Term">
-                                <input type="text" id="newD" placeholder="Definition">
-                            </div>
-                            <input type="text" id="newI" placeholder="Image URL (Optional)" style="margin-top:10px;">
-                            <button class="main-btn" style="width:100%; margin-top:10px; background:var(--accent);" onclick="submitNewWord()">Confirm Add Word</button>
-                        </div>
+                    <div id="adminBackToLists" class="breadcrumb" onclick="backToAdminLists()"></div>
+                    <div id="addWordForm" class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                        <h4 style="margin-top:0;">New Entry</h4>
+                        <input type="text" id="newT" placeholder="Term">
+                        <input type="text" id="newD" placeholder="Definition">
+                        <input type="text" id="newI" placeholder="Image URL (Optional)">
+                        <button class="main-btn" id="addWordBtn" onclick="submitNewWord()" style="width:100%;">Commit to Database</button>
                     </div>
                     <div id="adminWordList"></div>
                 </div>
             </div>
 
-            <div id="adminAnalyticsArea" class="hidden glass-panel">
-                <div id="studentListGrid" class="nav-grid"></div>
+            <div id="adminAnalyticsArea" class="hidden">
+                <h3 style="margin-top: 0;">Student Insights</h3>
+                <div id="studentListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="loading-text">Fetching records...</div>
+                </div>
                 <div id="individualStudentView" class="hidden">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h2 id="viewingStudentName" style="margin:0;">Student History</h2>
-                        <div style="display:flex; gap:10px;">
-                             <button id="clearAllBtn" class="nav-btn" style="background:var(--danger); border-color:var(--danger); padding:8px 15px;" onclick="clearResultsPrompt()">Clear All Results</button>
-                             <button class="nav-btn" style="padding:8px 15px;" onclick="backToStudentList()">&larr; Back to List</button>
-                        </div>
+                    <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to All Students</div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 id="viewingStudentName" style="color: var(--accent); margin: 0;"></h4>
+                        <button id="clearAllBtn" onclick="clearResultsPrompt()" style="background: var(--danger); border: none; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Clear All Results</button>
                     </div>
-                    <div id="studentDetailTable" style="margin-top:20px;"></div>
+
+                    <div id="studentDetailTable"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="syncIndicator" class="sync-indicator">Database Synchronized Successfully</div>
-    <button id="teacherLoginBtn" onclick="protectedToggle()">Teacher Access</button>
+<script>
+    // --- MULTI-TEACHER CONFIGURATION ---
+    let TEACHER_ID = "Teacher 1"; // Default; updated via dropdown
+    
+    // MAKE SURE TO KEEP YOUR URLs HERE:
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxA-22DpfpGSeORdjLePAR73zlsy0t2iiw-qYLggcEEnLTFN4T9nUYaPRBKeVLfGI5PbQ/exec"; 
+    const ADMIN_PASS = "science123";
 
-    <script>
-        // --- CONFIGURATION ---
-        let TEACHER_ID = "Teacher 1"; 
-        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-        const EXPORT_URL = "https://script.google.com/macros/s/AKfycbxA-22DpfpGSeORdjLePAR73zlsy0t2iiw-qYLggcEEnLTFN4T9nUYaPRBKeVLfGI5PbQ/exec"; 
-        const ADMIN_PASS = "science123";
+    let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
+    let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
+    let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
+    let adminSelectedUnit = "", adminSelectedList = "";
+    
+    let hasAnimatedStudentWelcome = false;
+    let hasAnimatedTeacherWelcome = false; 
+    let currentViewingStudent = ""; 
 
-        let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
-        let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
-        let matrixInterval = null, isDataLoaded = false, rawAnalytics = [];
-        let adminSelectedUnit = "", adminSelectedList = "";
-        
-        let hasAnimatedStudentWelcome = false;
-        let hasAnimatedTeacherWelcome = false; 
-        let currentViewingStudent = ""; 
+    let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
+    let mGoal = 0, mCorrect = 0, mTotal = 0;
+    let flashcardList = [];
 
-        let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
-        let mGoal = 0, mCorrect = 0, mTotal = 0;
-        let flashcardList = [];
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    let columns = [];
 
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-        let columns = [];
+    function resizeCanvas() { 
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
+        columns = Array(Math.floor(canvas.width / 20)).fill(0).map(() => ({
+            y: Math.random() * canvas.height,
+            word: allTerms[Math.floor(Math.random() * allTerms.length)]
+        })); 
+    }
 
-        function resizeCanvas() { 
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
-            columns = Array(Math.floor(canvas.width / 20)).fill(0).map(() => ({
-                y: Math.random() * canvas.height,
-                word: allTerms[Math.floor(Math.random() * allTerms.length)]
-            })); 
-        }
+    function updateMatrixWords() {
+        let terms = [];
+        for (let u in units) for (let l in units[u]) units[u][l].forEach(i => terms.push(i.t));
+        if (terms.length > 5) allTerms = terms;
+    }
 
-        function updateMatrixWords() {
-            let terms = [];
-            for (let u in units) for (let l in units[u]) units[u][l].forEach(i => terms.push(i.t));
-            if (terms.length > 5) allTerms = terms;
-        }
-
-        function drawMatrix() { 
-            ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height); 
-            ctx.fillStyle = "#3b82f6"; 
-            ctx.font = "bold 15px monospace"; 
-            columns.forEach((col, i) => { 
-                ctx.fillText(col.word, i * 20, col.y); 
-                col.y += 35; 
-                if (col.y > canvas.height && Math.random() > 0.9) { 
-                    col.y = 0; 
-                    col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
-                } 
-            }); 
-        }
-        
-        window.onload = () => { 
-            fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
-            const stored = localStorage.getItem('vocabSojournName');
-            const storedT = localStorage.getItem('vocabSojournTeacher');
-            if (stored) { 
-                studentName = stored; 
-                if(storedT) TEACHER_ID = storedT;
-                document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
-            }
-        };
-        window.addEventListener('resize', resizeCanvas);
-
-        async function fetchTeacherData(force = false) {
-            try {
-                const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
-                const response = await fetch(url); const csvText = await response.text();
-                const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
-                const newUnits = {}; 
-                
-                rows.slice(1).forEach(row => {
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                    if (cols.length >= 6 && cols[5] === TEACHER_ID) {
-                        const term = cols[0]; const def = cols[1]; const img = cols[2];
-                        const listName = cols[3]; const unitName = cols[4]; 
-                        if (!newUnits[unitName]) newUnits[unitName] = {}; 
-                        if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
-                        if (term !== "Initialization") {
-                            newUnits[unitName][listName].push({t: term, d: def, img: img});
-                        }
-                    }
-                });
-                units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
-            } catch (e) { console.error("Fetch Error:", e); }
-        }
-
-        function playWelcomeAnimation(mode = 'student') {
-            const text = mode === 'teacher' 
-                ? "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID
-                : "Welcome to your Vocabulary Journey.\nPlease select a unit...";
-                
-            const container = document.getElementById('typingTitleContainer');
-            if ((mode === 'teacher' && hasAnimatedTeacherWelcome) || (mode === 'student' && hasAnimatedStudentWelcome)) { 
-                container.innerText = text; 
-                return; 
-            }
-            container.innerHTML = '<span id="typingContent"></span><span class="blinking-cursor"></span>';
-            const target = document.getElementById('typingContent');
-            let i = 0;
-            function type() {
-                if (i < text.length) { 
-                    target.innerText += text.charAt(i); i++; 
-                    setTimeout(type, 40); 
-                } else { 
-                    if (mode === 'teacher') hasAnimatedTeacherWelcome = true;
-                    else hasAnimatedStudentWelcome = true;
-                }
-            }
-            type();
-        }
-
-        function triggerSyncIndicator() {
-            const toast = document.getElementById('syncIndicator');
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        // --- AUTHENTICATION LOGIC ---
-        async function handleAuth(type) {
-            TEACHER_ID = document.getElementById('teacherSelect').value;
-            let payload = {}; 
-            
-            if (type === 'login') {
-                payload = { 
-                    action: 'login', 
-                    username: document.getElementById('userIn').value, 
-                    password: document.getElementById('passIn').value 
-                };
-            } else { 
-                const fullNameInput = document.getElementById('regFull').value;
-                if(!fullNameInput) return alert("Please enter your full name."); 
-                payload = { 
-                    action: 'register', 
-                    fullname: fullNameInput, 
-                    username: document.getElementById('regUser').value, 
-                    password: document.getElementById('regPass').value,
-                    teacherID: TEACHER_ID 
-                }; 
-            }
-            
-            const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
-            const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
-            
-            try { 
-                // Removed mode: 'no-cors'
-                const response = await fetch(EXPORT_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload) 
-                }); 
-                
-                const result = await response.text(); 
-                
-                if (result.includes("Success:")) { 
-                    studentName = result.replace("Success: ", "").trim(); 
-                    localStorage.setItem('vocabSojournName', studentName); 
-                    localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
-                    unlockApp(); 
-                } else { 
-                    alert(result); 
-                } 
-            } catch (e) { 
-                console.error("Auth Error:", e);
-                alert("Network Error: Could not connect to database."); 
-            } finally { 
-                btn.innerText = oldText; btn.disabled = false; 
-            }
-        }
-
-        // --- UI-BASED CREATION LOGIC ---
-        function showCreateUnitForm() {
-            document.getElementById('adminUnitSelection').classList.add('hidden');
-            document.getElementById('adminCreateUnitArea').classList.remove('hidden');
-            document.getElementById('newUnitName').value = "";
-            document.getElementById('newUnitListName').value = "List 1";
-            document.getElementById('newUnitTerm').value = "";
-            document.getElementById('newUnitDef').value = "";
-            document.getElementById('newUnitImg').value = "";
-        }
-
-        function submitNewUnit() {
-            const unitName = document.getElementById('newUnitName').value.trim();
-            const listName = document.getElementById('newUnitListName').value.trim();
-            const term = document.getElementById('newUnitTerm').value.trim();
-            const def = document.getElementById('newUnitDef').value.trim();
-            const img = document.getElementById('newUnitImg').value.trim();
-
-            if (!unitName || !listName || !term || !def) {
-                return alert("Unit Name, List Name, Term, and Definition are all required to create a new Unit.");
-            }
-
-            if (!units[unitName]) units[unitName] = {};
-            if (!units[unitName][listName]) units[unitName][listName] = [];
-            units[unitName][listName].push({ t: term, d: def, img: img });
-            
-            triggerSyncIndicator();
-            fetch(EXPORT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
-            });
-
-            document.getElementById('adminCreateUnitArea').classList.add('hidden');
-            renderAdminUnitSelection();
-            adminSelectUnit(unitName);
-            adminSelectList(listName);
-        }
-
-        function showCreateListForm() {
-            document.getElementById('adminListSelection').classList.add('hidden');
-            document.getElementById('adminCreateListArea').classList.remove('hidden');
-            document.getElementById('createListUnitLabel').innerText = adminSelectedUnit;
-            
-            document.getElementById('newListName').value = "";
-            document.getElementById('newListTerm').value = "";
-            document.getElementById('newListDef').value = "";
-            document.getElementById('newListImg').value = "";
-        }
-
-        function submitNewList() {
-            const listName = document.getElementById('newListName').value.trim();
-            const term = document.getElementById('newListTerm').value.trim();
-            const def = document.getElementById('newListDef').value.trim();
-            const img = document.getElementById('newListImg').value.trim();
-
-            if (!listName || !term || !def) {
-                return alert("List Name, Term, and Definition are required to create a new List.");
-            }
-
-            if (!units[adminSelectedUnit][listName]) {
-                units[adminSelectedUnit][listName] = [];
-            }
-            units[adminSelectedUnit][listName].push({ t: term, d: def, img: img });
-
-            triggerSyncIndicator();
-            fetch(EXPORT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
-            });
-
-            document.getElementById('adminCreateListArea').classList.add('hidden');
-            adminSelectUnit(adminSelectedUnit); 
-            adminSelectList(listName);
-        }
-
-        function cancelCreate() {
-            document.getElementById('adminCreateUnitArea').classList.add('hidden');
-            document.getElementById('adminCreateListArea').classList.add('hidden');
-            if (adminSelectedUnit && document.getElementById('adminEditArea').classList.contains('hidden')) {
-                document.getElementById('adminListSelection').classList.remove('hidden');
-            } else {
-                document.getElementById('adminUnitSelection').classList.remove('hidden');
-            }
-        }
-
-        async function submitNewWord() { 
-            const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
-            if(!t || !d) return alert("Fill fields");
-            units[u][l].push({t, d, img: i}); 
-            renderAdminWordList(); triggerSyncIndicator();
-            document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
-            fetch(EXPORT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i, teacherID: TEACHER_ID }) 
-            });
-        }
-
-        async function saveEdit(u, l, idx) { 
-            const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
-            const oldTerm = units[u][l][idx].t;
-            units[u][l][idx] = {t: nt, d: nd, img: ni}; 
-            triggerSyncIndicator();
-            fetch(EXPORT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni, teacherID: TEACHER_ID }) 
-            }); 
-        }
-
-        async function deleteWord(u, l, idx) {
-            if(!confirm("Are you sure?")) return;
-            const termToDelete = units[u][l][idx].t;
-            units[u][l].splice(idx, 1); 
-            renderAdminWordList(); triggerSyncIndicator();
-            fetch(EXPORT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) 
-            });
-        }
-
-        function enterApp() { 
-            document.getElementById('landingPage').style.opacity = '0'; 
-            if (matrixInterval) clearInterval(matrixInterval); 
-            canvas.style.display = 'none'; 
-            setTimeout(() => { 
-                document.getElementById('landingPage').classList.add('hidden'); 
-                if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); 
-                renderUnitSelection(); 
-            }, 800); 
-        }
-
-        function toggleAuthMode(isReg) { 
-            document.getElementById('loginForm').classList.toggle('hidden', isReg); 
-            document.getElementById('registerForm').classList.toggle('hidden', !isReg); 
-        }
-        
-        function continueAsGuest() { 
-            TEACHER_ID = document.getElementById('teacherSelect').value;
-            studentName = "Guest"; 
-            unlockApp(); 
-        }
-
-        function unlockApp() { 
-            document.getElementById('loginOverlay').classList.add('hidden'); 
+    function drawMatrix() { 
+        ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        ctx.fillStyle = "#3b82f6"; 
+        ctx.font = "bold 15px monospace"; 
+        columns.forEach((col, i) => { 
+            ctx.fillText(col.word, i * 20, col.y); 
+            col.y += 35; 
+            if (col.y > canvas.height && Math.random() > 0.9) { 
+                col.y = 0; 
+                col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
+            } 
+        }); 
+    }
+    
+    window.onload = () => { 
+        fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
+        const stored = localStorage.getItem('vocabSojournName');
+        const storedT = localStorage.getItem('vocabSojournTeacher');
+        if (stored) { 
+            studentName = stored; 
+            if(storedT) TEACHER_ID = storedT;
             document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
-            document.querySelector('.app-container').style.opacity = '1'; 
-            document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-            fetchTeacherData(true); 
-            playWelcomeAnimation('student'); 
         }
+    };
+    window.addEventListener('resize', resizeCanvas);
 
-        function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); localStorage.removeItem('vocabSojournTeacher'); studentName = ""; location.reload(); } }
-        
-        function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">No units found for this teacher.</div>'; }
-        function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
-        function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
-        function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
-        function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
-        
-        async function syncSessionToSheet(mode, score) { 
-            if (studentName === "Guest") return; 
-            fetch(EXPORT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) 
-            }); 
-        }
-        
-        function setStudyMode(mode) { 
-            ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); 
-            document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); 
-            ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
-            document.getElementById(mode + 'Mode').classList.remove('hidden'); 
-            const list = units[currentUnit][currentClass]; 
-            if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
-            if (mode === 'flash') { 
-                cardIdx = 0; 
-                flashcardList = [...list].sort(() => 0.5 - Math.random());
-                updateCard(); 
-            } 
-            if (mode === 'quiz') resetQuizUI();
-            if (mode === 'match') resetMatchUI();
-        }
-
-        function renderFullList(list) { 
-            document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong style="color: var(--primary); font-size: 1.05rem; margin-right: 5px;">${i.t}</strong> ${i.d}</div></div>`).join(''); 
-        }
-        
-        function updateCard() { 
-            if (!flashcardList.length) return;
-            const card = flashcardList[cardIdx]; 
-            document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; 
-            document.getElementById('displayBack').innerText = card.d; 
-            document.getElementById('cardContainer').classList.remove('flipped'); 
-        }
-        function changeCard(dir) { 
-            if (!flashcardList.length) return;
-            cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; 
-            updateCard(); 
-        }
-
-        function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
-        function initQuiz(diff) {
-            currentDifficulty = diff; const list = units[currentUnit][currentClass];
-            if (!list || !list.length) return;
-            let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
-            qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-            qScore = 0; qIdx = 0;
-            document.getElementById('quizDifficultyArea').classList.add('hidden'); document.getElementById('quizPlayArea').classList.remove('hidden');
-            document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();
-        }
-        
-        function renderQuiz() { 
-            if (qIdx >= qPool.length) { endQuiz(); return; } 
-            const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; 
-            const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
-            document.getElementById('quizQuestion').innerText = `Definition of: ${correct.t}?`; 
-            document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
-            document.getElementById('nextQuizBtn').classList.add('hidden'); 
-        }
-        
-        function checkQuiz(el, isCorrect) { 
-            if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
-            if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } 
-            else { el.style.background = 'var(--danger)'; } 
-            qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; 
-            document.getElementById('nextQuizBtn').classList.remove('hidden'); 
-        }
-        function endQuiz() { 
-            document.getElementById('quizPlayArea').classList.add('hidden'); 
-            const pct = Math.round((qScore/qPool.length)*100) + "%"; 
-            document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct} (${currentDifficulty})</h3><button class="main-btn" onclick="resetQuizUI()">Restart</button>`; 
-            document.getElementById('quizEnd').classList.remove('hidden'); 
-            addHistory(`Quiz (${currentDifficulty})`, pct); syncSessionToSheet(`Quiz (${currentDifficulty})`, pct); 
-        }
-
-        function resetMatchUI() { document.getElementById('matchDifficultyArea').classList.remove('hidden'); document.getElementById('matchPlayArea').classList.add('hidden'); document.getElementById('matchEnd').classList.add('hidden'); }
-        function initMatch(diff) {
-            currentDifficulty = diff; const list = units[currentUnit][currentClass];
-            if (!list || !list.length) return;
-            let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
-            const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-            mGoal = sub.length; mCorrect = 0; mTotal = 0;
-            document.getElementById('matchDifficultyArea').classList.add('hidden'); document.getElementById('matchPlayArea').classList.remove('hidden');
-            document.getElementById('matchStats').innerText = "Accuracy: 0%";
-            let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
-            let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
-            document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`;
-        }
-        function drag(e) { draggedItem = e.target; }
-        function drop(e) { 
-            const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; 
-            mTotal++; 
-            if (draggedItem.dataset.id === target.dataset.id) { 
-                mCorrect++; target.style.background = 'var(--accent)'; 
-                draggedItem.style.visibility = 'hidden'; target.draggable = false; 
-            } else { 
-                target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); 
-            } 
-            const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
-            document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
-            if (mCorrect === mGoal) { 
-                document.getElementById('matchPlayArea').classList.add('hidden'); 
-                document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc} (${currentDifficulty})</h3><button class="main-btn" onclick="resetMatchUI()">Restart</button>`; 
-                document.getElementById('matchEnd').classList.remove('hidden'); 
-                addHistory(`Match (${currentDifficulty})`, acc); syncSessionToSheet(`Match (${currentDifficulty})`, acc); 
-            } 
-        }
-
-        function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
-        function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
-        
-        function protectedToggle() { 
-            const adminView = document.getElementById('adminView');
-            if (adminView.classList.contains('hidden')) {
-                const pass = prompt("Password:");
-                if (pass === ADMIN_PASS) { 
-                    const choice = prompt("Enter Class ID to manage:", TEACHER_ID);
-                    if(choice) TEACHER_ID = choice;
-                    if (matrixInterval) clearInterval(matrixInterval); 
-                    canvas.style.display = 'none'; 
-                    document.getElementById('studyView').classList.add('hidden'); 
-                    document.getElementById('landingPage').classList.add('hidden'); 
-                    document.getElementById('loginOverlay').classList.add('hidden'); 
-                    document.getElementById('teacherLoginBtn').classList.add('hidden'); 
-                    adminView.classList.remove('hidden'); 
-                    document.querySelector('.app-container').style.opacity = '1'; 
-                    document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-                    fetchTeacherData(true);
-                    playWelcomeAnimation('teacher');
-                }
-            } else { 
-                if (studentName) {
-                    adminView.classList.add('hidden');
-                    document.getElementById('studyView').classList.remove('hidden');
-                    document.getElementById('teacherLoginBtn').classList.remove('hidden');
-                    playWelcomeAnimation('student');
-                } else { location.reload(); }
-            } 
-        }
-        
-        function switchAdminTab(tab) { 
-            document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
-            document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
-            if (tab === 'analytics') fetchResultsAnalytics(); 
-        }
-        
-        async function fetchResultsAnalytics() { 
-            try { 
-                const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
-                const data = await response.json(); 
-                rawAnalytics = [];
-                for (let i = 0; i < data.length; i++) {
-                    let row = data[i];
-                    if (!row || row.length < 6) continue;
-                    if (row[6] === TEACHER_ID) {
-                        let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
-                        if (!name || String(name).trim() === "") name = "Anonymous";
-                        if (t) {
-                            const dateObj = new Date(t);
-                            if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                        }
-                        if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
-                        rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
+    async function fetchTeacherData(force = false) {
+        try {
+            const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
+            const response = await fetch(url); const csvText = await response.text();
+            const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
+            const newUnits = {}; 
+            
+            rows.slice(1).forEach(row => {
+                const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+                if (cols.length >= 6 && cols[5] === TEACHER_ID) {
+                    const term = cols[0]; const def = cols[1]; const img = cols[2];
+                    const listName = cols[3]; const unitName = cols[4]; 
+                    if (!newUnits[unitName]) newUnits[unitName] = {}; 
+                    if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
+                    if (term !== "Initialization") {
+                        newUnits[unitName][listName].push({t: term, d: def, img: img});
                     }
                 }
-                renderStudentList(); 
-            } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
+            });
+            units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
+        } catch (e) { console.error("Fetch Error:", e); }
+    }
+
+    function playWelcomeAnimation(mode = 'student') {
+        const text = mode === 'teacher' 
+            ? "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID
+            : "Welcome to your Vocabulary Journey.\nPlease select a unit...";
+            
+        const container = document.getElementById('typingTitleContainer');
+        if ((mode === 'teacher' && hasAnimatedTeacherWelcome) || (mode === 'student' && hasAnimatedStudentWelcome)) { 
+            container.innerText = text; 
+            return; 
+        }
+        container.innerHTML = '<span id="typingContent"></span><span class="blinking-cursor"></span>';
+        const target = document.getElementById('typingContent');
+        let i = 0;
+        function type() {
+            if (i < text.length) { 
+                target.innerText += text.charAt(i); i++; 
+                setTimeout(type, 40); 
+            } else { 
+                if (mode === 'teacher') hasAnimatedTeacherWelcome = true;
+                else hasAnimatedStudentWelcome = true;
+            }
+        }
+        type();
+    }
+
+    function triggerSyncIndicator() {
+        const toast = document.getElementById('syncIndicator');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // --- UI-BASED CREATION LOGIC ---
+    function showCreateUnitForm() {
+        document.getElementById('adminUnitSelection').classList.add('hidden');
+        document.getElementById('adminCreateUnitArea').classList.remove('hidden');
+        document.getElementById('newUnitName').value = "";
+        document.getElementById('newUnitListName').value = "List 1";
+        document.getElementById('newUnitTerm').value = "";
+        document.getElementById('newUnitDef').value = "";
+        document.getElementById('newUnitImg').value = "";
+    }
+
+    function submitNewUnit() {
+        const unitName = document.getElementById('newUnitName').value.trim();
+        const listName = document.getElementById('newUnitListName').value.trim();
+        const term = document.getElementById('newUnitTerm').value.trim();
+        const def = document.getElementById('newUnitDef').value.trim();
+        const img = document.getElementById('newUnitImg').value.trim();
+
+        if (!unitName || !listName || !term || !def) {
+            return alert("Unit Name, List Name, Term, and Definition are all required to create a new Unit.");
         }
 
-        function renderStudentList() { 
-            const grid = document.getElementById('studentListGrid'); 
-            document.getElementById('individualStudentView').classList.add('hidden'); 
-            grid.classList.remove('hidden'); 
-            let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-            if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records for ' + TEACHER_ID + '</div>'; return; }
-            grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
+        if (!units[unitName]) units[unitName] = {};
+        if (!units[unitName][listName]) units[unitName][listName] = [];
+        
+        units[unitName][listName].push({ t: term, d: def, img: img });
+        
+        triggerSyncIndicator();
+        fetch(EXPORT_URL, { 
+            method: 'POST', mode: 'no-cors', 
+            body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
+        });
+
+        document.getElementById('adminCreateUnitArea').classList.add('hidden');
+        renderAdminUnitSelection();
+        adminSelectUnit(unitName);
+        adminSelectList(listName);
+    }
+
+    function showCreateListForm() {
+        document.getElementById('adminListSelection').classList.add('hidden');
+        document.getElementById('adminCreateListArea').classList.remove('hidden');
+        document.getElementById('createListUnitLabel').innerText = adminSelectedUnit;
+        
+        document.getElementById('newListName').value = "";
+        document.getElementById('newListTerm').value = "";
+        document.getElementById('newListDef').value = "";
+        document.getElementById('newListImg').value = "";
+    }
+
+    function submitNewList() {
+        const listName = document.getElementById('newListName').value.trim();
+        const term = document.getElementById('newListTerm').value.trim();
+        const def = document.getElementById('newListDef').value.trim();
+        const img = document.getElementById('newListImg').value.trim();
+
+        if (!listName || !term || !def) {
+            return alert("List Name, Term, and Definition are required to create a new List.");
         }
 
-        function viewStudentDetail(name) { 
-            currentViewingStudent = name;
-            document.getElementById('studentListGrid').classList.add('hidden'); 
-            const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); 
-            document.getElementById('viewingStudentName').innerText = "History for: " + name; 
-            const filtered = rawAnalytics.filter(r => r.student === name); 
-            let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
-            filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); 
-            html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; 
+        if (!units[adminSelectedUnit][listName]) {
+            units[adminSelectedUnit][listName] = [];
         }
+        
+        units[adminSelectedUnit][listName].push({ t: term, d: def, img: img });
 
-        async function clearResultsPrompt() {
-            if (!confirm(`Clear all results for ${currentViewingStudent}?`)) return;
-            const btn = document.getElementById('clearAllBtn');
-            btn.innerText = "Clearing..."; btn.disabled = true;
-            try {
-                await fetch(EXPORT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
-                });
-                alert("Results cleared.");
-                fetchResultsAnalytics(); 
-            } catch (e) { alert("Error clearing results."); } finally { btn.innerText = "Clear All Results"; btn.disabled = false; }
+        triggerSyncIndicator();
+        fetch(EXPORT_URL, { 
+            method: 'POST', mode: 'no-cors', 
+            body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
+        });
+
+        document.getElementById('adminCreateListArea').classList.add('hidden');
+        adminSelectUnit(adminSelectedUnit); 
+        adminSelectList(listName);
+    }
+
+    function cancelCreate() {
+        document.getElementById('adminCreateUnitArea').classList.add('hidden');
+        document.getElementById('adminCreateListArea').classList.add('hidden');
+        
+        if (adminSelectedUnit && document.getElementById('adminEditArea').classList.contains('hidden')) {
+            document.getElementById('adminListSelection').classList.remove('hidden');
+        } else {
+            document.getElementById('adminUnitSelection').classList.remove('hidden');
         }
+    }
 
-        function backToStudentList() { renderStudentList(); }
-        function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
-        function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
-        function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
-        function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
-        function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-        function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
-    </script>
+    async function submitNewWord() { 
+        const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
+        if(!t || !d) return alert("Fill fields");
+        units[u][l].push({t, d, img: i}); 
+        renderAdminWordList(); triggerSyncIndicator();
+        document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i, teacherID: TEACHER_ID }) 
+        });
+    }
+
+    async function saveEdit(u, l, idx) { 
+        const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
+        const oldTerm = units[u][l][idx].t;
+        units[u][l][idx] = {t: nt, d: nd, img: ni}; 
+        triggerSyncIndicator();
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni, teacherID: TEACHER_ID }) 
+        }); 
+    }
+
+    async function deleteWord(u, l, idx) {
+        if(!confirm("Are you sure?")) return;
+        const termToDelete = units[u][l][idx].t;
+        units[u][l].splice(idx, 1); 
+        renderAdminWordList(); triggerSyncIndicator();
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) 
+        });
+    }
+
+    function enterApp() { 
+        document.getElementById('landingPage').style.opacity = '0'; 
+        if (matrixInterval) clearInterval(matrixInterval); 
+        canvas.style.display = 'none'; 
+        setTimeout(() => { 
+            document.getElementById('landingPage').classList.add('hidden'); 
+            if (studentName) unlockApp(); else document.getElementById('loginOverlay').classList.remove('hidden'); 
+            renderUnitSelection(); 
+        }, 800); 
+    }
+
+    function toggleAuthMode(isReg) { 
+        document.getElementById('loginForm').classList.toggle('hidden', isReg); 
+        document.getElementById('registerForm').classList.toggle('hidden', !isReg); 
+    }
+    
+    function continueAsGuest() { 
+        TEACHER_ID = document.getElementById('teacherSelect').value;
+        studentName = "Guest"; 
+        unlockApp(); 
+    }
+
+    async function handleAuth(type) {
+        TEACHER_ID = document.getElementById('teacherSelect').value;
+        let payload = {}; 
+        const fullNameInput = document.getElementById('regFull').value;
+        const userInput = document.getElementById('userIn').value;
+        
+        if (type === 'login') {
+            payload = { action: 'login', username: userInput, password: document.getElementById('passIn').value };
+        } else { 
+            if(!fullNameInput) return alert("Please enter your full name."); 
+            payload = { action: 'register', fullname: fullNameInput, username: document.getElementById('regUser').value, password: document.getElementById('regPass').value }; 
+        }
+        
+        const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
+        const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
+        
+        try { 
+            const response = await fetch(EXPORT_URL, { method: 'POST', body: JSON.stringify(payload) }); 
+            const result = await response.text(); 
+            if (result.startsWith("Success:")) { 
+                studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "").trim(); 
+                if (!studentName || studentName === "") studentName = userInput; 
+                localStorage.setItem('vocabSojournName', studentName); 
+                localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
+                unlockApp(); 
+            } else { alert(result); } 
+        } catch (e) { alert("Network Error."); } finally { btn.innerText = oldText; btn.disabled = false; }
+    }
+
+    function unlockApp() { 
+        document.getElementById('loginOverlay').classList.add('hidden'); 
+        document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
+        document.querySelector('.app-container').style.opacity = '1'; 
+        document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+        fetchTeacherData(true); 
+        playWelcomeAnimation('student'); 
+    }
+
+    function logout() { if(confirm("Logout?")) { localStorage.removeItem('vocabSojournName'); localStorage.removeItem('vocabSojournTeacher'); studentName = ""; location.reload(); } }
+    
+    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">No units found for this teacher.</div>'; }
+    function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
+    function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
+    function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
+    function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
+    
+    async function syncSessionToSheet(mode, score) { 
+        if (studentName === "Guest") return; 
+        fetch(EXPORT_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) 
+        }); 
+    }
+    
+    function setStudyMode(mode) { 
+        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); 
+        document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); 
+        ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
+        document.getElementById(mode + 'Mode').classList.remove('hidden'); 
+        const list = units[currentUnit][currentClass]; 
+        if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
+        if (mode === 'flash') { 
+            cardIdx = 0; 
+            flashcardList = [...list].sort(() => 0.5 - Math.random());
+            updateCard(); 
+        } 
+        if (mode === 'quiz') resetQuizUI();
+        if (mode === 'match') resetMatchUI();
+    }
+
+    function renderFullList(list) { 
+        document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong style="color: var(--primary); font-size: 1.05rem; margin-right: 5px;">${i.t}</strong> ${i.d}</div></div>`).join(''); 
+    }
+    
+    function updateCard() { 
+        if (!flashcardList.length) return;
+        const card = flashcardList[cardIdx]; 
+        document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; 
+        document.getElementById('displayBack').innerText = card.d; 
+        document.getElementById('cardContainer').classList.remove('flipped'); 
+    }
+    function changeCard(dir) { 
+        if (!flashcardList.length) return;
+        cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; 
+        updateCard(); 
+    }
+
+    function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
+    function initQuiz(diff) {
+        currentDifficulty = diff; const list = units[currentUnit][currentClass];
+        if (!list || !list.length) return;
+        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
+        qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        qScore = 0; qIdx = 0;
+        document.getElementById('quizDifficultyArea').classList.add('hidden'); document.getElementById('quizPlayArea').classList.remove('hidden');
+        document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();
+    }
+    
+    function renderQuiz() { 
+        if (qIdx >= qPool.length) { endQuiz(); return; } 
+        const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; 
+        const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
+        document.getElementById('quizQuestion').innerText = `Definition of: ${correct.t}?`; 
+        document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
+        document.getElementById('nextQuizBtn').classList.add('hidden'); 
+    }
+    
+    function checkQuiz(el, isCorrect) { 
+        if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
+        if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } 
+        else { el.style.background = 'var(--danger)'; } 
+        qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; 
+        document.getElementById('nextQuizBtn').classList.remove('hidden'); 
+    }
+    function endQuiz() { 
+        document.getElementById('quizPlayArea').classList.add('hidden'); 
+        const pct = Math.round((qScore/qPool.length)*100) + "%"; 
+        document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct} (${currentDifficulty})</h3><button class="main-btn" onclick="resetQuizUI()">Restart</button>`; 
+        document.getElementById('quizEnd').classList.remove('hidden'); 
+        addHistory(`Quiz (${currentDifficulty})`, pct); syncSessionToSheet(`Quiz (${currentDifficulty})`, pct); 
+    }
+
+    function resetMatchUI() { document.getElementById('matchDifficultyArea').classList.remove('hidden'); document.getElementById('matchPlayArea').classList.add('hidden'); document.getElementById('matchEnd').classList.add('hidden'); }
+    function initMatch(diff) {
+        currentDifficulty = diff; const list = units[currentUnit][currentClass];
+        if (!list || !list.length) return;
+        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
+        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        mGoal = sub.length; mCorrect = 0; mTotal = 0;
+        document.getElementById('matchDifficultyArea').classList.add('hidden'); document.getElementById('matchPlayArea').classList.remove('hidden');
+        document.getElementById('matchStats').innerText = "Accuracy: 0%";
+        let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
+        let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
+        document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`;
+    }
+    function drag(e) { draggedItem = e.target; }
+    function drop(e) { 
+        const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; 
+        mTotal++; 
+        if (draggedItem.dataset.id === target.dataset.id) { 
+            mCorrect++; target.style.background = 'var(--accent)'; 
+            draggedItem.style.visibility = 'hidden'; target.draggable = false; 
+        } else { 
+            target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); 
+        } 
+        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
+        document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
+        if (mCorrect === mGoal) { 
+            document.getElementById('matchPlayArea').classList.add('hidden'); 
+            document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc} (${currentDifficulty})</h3><button class="main-btn" onclick="resetMatchUI()">Restart</button>`; 
+            document.getElementById('matchEnd').classList.remove('hidden'); 
+            addHistory(`Match (${currentDifficulty})`, acc); syncSessionToSheet(`Match (${currentDifficulty})`, acc); 
+        } 
+    }
+
+    function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
+    function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
+    
+    function protectedToggle() { 
+        const adminView = document.getElementById('adminView');
+        if (adminView.classList.contains('hidden')) {
+            const pass = prompt("Password:");
+            if (pass === ADMIN_PASS) { 
+                const choice = prompt("Enter Class ID to manage:", TEACHER_ID);
+                if(choice) TEACHER_ID = choice;
+                if (matrixInterval) clearInterval(matrixInterval); 
+                canvas.style.display = 'none'; 
+                document.getElementById('studyView').classList.add('hidden'); 
+                document.getElementById('landingPage').classList.add('hidden'); 
+                document.getElementById('loginOverlay').classList.add('hidden'); 
+                document.getElementById('teacherLoginBtn').classList.add('hidden'); 
+                adminView.classList.remove('hidden'); 
+                document.querySelector('.app-container').style.opacity = '1'; 
+                document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+                fetchTeacherData(true);
+                playWelcomeAnimation('teacher');
+            }
+        } else { 
+            if (studentName) {
+                adminView.classList.add('hidden');
+                document.getElementById('studyView').classList.remove('hidden');
+                document.getElementById('teacherLoginBtn').classList.remove('hidden');
+                playWelcomeAnimation('student');
+            } else { location.reload(); }
+        } 
+    }
+    
+    function switchAdminTab(tab) { 
+        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
+        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
+        if (tab === 'analytics') fetchResultsAnalytics(); 
+    }
+    
+    async function fetchResultsAnalytics() { 
+        try { 
+            const response = await fetch(EXPORT_URL + "?action=getAnalytics&cb=" + Date.now()); 
+            const data = await response.json(); 
+            rawAnalytics = [];
+            for (let i = 0; i < data.length; i++) {
+                let row = data[i];
+                if (!row || row.length < 6) continue;
+                if (row[6] === TEACHER_ID) {
+                    let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
+                    if (!name || String(name).trim() === "") name = "Anonymous";
+                    if (t) {
+                        const dateObj = new Date(t);
+                        if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    }
+                    if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
+                    rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
+                }
+            }
+            renderStudentList(); 
+        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
+    }
+
+    function renderStudentList() { 
+        const grid = document.getElementById('studentListGrid'); 
+        document.getElementById('individualStudentView').classList.add('hidden'); 
+        grid.classList.remove('hidden'); 
+        let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
+        if (studentSet.length === 0) { grid.innerHTML = '<div class="loading-text">No records for ' + TEACHER_ID + '</div>'; return; }
+        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
+    }
+
+    function viewStudentDetail(name) { 
+        currentViewingStudent = name;
+        document.getElementById('studentListGrid').classList.add('hidden'); 
+        const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); 
+        document.getElementById('viewingStudentName').innerText = "History for: " + name; 
+        const filtered = rawAnalytics.filter(r => r.student === name); 
+        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
+        filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); 
+        html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; 
+    }
+
+    async function clearResultsPrompt() {
+        if (!confirm(`Clear all results for ${currentViewingStudent}?`)) return;
+        const btn = document.getElementById('clearAllBtn');
+        btn.innerText = "Clearing..."; btn.disabled = true;
+        try {
+            await fetch(EXPORT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
+            });
+            alert("Results cleared.");
+            fetchResultsAnalytics(); 
+        } catch (e) { alert("Error clearing results."); } finally { btn.innerText = "Clear All Results"; btn.disabled = false; }
+    }
+
+    function backToStudentList() { renderStudentList(); }
+    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); grid.innerHTML = Object.keys(units).map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join(''); }
+    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
+    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
+    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
+    function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
+    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
+</script>
 </body>
 </html>
