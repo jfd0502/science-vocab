@@ -455,7 +455,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwsCpBS1fpqK7BJPYcF14hLI4qpINv2X2th7k9NGJRSzh5AzuAfwMtt6yXQDNOkUemTyA/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbw_BVe0BuLNFrfNtWXSq_fKr6yr-4LxXcr8i5oWQ2MfRcIK6W2XraTV-xT1HbWy_Mubww/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -596,7 +596,8 @@
         
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
         });
 
@@ -629,7 +630,8 @@
 
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
         });
 
@@ -656,7 +658,7 @@
         document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
         fetch(EXPORT_URL, { 
             method: 'POST', 
-            mode: 'no-cors', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i, teacherID: TEACHER_ID }) 
         });
     }
@@ -668,7 +670,7 @@
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
             method: 'POST', 
-            mode: 'no-cors', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni, teacherID: TEACHER_ID }) 
         }); 
     }
@@ -680,7 +682,7 @@
         renderAdminWordList(); triggerSyncIndicator();
         fetch(EXPORT_URL, { 
             method: 'POST', 
-            mode: 'no-cors', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) 
         });
     }
@@ -707,6 +709,7 @@
         unlockApp(); 
     }
 
+    // FIX: Using normal CORS now that the backend doesn't crash from invalid addHeader calls
     async function handleAuth(type) {
         TEACHER_ID = document.getElementById('teacherSelect').value;
         let payload = {}; 
@@ -733,16 +736,22 @@
         const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
         
         try { 
-            await fetch(EXPORT_URL, { 
-                method: 'POST', mode: 'no-cors',
+            const response = await fetch(EXPORT_URL, { 
+                method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(payload) 
             }); 
+            const result = await response.text(); 
             
-            studentName = (type === 'register') ? fullNameInput : (userInput || "Explorer"); 
-            localStorage.setItem('vocabSojournName', studentName); 
-            localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
-            setTimeout(() => { unlockApp(); }, 1200);
+            if (result.startsWith("Success:")) { 
+                studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "").trim(); 
+                if (!studentName || studentName === "") studentName = userInput; 
+                localStorage.setItem('vocabSojournName', studentName); 
+                localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
+                unlockApp(); 
+            } else { 
+                alert(result); 
+            } 
         } catch (e) { 
             alert("Network Error."); 
             console.error(e);
@@ -751,7 +760,6 @@
         }
     }
 
-    // --- FIX: TEACHER AUTHENTICATION USING GET ---
     function showTeacherLogin() {
         document.getElementById('teacherLoginOverlay').classList.remove('hidden');
     }
@@ -771,7 +779,6 @@
         btn.innerText = "Authenticating..."; btn.disabled = true;
 
         try {
-            // Using GET request to bypass Google Apps Script POST CORS limitations completely
             const url = `${EXPORT_URL}?action=teacherLogin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
             const response = await fetch(url); 
             const result = await response.text(); 
@@ -843,7 +850,8 @@
     async function syncSessionToSheet(mode, score) { 
         if (studentName === "Guest") return; 
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) 
         }); 
     }
@@ -1002,7 +1010,7 @@
         btn.innerText = "Clearing..."; btn.disabled = true;
         try {
             await fetch(EXPORT_URL, {
-                method: 'POST', mode: 'no-cors',
+                method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
             });
