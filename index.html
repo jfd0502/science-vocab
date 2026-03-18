@@ -356,10 +356,13 @@
                 </div>
 
                 <div id="quizMode" class="hidden">
-                    <div id="quizDifficultyArea" class="diff-selector">
-                        <button class="diff-btn" onclick="initQuiz('Easy')">Easy (5)</button>
-                        <button class="diff-btn" onclick="initQuiz('Medium')">Medium (10)</button>
-                        <button class="diff-btn" onclick="initQuiz('Expert')">Expert (All)</button>
+                    <div id="quizDifficultyArea">
+                        <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
+                        <div class="diff-selector">
+                            <button class="diff-btn" onclick="initQuiz('Easy')">Easy (5)</button>
+                            <button class="diff-btn" onclick="initQuiz('Medium')">Medium (10)</button>
+                            <button class="diff-btn" onclick="initQuiz('Expert')">Expert (All)</button>
+                        </div>
                     </div>
                     <div id="quizPlayArea" class="hidden">
                         <div id="quizStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
@@ -373,10 +376,13 @@
                 </div>
 
                 <div id="matchMode" class="hidden">
-                    <div id="matchDifficultyArea" class="diff-selector">
-                        <button class="diff-btn" onclick="initMatch('Easy')">Easy (5)</button>
-                        <button class="diff-btn" onclick="initMatch('Medium')">Medium (10)</button>
-                        <button class="diff-btn" onclick="initMatch('Expert')">Expert (All)</button>
+                    <div id="matchDifficultyArea">
+                        <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
+                        <div class="diff-selector">
+                            <button class="diff-btn" onclick="initMatch('Easy')">Easy (5)</button>
+                            <button class="diff-btn" onclick="initMatch('Medium')">Medium (10)</button>
+                            <button class="diff-btn" onclick="initMatch('Expert')">Expert (All)</button>
+                        </div>
                     </div>
                     <div id="matchPlayArea" class="hidden">
                         <div id="matchStats" style="text-align:right; font-weight:bold; color:var(--primary); margin-bottom: 10px;">Accuracy: 0%</div>
@@ -485,7 +491,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynTCTFohNSTzKX4cD9IbhiblXeBEbLgIVja6H_bvug8WkIhoSeb-ca2nrRHRYyKYoSww/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwsCpBS1fpqK7BJPYcF14hLI4qpINv2X2th7k9NGJRSzh5AzuAfwMtt6yXQDNOkUemTyA/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -752,7 +758,6 @@
 
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
     
-    // UPDATE: Guest login now prompts for Teacher ID since dropdown was removed
     function continueAsGuest() { 
         const guestTeacher = prompt("Please enter the exact Educator ID you wish to view (e.g., Teacher 1):", "Teacher 1");
         if(guestTeacher) {
@@ -796,7 +801,6 @@
                 studentName = parts[0]; 
                 if (!studentName || studentName === "") studentName = userInput || regUser; 
                 
-                // Assign teacher dynamically based on backend result if logging in
                 if (type === 'login' && parts.length > 1) {
                     TEACHER_ID = parts[1].trim(); 
                 } else if (type === 'register') {
