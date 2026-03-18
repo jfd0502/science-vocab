@@ -207,8 +207,27 @@
         .hidden { display: none !important; }
         .auth-switch { color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.85rem; margin-top: 10px; display: inline-block; }
         
-        #logoutBtn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; margin-left: 10px; transition: 0.3s; }
-        #logoutBtn:hover { background: var(--danger); color: white; }
+        /* Updated Logout Button Styling */
+        #logoutBtn { 
+            background: rgba(239, 68, 68, 0.1); 
+            border: 1px solid var(--danger); 
+            color: #fca5a5; 
+            padding: 8px 16px; 
+            border-radius: 8px; 
+            font-size: 0.8rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-left: 10px; 
+            transition: all 0.3s ease; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #logoutBtn:hover { 
+            background: var(--danger); 
+            color: white; 
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+            transform: translateY(-2px);
+        }
 
         .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
         
@@ -288,7 +307,7 @@
 
         <div class="session-info-bar">
             <div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Explorer: Guest</div>
-            <button id="logoutBtn" onclick="logout()">Logout</button>
+            <button id="logoutBtn" onclick="logout()">LOGOUT</button>
         </div>
 
         <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">• Sync Online</div>
@@ -369,8 +388,6 @@
         </div>
 
         <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
-            <div class="breadcrumb" onclick="exitTeacherMode()">&larr; Exit Management</div>
-            
             <div style="display: flex; gap: 10px; margin-bottom: 25px;">
                 <button class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content Manager</button>
                 <button class="main-btn" style="flex: 1; background: var(--accent);" onclick="switchAdminTab('analytics')">Student Results</button>
@@ -683,7 +700,6 @@
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
     function continueAsGuest() { TEACHER_ID = document.getElementById('teacherSelect').value; studentName = "Guest"; unlockApp(); }
 
-    // --- FIX: Logins converted completely to GET Requests to bypass any browser CORS blocks ---
     async function handleAuth(type) {
         TEACHER_ID = document.getElementById('teacherSelect').value;
         const fullNameInput = document.getElementById('regFull').value;
@@ -784,8 +800,6 @@
         fetchTeacherData(true);
         if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID; }
     }
-
-    function exitTeacherMode() { location.reload(); }
 
     function unlockApp(skipAnim = false) { 
         document.getElementById('landingPage').style.display = 'none';
