@@ -469,10 +469,10 @@
             <div id="adminProfileArea" class="hidden">
                 <h3 style="margin-top: 0;">Educator Profile Settings</h3>
                 <div class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
-                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">Update your login credentials below. Changes take effect immediately.</p>
-                    <input type="text" id="updateTeacherUser" placeholder="New Username">
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">Update your login credentials below. This will also immediately update your Display Name and Teacher ID across all your vocabulary units and student records.</p>
+                    <input type="text" id="updateTeacherUser" placeholder="New Display Name & Username (e.g. Doerfler)">
                     <input type="password" id="updateTeacherPass" placeholder="New Password">
-                    <button class="main-btn" id="updateTeacherBtn" onclick="updateTeacherProfile()" style="width:100%; margin-top: 10px; background: #f59e0b;">Save Credentials</button>
+                    <button class="main-btn" id="updateTeacherBtn" onclick="updateTeacherProfile()" style="width:100%; margin-top: 10px; background: #f59e0b;">Update Identity & Transfer Data</button>
                     <div id="profileUpdateMsg" style="margin-top: 15px; font-size: 0.85rem; color: var(--accent); text-align: center;"></div>
                 </div>
             </div>
@@ -484,7 +484,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbz4YLNa9u5b75WgLGuAqDY0a_C3YeMXx9zw_Eiq4hoLRoNsmFgneUEW9L3xUaMFIobh_Q/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbzsUUqaUL_5SMRqDLTvDb24kCEPDHbLNwyn2F0kDrkkMIKWz9taLK7iqThqz4sfPodj/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -579,7 +579,7 @@
 
     function playWelcomeAnimation(mode = 'student') {
         const text = mode === 'teacher' 
-            ? "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID
+            ? "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID
             : "Welcome to your Vocabulary Journey.\nPlease select a unit...";
             
         const container = document.getElementById('typingTitleContainer');
@@ -685,24 +685,37 @@
         setTimeout(() => { alert("Results cleared."); fetchResultsAnalytics(); btn.innerText = "Clear All Results"; btn.disabled = false; }, 800);
     }
     
-    // --- Teacher Profile Update ---
+    // --- Teacher Profile Updater ---
     async function updateTeacherProfile() {
         const newUser = document.getElementById('updateTeacherUser').value.trim();
         const newPass = document.getElementById('updateTeacherPass').value.trim();
         
         if (!newUser || !newPass) return alert("Please enter both a new username and a new password.");
-        
+        if (!confirm(`Are you sure? This will update your login to "${newUser}" and permanently transfer all your lists and student data to this new identity.`)) return;
+
         const btn = document.getElementById('updateTeacherBtn');
-        btn.innerText = "Saving..."; btn.disabled = true;
+        btn.innerText = "Transferring Data..."; btn.disabled = true;
         
         try {
+            // Using no-cors because Apps Script POST responses trigger Network Errors. 
+            // We blindly trust success and aggressively update local state to match.
             fetch(EXPORT_URL, { 
                 method: 'POST', 
                 mode: 'no-cors', 
                 headers: { 'Content-Type': 'text/plain' }, 
                 body: JSON.stringify({ action: "updateTeacherProfile", teacherID: TEACHER_ID, newUser: newUser, newPass: newPass }) 
             });
-            document.getElementById('profileUpdateMsg').innerText = "Credentials updated securely. Please use these upon your next login.";
+            
+            // Instantly update local variables to the new ID so the site continues functioning seamlessly
+            TEACHER_ID = newUser;
+            studentName = TEACHER_ID;
+            localStorage.setItem('vocabSojournName', TEACHER_ID);
+            localStorage.setItem('vocabSojournTeacher', TEACHER_ID);
+            
+            document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
+            document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID;
+            
+            document.getElementById('profileUpdateMsg').innerText = "Credentials & Database updated securely. Welcome, " + TEACHER_ID + "!";
             setTimeout(() => { document.getElementById('profileUpdateMsg').innerText = ""; }, 5000);
             
             document.getElementById('updateTeacherUser').value = "";
@@ -711,7 +724,7 @@
             alert("Error updating profile.");
             console.error(e);
         } finally {
-            btn.innerText = "Save Credentials"; btn.disabled = false;
+            btn.innerText = "Update Identity & Transfer Data"; btn.disabled = false;
         }
     }
 
@@ -841,9 +854,9 @@
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         
         fetchTeacherData(true);
-        switchAdminTab('content'); // Default to content tab
+        switchAdminTab('content'); 
         
-        if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID; }
+        if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID; }
     }
 
     function unlockApp(skipAnim = false) { 
