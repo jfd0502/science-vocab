@@ -207,7 +207,6 @@
         .hidden { display: none !important; }
         .auth-switch { color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.85rem; margin-top: 10px; display: inline-block; }
         
-        /* Updated Logout Button Styling */
         #logoutBtn { 
             background: rgba(239, 68, 68, 0.1); 
             border: 1px solid var(--danger); 
@@ -388,9 +387,10 @@
         </div>
 
         <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
-            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
-                <button class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content Manager</button>
-                <button class="main-btn" style="flex: 1; background: var(--accent);" onclick="switchAdminTab('analytics')">Student Results</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
+                <button id="tabContentBtn" class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content Manager</button>
+                <button id="tabAnalyticsBtn" class="main-btn" style="flex: 1; background: var(--glass);" onclick="switchAdminTab('analytics')">Student Results</button>
+                <button id="tabProfileBtn" class="main-btn" style="flex: 1; background: var(--glass);" onclick="switchAdminTab('profile')">Edit Profile</button>
             </div>
 
             <div id="adminContentArea">
@@ -404,7 +404,7 @@
                 </div>
                 
                 <div id="adminListSelection" class="hidden">
-                    <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()"></div>
+                    <div id="adminBackToUnits" class="breadcrumb" onclick="resetAdminView()">&larr; Back to Units</div>
                     <div style="display:flex; gap:10px; margin-bottom:15px;">
                         <button class="main-btn" onclick="showCreateListForm()" style="flex:1; background:var(--accent);">+ Create New List</button>
                     </div>
@@ -412,7 +412,7 @@
                 </div>
 
                 <div id="adminCreateUnitArea" class="hidden panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
-                    <div class="breadcrumb" onclick="cancelCreate()">? Cancel</div>
+                    <div class="breadcrumb" onclick="cancelCreate()">&larr; Cancel</div>
                     <h4 style="margin-top:0;">Create New Unit</h4>
                     <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">To securely save a new Unit, you must add its first List and vocabulary word.</p>
                     <input type="text" id="newUnitName" placeholder="New Unit Name (e.g., Biology)">
@@ -425,7 +425,7 @@
                 </div>
 
                 <div id="adminCreateListArea" class="hidden panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
-                    <div class="breadcrumb" onclick="cancelCreate()">? Cancel</div>
+                    <div class="breadcrumb" onclick="cancelCreate()">&larr; Cancel</div>
                     <h4 style="margin-top:0;">Create New List for <span id="createListUnitLabel" style="color: var(--primary);"></span></h4>
                     <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">To securely save a new List, you must add its first vocabulary word.</p>
                     <input type="text" id="newListName" placeholder="New List Name (e.g., Week 2)">
@@ -465,6 +465,18 @@
                     <div id="studentDetailTable"></div>
                 </div>
             </div>
+
+            <div id="adminProfileArea" class="hidden">
+                <h3 style="margin-top: 0;">Educator Profile Settings</h3>
+                <div class="panel" style="background: rgba(255,255,255,0.02); padding: 20px;">
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px;">Update your login credentials below. Changes take effect immediately.</p>
+                    <input type="text" id="updateTeacherUser" placeholder="New Username">
+                    <input type="password" id="updateTeacherPass" placeholder="New Password">
+                    <button class="main-btn" id="updateTeacherBtn" onclick="updateTeacherProfile()" style="width:100%; margin-top: 10px; background: #f59e0b;">Save Credentials</button>
+                    <div id="profileUpdateMsg" style="margin-top: 15px; font-size: 0.85rem; color: var(--accent); text-align: center;"></div>
+                </div>
+            </div>
+            
         </div>
     </div>
 
@@ -472,7 +484,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbz_joirGQhdLjS15CgGcXRmMhIOdVDGTHuRiqAJaoJTmoim-swZVug9EHo-wKLO0NQexA/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbz4YLNa9u5b75WgLGuAqDY0a_C3YeMXx9zw_Eiq4hoLRoNsmFgneUEW9L3xUaMFIobh_Q/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -672,6 +684,36 @@
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID }) });
         setTimeout(() => { alert("Results cleared."); fetchResultsAnalytics(); btn.innerText = "Clear All Results"; btn.disabled = false; }, 800);
     }
+    
+    // --- Teacher Profile Update ---
+    async function updateTeacherProfile() {
+        const newUser = document.getElementById('updateTeacherUser').value.trim();
+        const newPass = document.getElementById('updateTeacherPass').value.trim();
+        
+        if (!newUser || !newPass) return alert("Please enter both a new username and a new password.");
+        
+        const btn = document.getElementById('updateTeacherBtn');
+        btn.innerText = "Saving..."; btn.disabled = true;
+        
+        try {
+            fetch(EXPORT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'text/plain' }, 
+                body: JSON.stringify({ action: "updateTeacherProfile", teacherID: TEACHER_ID, newUser: newUser, newPass: newPass }) 
+            });
+            document.getElementById('profileUpdateMsg').innerText = "Credentials updated securely. Please use these upon your next login.";
+            setTimeout(() => { document.getElementById('profileUpdateMsg').innerText = ""; }, 5000);
+            
+            document.getElementById('updateTeacherUser').value = "";
+            document.getElementById('updateTeacherPass').value = "";
+        } catch(e) {
+            alert("Error updating profile.");
+            console.error(e);
+        } finally {
+            btn.innerText = "Save Credentials"; btn.disabled = false;
+        }
+    }
 
     // --- View Navigation ---
     function showCreateUnitForm() { document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminCreateUnitArea').classList.remove('hidden'); document.getElementById('newUnitName').value = ""; document.getElementById('newUnitListName').value = "List 1"; document.getElementById('newUnitTerm').value = ""; document.getElementById('newUnitDef').value = ""; document.getElementById('newUnitImg').value = ""; }
@@ -782,7 +824,6 @@
         }
     }
 
-    // Hide overlapping UI elements forcefully
     function enterTeacherMode(skipAnim = false) {
         document.getElementById('teacherLoginOverlay').classList.add('hidden');
         document.getElementById('landingPage').style.display = 'none';
@@ -793,11 +834,15 @@
         if (matrixInterval) clearInterval(matrixInterval); 
         canvas.style.display = 'none'; 
         
-        document.getElementById('adminView').classList.remove('hidden'); 
+        const adminView = document.getElementById('adminView');
+        adminView.classList.remove('hidden'); 
+        
         document.querySelector('.app-container').style.opacity = '1'; 
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         
         fetchTeacherData(true);
+        switchAdminTab('content'); // Default to content tab
+        
         if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID; }
     }
 
@@ -907,7 +952,18 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
-    function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
+    // Updated Admin Tab Switcher to include Profile section
+    function switchAdminTab(tab) { 
+        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
+        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
+        document.getElementById('adminProfileArea').classList.toggle('hidden', tab !== 'profile'); 
+
+        document.getElementById('tabContentBtn').style.background = tab === 'content' ? 'var(--primary)' : 'var(--glass)';
+        document.getElementById('tabAnalyticsBtn').style.background = tab === 'analytics' ? 'var(--accent)' : 'var(--glass)';
+        document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)';
+
+        if (tab === 'analytics') fetchResultsAnalytics(); 
+    }
     
     async function fetchResultsAnalytics() { 
         try { 
