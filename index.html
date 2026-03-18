@@ -491,7 +491,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynTCTFohNSTzKX4cD9IbhiblXeBEbLgIVja6H_bvug8WkIhoSeb-ca2nrRHRYyKYoSww/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwsCpBS1fpqK7BJPYcF14hLI4qpINv2X2th7k9NGJRSzh5AzuAfwMtt6yXQDNOkUemTyA/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -884,10 +884,14 @@
         if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID; }
     }
 
+    // FIX: Completely clear the matrix canvas upon student auto-login so it doesn't ghost in the background
     function unlockApp(skipAnim = false) { 
         document.getElementById('landingPage').style.display = 'none';
         document.getElementById('loginOverlay').classList.add('hidden'); 
         document.getElementById('teacherLoginBtn').classList.add('hidden');
+        
+        if (matrixInterval) clearInterval(matrixInterval); 
+        canvas.style.display = 'none'; 
         
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
         document.querySelector('.app-container').style.opacity = '1'; 
