@@ -216,6 +216,7 @@
         .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
         .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
 
+        /* SVG Audio Speaker Button Styling */
         .speaker-btn {
             cursor: pointer;
             background: rgba(255,255,255,0.05);
@@ -325,6 +326,7 @@
 
     <div id="loginOverlay" class="hidden">
         <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
+            
             <div id="loginForm">
                 <h2 style="margin-top: 0;">Student Login</h2>
                 <input type="text" id="userIn" placeholder="Username">
@@ -337,6 +339,7 @@
 
             <div id="registerForm" class="hidden">
                 <h2 style="margin-top: 0;">Create Account</h2>
+                
                 <div style="margin-bottom: 15px; text-align: left;">
                     <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Select Your Teacher</label>
                     <select id="teacherSelect">
@@ -346,6 +349,7 @@
                         <option value="Teacher 4">Teacher 4</option>
                     </select>
                 </div>
+                
                 <input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)">
                 <input type="text" id="regUser" placeholder="Choose Username">
                 <input type="password" id="regPass" placeholder="Choose Password">
@@ -359,8 +363,10 @@
         <div class="panel" style="max-width: 420px; text-align: center; position: relative; background: #1e293b; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);">
             <h2 style="color: #cbd5e1; font-weight: 300; letter-spacing: 2px; margin-bottom: 5px; font-size: 0.9rem;">ADMINISTRATION</h2>
             <h1 style="margin-top: 0; margin-bottom: 25px; color: white;">Educator Portal</h1>
+            
             <input type="text" id="teacherUserIn" placeholder="Teacher Username (e.g. teacher1)" style="background: #0f172a; border-color: #475569;">
             <input type="password" id="teacherPassIn" placeholder="Password" style="background: #0f172a; border-color: #475569;">
+            
             <button class="main-btn" id="teacherLoginSubmit" onclick="handleTeacherAuth()" style="width: 100%; margin-top: 20px; background: #475569; box-shadow: none;">Authenticate</button>
             <button class="nav-btn" onclick="cancelTeacherLogin()" style="width: 100%; margin-top: 15px; background: transparent; border: none; font-size: 0.85rem; padding: 10px; color: #94a3b8;">&larr; Return to Application</button>
         </div>
@@ -466,9 +472,8 @@
                         </div>
                     </div>
                     <div id="memoryPlayArea" class="hidden">
-                        <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--primary); margin-bottom: 10px; font-size:0.9rem;">
+                        <div style="text-align:center; font-weight:bold; color:var(--primary); margin-bottom: 10px; font-size:1rem;">
                             <div id="memoryAttempts">Attempts: 0</div>
-                            <div id="memoryStats">Accuracy: 0%</div>
                         </div>
                         <div id="memoryContainer" class="memory-grid"></div>
                     </div>
@@ -547,10 +552,12 @@
                 </div>
                 <div id="individualStudentView" class="hidden">
                     <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to All Students</div>
+                    
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h4 id="viewingStudentName" style="color: var(--accent); margin: 0;"></h4>
                         <button id="clearAllBtn" onclick="clearResultsPrompt()" style="background: var(--danger); border: none; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Clear All Results</button>
                     </div>
+
                     <div id="studentDetailTable"></div>
                 </div>
             </div>
@@ -565,6 +572,7 @@
                     <div id="profileUpdateMsg" style="margin-top: 15px; font-size: 0.85rem; color: var(--accent); text-align: center;"></div>
                 </div>
             </div>
+            
         </div>
     </div>
 
@@ -998,7 +1006,7 @@
         } 
     }
 
-    // --- NEW: Memory Matrix Logic ---
+    // --- FIX: Updated Memory Matrix Logic (Attempts Only) ---
     function resetMemoryUI() {
         document.getElementById('memoryDifficultyArea').classList.remove('hidden');
         document.getElementById('memoryPlayArea').classList.add('hidden');
@@ -1027,11 +1035,10 @@
         document.getElementById('memoryDifficultyArea').classList.add('hidden');
         document.getElementById('memoryPlayArea').classList.remove('hidden');
         document.getElementById('memoryAttempts').innerText = "Attempts: 0";
-        document.getElementById('memoryStats').innerText = "Accuracy: 0%";
         
         const container = document.getElementById('memoryContainer');
         let cols = memCards.length <= 12 ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)'; 
-        if(window.innerWidth < 450) cols = 'repeat(3, 1fr)'; // Mobile adjustment
+        if(window.innerWidth < 450) cols = 'repeat(3, 1fr)'; 
         container.style.gridTemplateColumns = cols;
         
         container.innerHTML = memCards.map((c, i) => `
@@ -1076,17 +1083,17 @@
 
     function updateMemoryStats() {
         document.getElementById('memoryAttempts').innerText = `Attempts: ${memAttempts}`;
-        const acc = memAttempts === 0 ? 0 : Math.round((memMatched / memAttempts) * 100);
-        document.getElementById('memoryStats').innerText = `Accuracy: ${acc}%`;
     }
 
     function endMemory() {
         document.getElementById('memoryPlayArea').classList.add('hidden');
-        const acc = Math.round((memMatched / memAttempts) * 100) + "%";
-        document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${acc} (${memDifficulty})</h3><p style="color:#94a3b8; margin-top:-10px; margin-bottom: 20px;">Attempts: ${memAttempts}</p><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`;
+        const resultText = `${memAttempts} Attempts`;
+        document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${resultText} (${memDifficulty})</h3><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`;
         document.getElementById('memoryEnd').classList.remove('hidden');
-        addHistory(`Memory (${memDifficulty})`, acc);
-        syncSessionToSheet(`Memory (${memDifficulty})`, acc);
+        
+        // Write the total attempts to the session history and backend sheet
+        addHistory(`Memory (${memDifficulty})`, resultText);
+        syncSessionToSheet(`Memory (${memDifficulty})`, resultText);
     }
 
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
@@ -1103,7 +1110,7 @@
                     let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
                     if (!name || String(name).trim() === "") name = "Anonymous";
                     if (t) { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-                    if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
+                    if (!isNaN(s) && s !== '' && !String(s).includes('%') && !String(s).includes('Attempts')) s = Math.round(parseFloat(s) * 100) + "%";
                     rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
                 }
             } renderStudentList(); 
