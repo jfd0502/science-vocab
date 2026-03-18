@@ -1,4 +1,4 @@
-<!DO<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -455,7 +455,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwhTj6EMQhbQZIjBB0mNV9mqtpJ_ufYz8pHyEKdTgYWszNhbv2mMOLfV8xYgT4atXN3Yg/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwsCpBS1fpqK7BJPYcF14hLI4qpINv2X2th7k9NGJRSzh5AzuAfwMtt6yXQDNOkUemTyA/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -607,7 +607,8 @@
         
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
         });
 
@@ -640,7 +641,8 @@
 
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
         });
 
@@ -666,7 +668,8 @@
         renderAdminWordList(); triggerSyncIndicator();
         document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i, teacherID: TEACHER_ID }) 
         });
     }
@@ -677,7 +680,8 @@
         units[u][l][idx] = {t: nt, d: nd, img: ni}; 
         triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni, teacherID: TEACHER_ID }) 
         }); 
     }
@@ -688,7 +692,8 @@
         units[u][l].splice(idx, 1); 
         renderAdminWordList(); triggerSyncIndicator();
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) 
         });
     }
@@ -780,7 +785,7 @@
     }
 
     function showTeacherLogin() {
-        // FIX: Force clear all local storage to completely banish "Jim Bob" ghosts 
+        // Force clear all local storage to completely banish ghosts 
         localStorage.clear();
         studentName = "";
         
@@ -802,8 +807,12 @@
         btn.innerText = "Authenticating..."; btn.disabled = true;
 
         try {
-            const url = `${EXPORT_URL}?action=teacherLogin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-            const response = await fetch(url); 
+            // FIX: Ensure this is a POST request matching exactly what the backend expects
+            const response = await fetch(EXPORT_URL, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: 'teacherLogin', username: user, password: pass }) 
+            }); 
             const result = await response.text(); 
             
             if (result.startsWith("Success:")) { 
@@ -893,7 +902,8 @@
     async function syncSessionToSheet(mode, score) { 
         if (studentName === "Guest") return; 
         fetch(EXPORT_URL, { 
-            method: 'POST', mode: 'no-cors', 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) 
         }); 
     }
@@ -1052,7 +1062,8 @@
         btn.innerText = "Clearing..."; btn.disabled = true;
         try {
             await fetch(EXPORT_URL, {
-                method: 'POST', mode: 'no-cors',
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
             });
             alert("Results cleared.");
