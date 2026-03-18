@@ -455,7 +455,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwsCpBS1fpqK7BJPYcF14hLI4qpINv2X2th7k9NGJRSzh5AzuAfwMtt6yXQDNOkUemTyA/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbz_joirGQhdLjS15CgGcXRmMhIOdVDGTHuRiqAJaoJTmoim-swZVug9EHo-wKLO0NQexA/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -510,17 +510,16 @@
         const storedT = localStorage.getItem('vocabSojournTeacher');
         const storedRole = localStorage.getItem('vocabSojournRole');
 
-        // Restore correct session state upon refresh
         if (stored) { 
             studentName = stored; 
             if(storedT) TEACHER_ID = storedT;
             
             if (storedRole === 'educator') {
                 document.getElementById('studentWelcome').innerText = "Educator: " + studentName; 
-                enterTeacherMode(true); // Jump straight to Teacher Dashboard
+                enterTeacherMode(true); 
             } else {
                 document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
-                unlockApp(true); // Jump straight to Student Dashboard
+                unlockApp(true); 
             }
         }
     };
@@ -580,16 +579,7 @@
         setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
-    function showCreateUnitForm() {
-        document.getElementById('adminUnitSelection').classList.add('hidden');
-        document.getElementById('adminCreateUnitArea').classList.remove('hidden');
-        document.getElementById('newUnitName').value = "";
-        document.getElementById('newUnitListName').value = "List 1";
-        document.getElementById('newUnitTerm').value = "";
-        document.getElementById('newUnitDef').value = "";
-        document.getElementById('newUnitImg').value = "";
-    }
-
+    // Database Write Operations - Forced to POST w/ no-cors to silently bypass redirects
     function submitNewUnit() {
         const unitName = document.getElementById('newUnitName').value.trim();
         const listName = document.getElementById('newUnitListName').value.trim();
@@ -597,35 +587,17 @@
         const def = document.getElementById('newUnitDef').value.trim();
         const img = document.getElementById('newUnitImg').value.trim();
 
-        if (!unitName || !listName || !term || !def) {
-            return alert("Unit Name, List Name, Term, and Definition are all required.");
-        }
+        if (!unitName || !listName || !term || !def) return alert("Unit Name, List Name, Term, and Definition are all required.");
 
         if (!units[unitName]) units[unitName] = {};
         if (!units[unitName][listName]) units[unitName][listName] = [];
         units[unitName][listName].push({ t: term, d: def, img: img });
         
         triggerSyncIndicator();
-        fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
-        });
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) });
 
         document.getElementById('adminCreateUnitArea').classList.add('hidden');
-        renderAdminUnitSelection();
-        adminSelectUnit(unitName);
-        adminSelectList(listName);
-    }
-
-    function showCreateListForm() {
-        document.getElementById('adminListSelection').classList.add('hidden');
-        document.getElementById('adminCreateListArea').classList.remove('hidden');
-        document.getElementById('createListUnitLabel').innerText = adminSelectedUnit;
-        document.getElementById('newListName').value = "";
-        document.getElementById('newListTerm').value = "";
-        document.getElementById('newListDef').value = "";
-        document.getElementById('newListImg').value = "";
+        renderAdminUnitSelection(); adminSelectUnit(unitName); adminSelectList(listName);
     }
 
     function submitNewList() {
@@ -640,25 +612,10 @@
         units[adminSelectedUnit][listName].push({ t: term, d: def, img: img });
 
         triggerSyncIndicator();
-        fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) 
-        });
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) });
 
         document.getElementById('adminCreateListArea').classList.add('hidden');
-        adminSelectUnit(adminSelectedUnit); 
-        adminSelectList(listName);
-    }
-
-    function cancelCreate() {
-        document.getElementById('adminCreateUnitArea').classList.add('hidden');
-        document.getElementById('adminCreateListArea').classList.add('hidden');
-        if (adminSelectedUnit && document.getElementById('adminEditArea').classList.contains('hidden')) {
-            document.getElementById('adminListSelection').classList.remove('hidden');
-        } else {
-            document.getElementById('adminUnitSelection').classList.remove('hidden');
-        }
+        adminSelectUnit(adminSelectedUnit); adminSelectList(listName);
     }
 
     async function submitNewWord() { 
@@ -667,11 +624,7 @@
         units[u][l].push({t, d, img: i}); 
         renderAdminWordList(); triggerSyncIndicator();
         document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
-        fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i, teacherID: TEACHER_ID }) 
-        });
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i, teacherID: TEACHER_ID }) });
     }
 
     async function saveEdit(u, l, idx) { 
@@ -679,11 +632,7 @@
         const oldTerm = units[u][l][idx].t;
         units[u][l][idx] = {t: nt, d: nd, img: ni}; 
         triggerSyncIndicator();
-        fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni, teacherID: TEACHER_ID }) 
-        }); 
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni, teacherID: TEACHER_ID }) }); 
     }
 
     async function deleteWord(u, l, idx) {
@@ -691,13 +640,27 @@
         const termToDelete = units[u][l][idx].t;
         units[u][l].splice(idx, 1); 
         renderAdminWordList(); triggerSyncIndicator();
-        fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) 
-        });
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) });
     }
 
+    async function syncSessionToSheet(mode, score) { 
+        if (studentName === "Guest") return; 
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) }); 
+    }
+
+    async function clearResultsPrompt() {
+        if (!confirm(`Clear all results for ${currentViewingStudent}?`)) return;
+        const btn = document.getElementById('clearAllBtn');
+        btn.innerText = "Clearing..."; btn.disabled = true;
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID }) });
+        setTimeout(() => { alert("Results cleared."); fetchResultsAnalytics(); btn.innerText = "Clear All Results"; btn.disabled = false; }, 800);
+    }
+
+    // --- View Navigation ---
+    function showCreateUnitForm() { document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminCreateUnitArea').classList.remove('hidden'); document.getElementById('newUnitName').value = ""; document.getElementById('newUnitListName').value = "List 1"; document.getElementById('newUnitTerm').value = ""; document.getElementById('newUnitDef').value = ""; document.getElementById('newUnitImg').value = ""; }
+    function showCreateListForm() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminCreateListArea').classList.remove('hidden'); document.getElementById('createListUnitLabel').innerText = adminSelectedUnit; document.getElementById('newListName').value = ""; document.getElementById('newListTerm').value = ""; document.getElementById('newListDef').value = ""; document.getElementById('newListImg').value = ""; }
+    function cancelCreate() { document.getElementById('adminCreateUnitArea').classList.add('hidden'); document.getElementById('adminCreateListArea').classList.add('hidden'); if (adminSelectedUnit && document.getElementById('adminEditArea').classList.contains('hidden')) { document.getElementById('adminListSelection').classList.remove('hidden'); } else { document.getElementById('adminUnitSelection').classList.remove('hidden'); } }
+    
     function enterApp() { 
         document.getElementById('landingPage').style.opacity = '0'; 
         if (matrixInterval) clearInterval(matrixInterval); 
@@ -717,57 +680,38 @@
         }, 800); 
     }
 
-    function toggleAuthMode(isReg) { 
-        document.getElementById('loginForm').classList.toggle('hidden', isReg); 
-        document.getElementById('registerForm').classList.toggle('hidden', !isReg); 
-    }
-    
-    function continueAsGuest() { 
-        TEACHER_ID = document.getElementById('teacherSelect').value;
-        studentName = "Guest"; 
-        unlockApp(); 
-    }
+    function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
+    function continueAsGuest() { TEACHER_ID = document.getElementById('teacherSelect').value; studentName = "Guest"; unlockApp(); }
 
+    // --- FIX: Logins converted completely to GET Requests to bypass any browser CORS blocks ---
     async function handleAuth(type) {
         TEACHER_ID = document.getElementById('teacherSelect').value;
-        let payload = {}; 
         const fullNameInput = document.getElementById('regFull').value;
         const userInput = document.getElementById('userIn').value;
-        
-        if (type === 'login') {
-            payload = { 
-                action: 'login', username: userInput, 
-                password: document.getElementById('passIn').value,
-                teacherID: TEACHER_ID 
-            };
-        } else { 
-            if(!fullNameInput) return alert("Please enter your full name."); 
-            payload = { 
-                action: 'register', fullname: fullNameInput, 
-                username: document.getElementById('regUser').value, 
-                password: document.getElementById('regPass').value,
-                teacherID: TEACHER_ID 
-            }; 
-        }
+        const passInput = document.getElementById('passIn').value;
+        const regUser = document.getElementById('regUser').value;
+        const regPass = document.getElementById('regPass').value;
         
         const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
         const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
         
         try { 
-            const response = await fetch(EXPORT_URL, { 
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(payload) 
-            }); 
+            let urlStr = `${EXPORT_URL}?action=${type}&teacherID=${encodeURIComponent(TEACHER_ID)}`;
+            if (type === 'login') {
+                urlStr += `&username=${encodeURIComponent(userInput)}&password=${encodeURIComponent(passInput)}`;
+            } else {
+                if(!fullNameInput) { btn.innerText = oldText; btn.disabled = false; return alert("Please enter your full name."); }
+                urlStr += `&fullname=${encodeURIComponent(fullNameInput)}&username=${encodeURIComponent(regUser)}&password=${encodeURIComponent(regPass)}`;
+            }
+
+            const response = await fetch(urlStr); 
             const result = await response.text(); 
             
             if (result.startsWith("Success:")) { 
                 studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "").trim(); 
                 if (!studentName || studentName === "") studentName = userInput; 
                 
-                // Clear any potential ghosts
                 localStorage.clear(); 
-                
                 localStorage.setItem('vocabSojournName', studentName); 
                 localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
                 localStorage.setItem('vocabSojournRole', 'student');
@@ -784,17 +728,8 @@
         }
     }
 
-    function showTeacherLogin() {
-        // Force clear all local storage to completely banish ghosts 
-        localStorage.clear();
-        studentName = "";
-        
-        document.getElementById('teacherLoginOverlay').classList.remove('hidden');
-    }
-
-    function cancelTeacherLogin() {
-        document.getElementById('teacherLoginOverlay').classList.add('hidden');
-    }
+    function showTeacherLogin() { localStorage.clear(); studentName = ""; document.getElementById('teacherLoginOverlay').classList.remove('hidden'); }
+    function cancelTeacherLogin() { document.getElementById('teacherLoginOverlay').classList.add('hidden'); }
 
     async function handleTeacherAuth() {
         const user = document.getElementById('teacherUserIn').value;
@@ -803,21 +738,15 @@
         if (!user || !pass) return alert("Please enter both username and password.");
 
         const btn = document.getElementById('teacherLoginSubmit');
-        const oldText = btn.innerText; 
-        btn.innerText = "Authenticating..."; btn.disabled = true;
+        const oldText = btn.innerText; btn.innerText = "Authenticating..."; btn.disabled = true;
 
         try {
-            // FIX: Ensure this is a POST request matching exactly what the backend expects
-            const response = await fetch(EXPORT_URL, { 
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: 'teacherLogin', username: user, password: pass }) 
-            }); 
+            const urlStr = `${EXPORT_URL}?action=teacherLogin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+            const response = await fetch(urlStr); 
             const result = await response.text(); 
             
             if (result.startsWith("Success:")) { 
                 TEACHER_ID = result.replace("Success: ", "").trim(); 
-                
                 studentName = TEACHER_ID;
                 document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
                 
@@ -837,39 +766,30 @@
         }
     }
 
+    // Hide overlapping UI elements forcefully
     function enterTeacherMode(skipAnim = false) {
         document.getElementById('teacherLoginOverlay').classList.add('hidden');
+        document.getElementById('landingPage').style.display = 'none';
+        document.getElementById('loginOverlay').classList.add('hidden'); 
+        document.getElementById('studyView').classList.add('hidden'); 
+        document.getElementById('teacherLoginBtn').classList.add('hidden'); 
         
         if (matrixInterval) clearInterval(matrixInterval); 
         canvas.style.display = 'none'; 
         
-        document.getElementById('studyView').classList.add('hidden'); 
-        document.getElementById('landingPage').classList.add('hidden'); 
-        document.getElementById('loginOverlay').classList.add('hidden'); 
-        document.getElementById('teacherLoginBtn').classList.add('hidden'); 
-        
-        const adminView = document.getElementById('adminView');
-        adminView.classList.remove('hidden'); 
-        
+        document.getElementById('adminView').classList.remove('hidden'); 
         document.querySelector('.app-container').style.opacity = '1'; 
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         
         fetchTeacherData(true);
-        
-        if (!skipAnim) {
-            playWelcomeAnimation('teacher');
-        } else {
-            document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID;
-        }
+        if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Class ID: " + TEACHER_ID; }
     }
 
-    function exitTeacherMode() {
-        location.reload();
-    }
+    function exitTeacherMode() { location.reload(); }
 
     function unlockApp(skipAnim = false) { 
+        document.getElementById('landingPage').style.display = 'none';
         document.getElementById('loginOverlay').classList.add('hidden'); 
-        document.getElementById('landingPage').classList.add('hidden');
         document.getElementById('teacherLoginBtn').classList.add('hidden');
         
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
@@ -877,36 +797,17 @@
         document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         
         fetchTeacherData(true); 
-        
-        if (!skipAnim) {
-            playWelcomeAnimation('student'); 
-        } else {
-            document.getElementById('typingTitleContainer').innerText = "Welcome to your Vocabulary Journey.\nPlease select a unit...";
-        }
+        if (!skipAnim) { playWelcomeAnimation('student'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to your Vocabulary Journey.\nPlease select a unit..."; }
     }
 
-    function logout() { 
-        if(confirm("Logout?")) { 
-            localStorage.clear(); 
-            studentName = ""; 
-            location.reload(); 
-        } 
-    }
+    function logout() { if(confirm("Logout?")) { localStorage.clear(); studentName = ""; location.reload(); } }
     
+    // Core Display Logic
     function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">No units found.</div>'; }
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
-    
-    async function syncSessionToSheet(mode, score) { 
-        if (studentName === "Guest") return; 
-        fetch(EXPORT_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) 
-        }); 
-    }
     
     function setStudyMode(mode) { 
         ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); 
@@ -920,21 +821,9 @@
         if (mode === 'match') resetMatchUI();
     }
 
-    function renderFullList(list) { 
-        document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong style="color: var(--primary); font-size: 1.05rem; margin-right: 5px;">${i.t}</strong> ${i.d}</div></div>`).join(''); 
-    }
-    
-    function updateCard() { 
-        if (!flashcardList.length) return;
-        const card = flashcardList[cardIdx]; 
-        document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; 
-        document.getElementById('displayBack').innerText = card.d; 
-        document.getElementById('cardContainer').classList.remove('flipped'); 
-    }
-    function changeCard(dir) { 
-        if (!flashcardList.length) return;
-        cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; updateCard(); 
-    }
+    function renderFullList(list) { document.getElementById('fullListArea').innerHTML = list.map(i => `<div class="list-item">${i.img ? `<img src="${i.img}" class="list-img" onerror="this.style.display='none'">` : ''}<div><strong style="color: var(--primary); font-size: 1.05rem; margin-right: 5px;">${i.t}</strong> ${i.d}</div></div>`).join(''); }
+    function updateCard() { if (!flashcardList.length) return; const card = flashcardList[cardIdx]; document.getElementById('displayFront').innerHTML = `${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}<div>${card.t}</div>`; document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); }
+    function changeCard(dir) { if (!flashcardList.length) return; cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; updateCard(); }
 
     function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
     function initQuiz(diff) {
@@ -946,7 +835,6 @@
         document.getElementById('quizDifficultyArea').classList.add('hidden'); document.getElementById('quizPlayArea').classList.remove('hidden');
         document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();
     }
-    
     function renderQuiz() { 
         if (qIdx >= qPool.length) { endQuiz(); return; } 
         const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; 
@@ -955,11 +843,9 @@
         document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
         document.getElementById('nextQuizBtn').classList.add('hidden'); 
     }
-    
     function checkQuiz(el, isCorrect) { 
         if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
-        if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } 
-        else { el.style.background = 'var(--danger)'; } 
+        if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } 
         qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; 
         document.getElementById('nextQuizBtn').classList.remove('hidden'); 
     }
@@ -1007,11 +893,7 @@
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
-    function switchAdminTab(tab) { 
-        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
-        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
-        if (tab === 'analytics') fetchResultsAnalytics(); 
-    }
+    function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); if (tab === 'analytics') fetchResultsAnalytics(); }
     
     async function fetchResultsAnalytics() { 
         try { 
@@ -1056,28 +938,8 @@
         html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; 
     }
 
-    async function clearResultsPrompt() {
-        if (!confirm(`Clear all results for ${currentViewingStudent}?`)) return;
-        const btn = document.getElementById('clearAllBtn');
-        btn.innerText = "Clearing..."; btn.disabled = true;
-        try {
-            await fetch(EXPORT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID })
-            });
-            alert("Results cleared.");
-            fetchResultsAnalytics(); 
-        } catch (e) { alert("Error."); } finally { btn.innerText = "Clear All Results"; btn.disabled = false; }
-    }
-
     function backToStudentList() { renderStudentList(); }
-    function renderAdminUnitSelection() { 
-        const grid = document.getElementById('adminUnitGrid'); 
-        if (!isDataLoaded) return; 
-        const keys = Object.keys(units); 
-        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; 
-    }
+    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; }
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
