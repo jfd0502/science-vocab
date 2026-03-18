@@ -257,16 +257,6 @@
     <div id="loginOverlay" class="hidden">
         <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
             
-            <div style="margin-bottom: 15px;">
-                <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Select Your Teacher</label>
-                <select id="teacherSelect">
-                    <option value="Teacher 1">Teacher 1</option>
-                    <option value="Teacher 2">Teacher 2</option>
-                    <option value="Teacher 3">Teacher 3</option>
-                    <option value="Teacher 4">Teacher 4</option>
-                </select>
-            </div>
-
             <div id="loginForm">
                 <h2 style="margin-top: 0;">Student Login</h2>
                 <input type="text" id="userIn" placeholder="Username">
@@ -279,6 +269,17 @@
 
             <div id="registerForm" class="hidden">
                 <h2 style="margin-top: 0;">Create Account</h2>
+                
+                <div style="margin-bottom: 15px; text-align: left;">
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Select Your Teacher</label>
+                    <select id="teacherSelect">
+                        <option value="Teacher 1">Teacher 1</option>
+                        <option value="Teacher 2">Teacher 2</option>
+                        <option value="Teacher 3">Teacher 3</option>
+                        <option value="Teacher 4">Teacher 4</option>
+                    </select>
+                </div>
+                
                 <input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)">
                 <input type="text" id="regUser" placeholder="Choose Username">
                 <input type="password" id="regPass" placeholder="Choose Password">
@@ -484,7 +485,7 @@
     let TEACHER_ID = "Teacher 1"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbzsUUqaUL_5SMRqDLTvDb24kCEPDHbLNwyn2F0kDrkkMIKWz9taLK7iqThqz4sfPodj/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynTCTFohNSTzKX4cD9IbhiblXeBEbLgIVja6H_bvug8WkIhoSeb-ca2nrRHRYyKYoSww/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -697,8 +698,6 @@
         btn.innerText = "Transferring Data..."; btn.disabled = true;
         
         try {
-            // Using no-cors because Apps Script POST responses trigger Network Errors. 
-            // We blindly trust success and aggressively update local state to match.
             fetch(EXPORT_URL, { 
                 method: 'POST', 
                 mode: 'no-cors', 
@@ -706,7 +705,6 @@
                 body: JSON.stringify({ action: "updateTeacherProfile", teacherID: TEACHER_ID, newUser: newUser, newPass: newPass }) 
             });
             
-            // Instantly update local variables to the new ID so the site continues functioning seamlessly
             TEACHER_ID = newUser;
             studentName = TEACHER_ID;
             localStorage.setItem('vocabSojournName', TEACHER_ID);
@@ -753,10 +751,23 @@
     }
 
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
-    function continueAsGuest() { TEACHER_ID = document.getElementById('teacherSelect').value; studentName = "Guest"; unlockApp(); }
+    
+    // UPDATE: Guest login now prompts for Teacher ID since dropdown was removed
+    function continueAsGuest() { 
+        const guestTeacher = prompt("Please enter the exact Educator ID you wish to view (e.g., Teacher 1):", "Teacher 1");
+        if(guestTeacher) {
+            TEACHER_ID = guestTeacher.trim();
+            studentName = "Guest"; 
+            unlockApp(); 
+        }
+    }
 
     async function handleAuth(type) {
-        TEACHER_ID = document.getElementById('teacherSelect').value;
+        let currentTeacherID = "Teacher 1";
+        if (type === 'register') {
+            currentTeacherID = document.getElementById('teacherSelect').value;
+        }
+
         const fullNameInput = document.getElementById('regFull').value;
         const userInput = document.getElementById('userIn').value;
         const passInput = document.getElementById('passIn').value;
@@ -767,20 +778,30 @@
         const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
         
         try { 
-            let urlStr = `${EXPORT_URL}?action=${type}&teacherID=${encodeURIComponent(TEACHER_ID)}`;
+            let urlStr = `${EXPORT_URL}?action=${type}`;
             if (type === 'login') {
                 urlStr += `&username=${encodeURIComponent(userInput)}&password=${encodeURIComponent(passInput)}`;
             } else {
                 if(!fullNameInput) { btn.innerText = oldText; btn.disabled = false; return alert("Please enter your full name."); }
-                urlStr += `&fullname=${encodeURIComponent(fullNameInput)}&username=${encodeURIComponent(regUser)}&password=${encodeURIComponent(regPass)}`;
+                urlStr += `&fullname=${encodeURIComponent(fullNameInput)}&username=${encodeURIComponent(regUser)}&password=${encodeURIComponent(regPass)}&teacherID=${encodeURIComponent(currentTeacherID)}`;
             }
 
             const response = await fetch(urlStr); 
             const result = await response.text(); 
             
             if (result.startsWith("Success:")) { 
-                studentName = (type === 'register') ? fullNameInput : result.replace("Success: ", "").trim(); 
-                if (!studentName || studentName === "") studentName = userInput; 
+                let rawData = result.replace("Success: ", "").trim(); 
+                let parts = rawData.split("|");
+                
+                studentName = parts[0]; 
+                if (!studentName || studentName === "") studentName = userInput || regUser; 
+                
+                // Assign teacher dynamically based on backend result if logging in
+                if (type === 'login' && parts.length > 1) {
+                    TEACHER_ID = parts[1].trim(); 
+                } else if (type === 'register') {
+                    TEACHER_ID = currentTeacherID; 
+                }
                 
                 localStorage.clear(); 
                 localStorage.setItem('vocabSojournName', studentName); 
