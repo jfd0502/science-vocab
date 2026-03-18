@@ -127,11 +127,12 @@
             transition: color 0.3s; font-weight: 600;
         }
 
-        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; }
+        .study-tabs { display: flex; gap: 5px; margin-bottom: 25px; flex-wrap: wrap; }
         .study-tabs button { 
-            flex: 1; padding: 12px; font-size: 0.8rem; border: none; 
+            flex: 1 1 auto; padding: 12px 8px; font-size: 0.75rem; border: none; 
             border-radius: 10px; cursor: pointer; font-weight: 600;
             background: var(--glass); color: #94a3b8; transition: 0.3s;
+            text-align: center;
         }
         .study-tabs button.active { 
             background: white; color: var(--bg);
@@ -165,10 +166,56 @@
         .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); }
         .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }
 
+        /* Memory Matrix CSS */
+        .memory-grid { 
+            display: grid; 
+            gap: 10px; 
+            margin-top: 15px; 
+        }
+        .memory-card { 
+            aspect-ratio: 1 / 1; 
+            perspective: 1000px; 
+            cursor: pointer; 
+            min-height: 80px; 
+        }
+        .memory-inner { 
+            position: relative; 
+            width: 100%; 
+            height: 100%; 
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); 
+            transform-style: preserve-3d; 
+        }
+        .memory-card.flipped .memory-inner { transform: rotateY(180deg); }
+        .memory-front, .memory-back { 
+            position: absolute; 
+            width: 100%; 
+            height: 100%; 
+            backface-visibility: hidden; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 8px; 
+            text-align: center; 
+            box-sizing: border-box; 
+            border: 1px solid var(--glass-border); 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .memory-front { background: rgba(255,255,255,0.05); }
+        .memory-front::after { content: "?"; font-size: 2.5rem; color: rgba(255,255,255,0.2); font-weight: bold; }
+        .memory-back { 
+            background: var(--primary); 
+            color: white; 
+            transform: rotateY(180deg); 
+            font-weight: 600; 
+            overflow-y: auto; 
+            word-wrap: break-word;
+        }
+        .memory-card.matched .memory-back { background: var(--accent); }
+
         .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
         .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
 
-        /* SVG Audio Speaker Button Styling */
         .speaker-btn {
             cursor: pointer;
             background: rgba(255,255,255,0.05);
@@ -181,7 +228,7 @@
             justify-content: center;
             margin-left: 10px;
             transition: all 0.3s ease;
-            color: var(--text); /* Matches current text color */
+            color: var(--text);
         }
         .speaker-btn:hover {
             background: var(--primary);
@@ -278,7 +325,6 @@
 
     <div id="loginOverlay" class="hidden">
         <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
-            
             <div id="loginForm">
                 <h2 style="margin-top: 0;">Student Login</h2>
                 <input type="text" id="userIn" placeholder="Username">
@@ -291,7 +337,6 @@
 
             <div id="registerForm" class="hidden">
                 <h2 style="margin-top: 0;">Create Account</h2>
-                
                 <div style="margin-bottom: 15px; text-align: left;">
                     <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Select Your Teacher</label>
                     <select id="teacherSelect">
@@ -301,7 +346,6 @@
                         <option value="Teacher 4">Teacher 4</option>
                     </select>
                 </div>
-                
                 <input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)">
                 <input type="text" id="regUser" placeholder="Choose Username">
                 <input type="password" id="regPass" placeholder="Choose Password">
@@ -315,10 +359,8 @@
         <div class="panel" style="max-width: 420px; text-align: center; position: relative; background: #1e293b; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);">
             <h2 style="color: #cbd5e1; font-weight: 300; letter-spacing: 2px; margin-bottom: 5px; font-size: 0.9rem;">ADMINISTRATION</h2>
             <h1 style="margin-top: 0; margin-bottom: 25px; color: white;">Educator Portal</h1>
-            
             <input type="text" id="teacherUserIn" placeholder="Teacher Username (e.g. teacher1)" style="background: #0f172a; border-color: #475569;">
             <input type="password" id="teacherPassIn" placeholder="Password" style="background: #0f172a; border-color: #475569;">
-            
             <button class="main-btn" id="teacherLoginSubmit" onclick="handleTeacherAuth()" style="width: 100%; margin-top: 20px; background: #475569; box-shadow: none;">Authenticate</button>
             <button class="nav-btn" onclick="cancelTeacherLogin()" style="width: 100%; margin-top: 15px; background: transparent; border: none; font-size: 0.85rem; padding: 10px; color: #94a3b8;">&larr; Return to Application</button>
         </div>
@@ -357,6 +399,7 @@
                     <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
                     <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
                     <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
+                    <button id="tabMemory" onclick="setStudyMode('memory')">Memory</button>
                 </div>
 
                 <div id="listMode">
@@ -411,6 +454,25 @@
                         <div id="matchContainer"></div>
                     </div>
                     <div id="matchEnd" class="hidden"></div>
+                </div>
+
+                <div id="memoryMode" class="hidden">
+                    <div id="memoryDifficultyArea">
+                        <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
+                        <div class="diff-selector">
+                            <button class="diff-btn" onclick="initMemory('Easy')">Easy (6 Pairs)</button>
+                            <button class="diff-btn" onclick="initMemory('Medium')">Medium (10 Pairs)</button>
+                            <button class="diff-btn" onclick="initMemory('Expert')">Expert (All)</button>
+                        </div>
+                    </div>
+                    <div id="memoryPlayArea" class="hidden">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--primary); margin-bottom: 10px; font-size:0.9rem;">
+                            <div id="memoryAttempts">Attempts: 0</div>
+                            <div id="memoryStats">Accuracy: 0%</div>
+                        </div>
+                        <div id="memoryContainer" class="memory-grid"></div>
+                    </div>
+                    <div id="memoryEnd" class="hidden"></div>
                 </div>
             </div>
         </div>
@@ -485,12 +547,10 @@
                 </div>
                 <div id="individualStudentView" class="hidden">
                     <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to All Students</div>
-                    
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h4 id="viewingStudentName" style="color: var(--accent); margin: 0;"></h4>
                         <button id="clearAllBtn" onclick="clearResultsPrompt()" style="background: var(--danger); border: none; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Clear All Results</button>
                     </div>
-
                     <div id="studentDetailTable"></div>
                 </div>
             </div>
@@ -505,7 +565,6 @@
                     <div id="profileUpdateMsg" style="margin-top: 15px; font-size: 0.85rem; color: var(--accent); text-align: center;"></div>
                 </div>
             </div>
-            
         </div>
     </div>
 
@@ -528,23 +587,23 @@
     let mGoal = 0, mCorrect = 0, mTotal = 0;
     let flashcardList = [];
 
+    // Memory Logic Variables
+    let memCards = [], memFlipped = [], memMatched = 0, memAttempts = 0, memGoal = 0, memIsAnimating = false, memDifficulty = "";
+
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
     let columns = [];
 
-    // Native SVG Speaker Icon (replaces text-based emojis to avoid encoding bugs)
     const speakerSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
     const speakerSVG_large = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
 
-    // --- Web Speech API Logic ---
     function speakWord(event, word) {
-        if (event) event.stopPropagation(); // Prevents flashcard from flipping when clicking audio
-        
+        if (event) event.stopPropagation(); 
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Stop any currently playing audio so it doesn't queue up
+            window.speechSynthesis.cancel(); 
             let utterance = new SpeechSynthesisUtterance(word);
             utterance.lang = 'en-US';
-            utterance.rate = 0.9; // Slightly slower for clearer pronunciation
+            utterance.rate = 0.9; 
             window.speechSynthesis.speak(utterance);
         } else {
             alert("Sorry, your browser doesn't support text-to-speech features.");
@@ -626,14 +685,10 @@
     }
 
     function playWelcomeAnimation(mode = 'student') {
-        const text = mode === 'teacher' 
-            ? "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID
-            : "Welcome to your Vocabulary Journey.\nPlease select a unit...";
-            
+        const text = mode === 'teacher' ? "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID : "Welcome to your Vocabulary Journey.\nPlease select a unit...";
         const container = document.getElementById('typingTitleContainer');
         if ((mode === 'teacher' && hasAnimatedTeacherWelcome) || (mode === 'student' && hasAnimatedStudentWelcome)) { 
-            container.innerText = text; 
-            return; 
+            container.innerText = text; return; 
         }
         container.innerHTML = '<span id="typingContent"></span><span class="blinking-cursor"></span>';
         const target = document.getElementById('typingContent');
@@ -656,41 +711,25 @@
         setTimeout(() => toast.classList.remove('show'), 2000);
     }
 
-    // Database Write Operations - Forced to POST w/ no-cors to silently bypass redirects
     function submitNewUnit() {
-        const unitName = document.getElementById('newUnitName').value.trim();
-        const listName = document.getElementById('newUnitListName').value.trim();
-        const term = document.getElementById('newUnitTerm').value.trim();
-        const def = document.getElementById('newUnitDef').value.trim();
-        const img = document.getElementById('newUnitImg').value.trim();
-
+        const unitName = document.getElementById('newUnitName').value.trim(), listName = document.getElementById('newUnitListName').value.trim(), term = document.getElementById('newUnitTerm').value.trim(), def = document.getElementById('newUnitDef').value.trim(), img = document.getElementById('newUnitImg').value.trim();
         if (!unitName || !listName || !term || !def) return alert("Unit Name, List Name, Term, and Definition are all required.");
-
         if (!units[unitName]) units[unitName] = {};
         if (!units[unitName][listName]) units[unitName][listName] = [];
         units[unitName][listName].push({ t: term, d: def, img: img });
-        
         triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) });
-
         document.getElementById('adminCreateUnitArea').classList.add('hidden');
         renderAdminUnitSelection(); adminSelectUnit(unitName); adminSelectList(listName);
     }
 
     function submitNewList() {
-        const listName = document.getElementById('newListName').value.trim();
-        const term = document.getElementById('newListTerm').value.trim();
-        const def = document.getElementById('newListDef').value.trim();
-        const img = document.getElementById('newListImg').value.trim();
-
+        const listName = document.getElementById('newListName').value.trim(), term = document.getElementById('newListTerm').value.trim(), def = document.getElementById('newListDef').value.trim(), img = document.getElementById('newListImg').value.trim();
         if (!listName || !term || !def) return alert("All fields except image required.");
-
         if (!units[adminSelectedUnit][listName]) units[adminSelectedUnit][listName] = [];
         units[adminSelectedUnit][listName].push({ t: term, d: def, img: img });
-
         triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) });
-
         document.getElementById('adminCreateListArea').classList.add('hidden');
         adminSelectUnit(adminSelectedUnit); adminSelectList(listName);
     }
@@ -734,9 +773,7 @@
     }
     
     async function updateTeacherProfile() {
-        const newUser = document.getElementById('updateTeacherUser').value.trim();
-        const newPass = document.getElementById('updateTeacherPass').value.trim();
-        
+        const newUser = document.getElementById('updateTeacherUser').value.trim(), newPass = document.getElementById('updateTeacherPass').value.trim();
         if (!newUser || !newPass) return alert("Please enter both a new username and a new password.");
         if (!confirm(`Are you sure? This will update your login to "${newUser}" and permanently transfer all your lists and student data to this new identity.`)) return;
 
@@ -744,32 +781,17 @@
         btn.innerText = "Transferring Data..."; btn.disabled = true;
         
         try {
-            fetch(EXPORT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'text/plain' }, 
-                body: JSON.stringify({ action: "updateTeacherProfile", teacherID: TEACHER_ID, newUser: newUser, newPass: newPass }) 
-            });
-            
-            TEACHER_ID = newUser;
-            studentName = TEACHER_ID;
-            localStorage.setItem('vocabSojournName', TEACHER_ID);
-            localStorage.setItem('vocabSojournTeacher', TEACHER_ID);
+            fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "updateTeacherProfile", teacherID: TEACHER_ID, newUser: newUser, newPass: newPass }) });
+            TEACHER_ID = newUser; studentName = TEACHER_ID;
+            localStorage.setItem('vocabSojournName', TEACHER_ID); localStorage.setItem('vocabSojournTeacher', TEACHER_ID);
             
             document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
             document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID;
-            
             document.getElementById('profileUpdateMsg').innerText = "Credentials & Database updated securely. Welcome, " + TEACHER_ID + "!";
             setTimeout(() => { document.getElementById('profileUpdateMsg').innerText = ""; }, 5000);
             
-            document.getElementById('updateTeacherUser').value = "";
-            document.getElementById('updateTeacherPass').value = "";
-        } catch(e) {
-            alert("Error updating profile.");
-            console.error(e);
-        } finally {
-            btn.innerText = "Update Identity & Transfer Data"; btn.disabled = false;
-        }
+            document.getElementById('updateTeacherUser').value = ""; document.getElementById('updateTeacherPass').value = "";
+        } catch(e) { alert("Error updating profile."); console.error(e); } finally { btn.innerText = "Update Identity & Transfer Data"; btn.disabled = false; }
     }
 
     function showCreateUnitForm() { document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminCreateUnitArea').classList.remove('hidden'); document.getElementById('newUnitName').value = ""; document.getElementById('newUnitListName').value = "List 1"; document.getElementById('newUnitTerm').value = ""; document.getElementById('newUnitDef').value = ""; document.getElementById('newUnitImg').value = ""; }
@@ -783,11 +805,8 @@
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
             if (studentName) {
-                if (localStorage.getItem('vocabSojournRole') === 'educator') {
-                    enterTeacherMode();
-                } else {
-                    unlockApp(); 
-                }
+                if (localStorage.getItem('vocabSojournRole') === 'educator') enterTeacherMode();
+                else unlockApp(); 
             } else {
                 document.getElementById('loginOverlay').classList.remove('hidden'); 
             }
@@ -799,142 +818,73 @@
     
     function continueAsGuest() { 
         const guestTeacher = prompt("Please enter the exact Educator ID you wish to view (e.g., Teacher 1):", "Teacher 1");
-        if(guestTeacher) {
-            TEACHER_ID = guestTeacher.trim();
-            studentName = "Guest"; 
-            unlockApp(); 
-        }
+        if(guestTeacher) { TEACHER_ID = guestTeacher.trim(); studentName = "Guest"; unlockApp(); }
     }
 
     async function handleAuth(type) {
         let currentTeacherID = "Teacher 1";
-        if (type === 'register') {
-            currentTeacherID = document.getElementById('teacherSelect').value;
-        }
+        if (type === 'register') currentTeacherID = document.getElementById('teacherSelect').value;
 
-        const fullNameInput = document.getElementById('regFull').value;
-        const userInput = document.getElementById('userIn').value;
-        const passInput = document.getElementById('passIn').value;
-        const regUser = document.getElementById('regUser').value;
-        const regPass = document.getElementById('regPass').value;
-        
+        const fullNameInput = document.getElementById('regFull').value, userInput = document.getElementById('userIn').value, passInput = document.getElementById('passIn').value, regUser = document.getElementById('regUser').value, regPass = document.getElementById('regPass').value;
         const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
         const oldText = btn.innerText; btn.innerText = "Verifying..."; btn.disabled = true;
         
         try { 
             let urlStr = `${EXPORT_URL}?action=${type}`;
-            if (type === 'login') {
-                urlStr += `&username=${encodeURIComponent(userInput)}&password=${encodeURIComponent(passInput)}`;
-            } else {
+            if (type === 'login') urlStr += `&username=${encodeURIComponent(userInput)}&password=${encodeURIComponent(passInput)}`;
+            else {
                 if(!fullNameInput) { btn.innerText = oldText; btn.disabled = false; return alert("Please enter your full name."); }
                 urlStr += `&fullname=${encodeURIComponent(fullNameInput)}&username=${encodeURIComponent(regUser)}&password=${encodeURIComponent(regPass)}&teacherID=${encodeURIComponent(currentTeacherID)}`;
             }
 
-            const response = await fetch(urlStr); 
-            const result = await response.text(); 
+            const response = await fetch(urlStr); const result = await response.text(); 
             
             if (result.startsWith("Success:")) { 
-                let rawData = result.replace("Success: ", "").trim(); 
-                let parts = rawData.split("|");
-                
+                let parts = result.replace("Success: ", "").trim().split("|");
                 studentName = parts[0]; 
                 if (!studentName || studentName === "") studentName = userInput || regUser; 
                 
-                if (type === 'login' && parts.length > 1) {
-                    TEACHER_ID = parts[1].trim(); 
-                } else if (type === 'register') {
-                    TEACHER_ID = currentTeacherID; 
-                }
+                if (type === 'login' && parts.length > 1) TEACHER_ID = parts[1].trim(); 
+                else if (type === 'register') TEACHER_ID = currentTeacherID; 
                 
-                localStorage.clear(); 
-                localStorage.setItem('vocabSojournName', studentName); 
-                localStorage.setItem('vocabSojournTeacher', TEACHER_ID); 
-                localStorage.setItem('vocabSojournRole', 'student');
-                
+                localStorage.clear(); localStorage.setItem('vocabSojournName', studentName); localStorage.setItem('vocabSojournTeacher', TEACHER_ID); localStorage.setItem('vocabSojournRole', 'student');
                 unlockApp(); 
-            } else { 
-                alert(result); 
-            } 
-        } catch (e) { 
-            alert("Network Error."); 
-            console.error(e);
-        } finally { 
-            btn.innerText = oldText; btn.disabled = false; 
-        }
+            } else { alert(result); } 
+        } catch (e) { alert("Network Error."); console.error(e); } finally { btn.innerText = oldText; btn.disabled = false; }
     }
 
     function showTeacherLogin() { localStorage.clear(); studentName = ""; document.getElementById('teacherLoginOverlay').classList.remove('hidden'); }
     function cancelTeacherLogin() { document.getElementById('teacherLoginOverlay').classList.add('hidden'); }
 
     async function handleTeacherAuth() {
-        const user = document.getElementById('teacherUserIn').value;
-        const pass = document.getElementById('teacherPassIn').value;
-        
+        const user = document.getElementById('teacherUserIn').value, pass = document.getElementById('teacherPassIn').value;
         if (!user || !pass) return alert("Please enter both username and password.");
-
-        const btn = document.getElementById('teacherLoginSubmit');
-        const oldText = btn.innerText; btn.innerText = "Authenticating..."; btn.disabled = true;
+        const btn = document.getElementById('teacherLoginSubmit'); const oldText = btn.innerText; btn.innerText = "Authenticating..."; btn.disabled = true;
 
         try {
             const urlStr = `${EXPORT_URL}?action=teacherLogin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
-            const response = await fetch(urlStr); 
-            const result = await response.text(); 
-            
+            const response = await fetch(urlStr); const result = await response.text(); 
             if (result.startsWith("Success:")) { 
-                TEACHER_ID = result.replace("Success: ", "").trim(); 
-                studentName = TEACHER_ID;
+                TEACHER_ID = result.replace("Success: ", "").trim(); studentName = TEACHER_ID;
                 document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
-                
-                localStorage.setItem('vocabSojournName', TEACHER_ID);
-                localStorage.setItem('vocabSojournTeacher', TEACHER_ID);
-                localStorage.setItem('vocabSojournRole', 'educator');
-                
+                localStorage.setItem('vocabSojournName', TEACHER_ID); localStorage.setItem('vocabSojournTeacher', TEACHER_ID); localStorage.setItem('vocabSojournRole', 'educator');
                 enterTeacherMode();
-            } else { 
-                alert(result); 
-            } 
-        } catch (e) { 
-            alert("Network Error. Check console."); 
-            console.error(e);
-        } finally { 
-            btn.innerText = oldText; btn.disabled = false; 
-        }
+            } else { alert(result); } 
+        } catch (e) { alert("Network Error. Check console."); console.error(e); } finally { btn.innerText = oldText; btn.disabled = false; }
     }
 
     function enterTeacherMode(skipAnim = false) {
-        document.getElementById('teacherLoginOverlay').classList.add('hidden');
-        document.getElementById('landingPage').style.display = 'none';
-        document.getElementById('loginOverlay').classList.add('hidden'); 
-        document.getElementById('studyView').classList.add('hidden'); 
-        document.getElementById('teacherLoginBtn').classList.add('hidden'); 
-        
-        if (matrixInterval) clearInterval(matrixInterval); 
-        canvas.style.display = 'none'; 
-        
-        const adminView = document.getElementById('adminView');
-        adminView.classList.remove('hidden'); 
-        
-        document.querySelector('.app-container').style.opacity = '1'; 
-        document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        
-        fetchTeacherData(true);
-        switchAdminTab('content'); 
-        
+        document.getElementById('teacherLoginOverlay').classList.add('hidden'); document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studyView').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden'); 
+        if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; 
+        document.getElementById('adminView').classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+        fetchTeacherData(true); switchAdminTab('content'); 
         if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID; }
     }
 
     function unlockApp(skipAnim = false) { 
-        document.getElementById('landingPage').style.display = 'none';
-        document.getElementById('loginOverlay').classList.add('hidden'); 
-        document.getElementById('teacherLoginBtn').classList.add('hidden');
-        
-        if (matrixInterval) clearInterval(matrixInterval); 
-        canvas.style.display = 'none'; 
-        
-        document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
-        document.querySelector('.app-container').style.opacity = '1'; 
-        document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        
+        document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden');
+        if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; 
+        document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         fetchTeacherData(true); 
         if (!skipAnim) { playWelcomeAnimation('student'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to your Vocabulary Journey.\nPlease select a unit..."; }
     }
@@ -948,18 +898,18 @@
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
     
     function setStudyMode(mode) { 
-        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch'].forEach(t => document.getElementById(t).classList.remove('active')); 
+        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch', 'tabMemory'].forEach(t => document.getElementById(t).classList.remove('active')); 
         document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); 
-        ['listMode', 'flashMode', 'quizMode', 'matchMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
+        ['listMode', 'flashMode', 'quizMode', 'matchMode', 'memoryMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
         document.getElementById(mode + 'Mode').classList.remove('hidden'); 
         const list = units[currentUnit][currentClass]; 
         if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
         if (mode === 'flash') { cardIdx = 0; flashcardList = [...list].sort(() => 0.5 - Math.random()); updateCard(); } 
         if (mode === 'quiz') resetQuizUI();
         if (mode === 'match') resetMatchUI();
+        if (mode === 'memory') resetMemoryUI();
     }
 
-    // FIX: Using robust native SVG tags instead of emoji
     function renderFullList(list) { 
         document.getElementById('fullListArea').innerHTML = list.map(i => `
             <div class="list-item">
@@ -974,20 +924,16 @@
             </div>`).join(''); 
     }
 
-    // FIX: Using robust native SVG tags instead of emoji
     function updateCard() { 
         if (!flashcardList.length) return; 
         const card = flashcardList[cardIdx]; 
-        
         document.getElementById('displayFront').innerHTML = `
             ${card.img ? `<img src="${card.img}" class="vocab-img" onerror="this.style.display='none'">` : ''}
             <div style="display:flex; flex-direction:column; align-items:center; gap:15px;">
                 <div>${card.t}</div> 
                 <div class="speaker-btn" style="width:45px; height:45px;" onclick="speakWord(event, '${card.t.replace(/'/g, "\\'")}')" title="Listen">${speakerSVG_large}</div>
             </div>`; 
-            
-        document.getElementById('displayBack').innerText = card.d; 
-        document.getElementById('cardContainer').classList.remove('flipped'); 
+        document.getElementById('displayBack').innerText = card.d; document.getElementById('cardContainer').classList.remove('flipped'); 
     }
     
     function changeCard(dir) { if (!flashcardList.length) return; cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; updateCard(); }
@@ -997,8 +943,7 @@
         currentDifficulty = diff; const list = units[currentUnit][currentClass];
         if (!list || !list.length) return;
         let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
-        qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-        qScore = 0; qIdx = 0;
+        qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, count); qScore = 0; qIdx = 0;
         document.getElementById('quizDifficultyArea').classList.add('hidden'); document.getElementById('quizPlayArea').classList.remove('hidden');
         document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();
     }
@@ -1029,12 +974,10 @@
         currentDifficulty = diff; const list = units[currentUnit][currentClass];
         if (!list || !list.length) return;
         let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
-        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-        mGoal = sub.length; mCorrect = 0; mTotal = 0;
+        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count); mGoal = sub.length; mCorrect = 0; mTotal = 0;
         document.getElementById('matchDifficultyArea').classList.add('hidden'); document.getElementById('matchPlayArea').classList.remove('hidden');
         document.getElementById('matchStats').innerText = "Accuracy: 0%";
-        let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); 
-        let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
+        let words = sub.map((x, i) => ({t: x.t, id: i, type: 'w'})).sort(() => 0.5 - Math.random()); let defs = sub.map((x, i) => ({t: x.d, id: i, type: 'd'})).sort(() => 0.5 - Math.random()); 
         document.getElementById('matchContainer').innerHTML = `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;"><div>${words.map(i => `<div class="nav-btn" draggable="true" ondragstart="drag(event)" data-id="${i.id}" data-type="w" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div><div>${defs.map(i => `<div class="nav-btn" ondragover="event.preventDefault()" ondrop="drop(event)" data-id="${i.id}" data-type="d" style="margin-bottom:10px; padding:10px; font-size:0.8rem; border-style: dashed;">${i.t}</div>`).join('')}</div></div>`;
     }
     function drag(e) { draggedItem = e.target; }
@@ -1042,13 +985,11 @@
         const target = e.target.closest('.nav-btn'); if (!target || !draggedItem) return; 
         mTotal++; 
         if (draggedItem.dataset.id === target.dataset.id) { 
-            mCorrect++; target.style.background = 'var(--accent)'; 
-            draggedItem.style.visibility = 'hidden'; target.draggable = false; 
+            mCorrect++; target.style.background = 'var(--accent)'; draggedItem.style.visibility = 'hidden'; target.draggable = false; 
         } else { 
             target.style.background = 'var(--danger)'; setTimeout(() => target.style.background = 'var(--glass)', 500); 
         } 
-        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; 
-        document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
+        const acc = Math.round((mCorrect / mTotal) * 100) + "%"; document.getElementById('matchStats').innerText = `Accuracy: ${acc}`; 
         if (mCorrect === mGoal) { 
             document.getElementById('matchPlayArea').classList.add('hidden'); 
             document.getElementById('matchEnd').innerHTML = `<h3>Result: ${acc} (${currentDifficulty})</h3><button class="main-btn" onclick="resetMatchUI()">Restart</button>`; 
@@ -1057,64 +998,120 @@
         } 
     }
 
+    // --- NEW: Memory Matrix Logic ---
+    function resetMemoryUI() {
+        document.getElementById('memoryDifficultyArea').classList.remove('hidden');
+        document.getElementById('memoryPlayArea').classList.add('hidden');
+        document.getElementById('memoryEnd').classList.add('hidden');
+    }
+
+    function initMemory(diff) {
+        memDifficulty = diff;
+        const list = units[currentUnit][currentClass];
+        if (!list || !list.length) return;
+        
+        let count = (diff === 'Easy') ? 6 : (diff === 'Medium') ? 10 : list.length;
+        if (count > list.length) count = list.length;
+        
+        const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        memGoal = sub.length;
+        memMatched = 0; memAttempts = 0; memFlipped = []; memIsAnimating = false;
+        
+        memCards = [];
+        sub.forEach((item, idx) => {
+            memCards.push({ id: idx, text: item.t, type: 'word' });
+            memCards.push({ id: idx, text: item.d, type: 'def' });
+        });
+        memCards.sort(() => 0.5 - Math.random());
+        
+        document.getElementById('memoryDifficultyArea').classList.add('hidden');
+        document.getElementById('memoryPlayArea').classList.remove('hidden');
+        document.getElementById('memoryAttempts').innerText = "Attempts: 0";
+        document.getElementById('memoryStats').innerText = "Accuracy: 0%";
+        
+        const container = document.getElementById('memoryContainer');
+        let cols = memCards.length <= 12 ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)'; 
+        if(window.innerWidth < 450) cols = 'repeat(3, 1fr)'; // Mobile adjustment
+        container.style.gridTemplateColumns = cols;
+        
+        container.innerHTML = memCards.map((c, i) => `
+            <div class="memory-card" id="memCard-${i}" onclick="flipMemoryCard(${i})">
+                <div class="memory-inner">
+                    <div class="memory-front"></div>
+                    <div class="memory-back" style="font-size: ${c.type === 'def' ? '0.65rem' : '0.85rem'}">${c.text}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function flipMemoryCard(idx) {
+        if (memIsAnimating) return;
+        const cardEl = document.getElementById(`memCard-${idx}`);
+        if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+        
+        cardEl.classList.add('flipped');
+        memFlipped.push({ idx: idx, id: memCards[idx].id });
+        
+        if (memFlipped.length === 2) {
+            memAttempts++;
+            memIsAnimating = true;
+            const c1 = memFlipped[0], c2 = memFlipped[1];
+            
+            if (c1.id === c2.id) {
+                setTimeout(() => {
+                    document.getElementById(`memCard-${c1.idx}`).classList.add('matched');
+                    document.getElementById(`memCard-${c2.idx}`).classList.add('matched');
+                    memMatched++; updateMemoryStats(); memFlipped = []; memIsAnimating = false;
+                    if (memMatched === memGoal) endMemory();
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    document.getElementById(`memCard-${c1.idx}`).classList.remove('flipped');
+                    document.getElementById(`memCard-${c2.idx}`).classList.remove('flipped');
+                    updateMemoryStats(); memFlipped = []; memIsAnimating = false;
+                }, 1000);
+            }
+        }
+    }
+
+    function updateMemoryStats() {
+        document.getElementById('memoryAttempts').innerText = `Attempts: ${memAttempts}`;
+        const acc = memAttempts === 0 ? 0 : Math.round((memMatched / memAttempts) * 100);
+        document.getElementById('memoryStats').innerText = `Accuracy: ${acc}%`;
+    }
+
+    function endMemory() {
+        document.getElementById('memoryPlayArea').classList.add('hidden');
+        const acc = Math.round((memMatched / memAttempts) * 100) + "%";
+        document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${acc} (${memDifficulty})</h3><p style="color:#94a3b8; margin-top:-10px; margin-bottom: 20px;">Attempts: ${memAttempts}</p><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`;
+        document.getElementById('memoryEnd').classList.remove('hidden');
+        addHistory(`Memory (${memDifficulty})`, acc);
+        syncSessionToSheet(`Memory (${memDifficulty})`, acc);
+    }
+
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
     function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
     
-    function switchAdminTab(tab) { 
-        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
-        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
-        document.getElementById('adminProfileArea').classList.toggle('hidden', tab !== 'profile'); 
-
-        document.getElementById('tabContentBtn').style.background = tab === 'content' ? 'var(--primary)' : 'var(--glass)';
-        document.getElementById('tabAnalyticsBtn').style.background = tab === 'analytics' ? 'var(--accent)' : 'var(--glass)';
-        document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)';
-
-        if (tab === 'analytics') fetchResultsAnalytics(); 
-    }
+    function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); document.getElementById('adminProfileArea').classList.toggle('hidden', tab !== 'profile'); document.getElementById('tabContentBtn').style.background = tab === 'content' ? 'var(--primary)' : 'var(--glass)'; document.getElementById('tabAnalyticsBtn').style.background = tab === 'analytics' ? 'var(--accent)' : 'var(--glass)'; document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)'; if (tab === 'analytics') fetchResultsAnalytics(); }
     
     async function fetchResultsAnalytics() { 
         try { 
-            const response = await fetch(`${EXPORT_URL}?action=getAnalytics&teacherID=${TEACHER_ID}&cb=${Date.now()}`); 
-            const data = await response.json(); 
-            rawAnalytics = [];
+            const response = await fetch(`${EXPORT_URL}?action=getAnalytics&teacherID=${TEACHER_ID}&cb=${Date.now()}`); const data = await response.json(); rawAnalytics = [];
             for (let i = 0; i < data.length; i++) {
-                let row = data[i];
-                if (!row || row.length < 6) continue;
+                let row = data[i]; if (!row || row.length < 6) continue;
                 if (row[6] === TEACHER_ID) {
                     let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
                     if (!name || String(name).trim() === "") name = "Anonymous";
-                    if (t) {
-                        const dateObj = new Date(t);
-                        if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    }
+                    if (t) { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
                     if (!isNaN(s) && s !== '' && !String(s).includes('%')) s = Math.round(parseFloat(s) * 100) + "%";
                     rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
                 }
-            }
-            renderStudentList(); 
+            } renderStudentList(); 
         } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
     }
 
-    function renderStudentList() { 
-        const grid = document.getElementById('studentListGrid'); 
-        document.getElementById('individualStudentView').classList.add('hidden'); 
-        grid.classList.remove('hidden'); 
-        let studentSet = [...new Set(rawAnalytics.map(r => r.student))];
-        if (studentSet.length === 0) { grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">No records found for ${TEACHER_ID}.</div>`; return; }
-        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
-    }
-
-    function viewStudentDetail(name) { 
-        currentViewingStudent = name;
-        document.getElementById('studentListGrid').classList.add('hidden'); 
-        const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); 
-        document.getElementById('viewingStudentName').innerText = "History for: " + name; 
-        const filtered = rawAnalytics.filter(r => r.student === name); 
-        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
-        filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); 
-        html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; 
-    }
-
+    function renderStudentList() { const grid = document.getElementById('studentListGrid'); document.getElementById('individualStudentView').classList.add('hidden'); grid.classList.remove('hidden'); let studentSet = [...new Set(rawAnalytics.map(r => r.student))]; if (studentSet.length === 0) { grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">No records found for ${TEACHER_ID}.</div>`; return; } grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); }
+    function viewStudentDetail(name) { currentViewingStudent = name; document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
     function backToStudentList() { renderStudentList(); }
     function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; }
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
