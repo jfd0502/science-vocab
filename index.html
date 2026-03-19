@@ -182,7 +182,6 @@
         .front { background: rgba(255,255,255,0.03); font-size: 2rem; font-weight: 800; color: white; z-index: 2; transform: rotateY(0deg); }
         .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }
 
-        /* Memory Matrix CSS */
         .memory-grid { display: grid; gap: 10px; margin-top: 15px; }
         .memory-card { aspect-ratio: 1 / 1; perspective: 1000px; cursor: pointer; min-height: 80px; }
         .memory-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; }
@@ -193,14 +192,12 @@
         .memory-back { background: var(--primary); color: white; transform: rotateY(180deg); font-weight: 600; overflow-y: auto; word-wrap: break-word; }
         .memory-card.matched .memory-back { background: var(--accent); }
 
-        /* Meteor Strike CSS */
         .meteor-board { width: 100%; height: 450px; background: #000; position: relative; overflow: hidden; border-radius: 12px; border: 1px solid var(--glass-border); box-shadow: inset 0 0 30px rgba(0,0,0,0.8); transition: background 0.2s; }
         .meteor-word { position: absolute; width: 100%; text-align: center; font-size: 1.8rem; font-weight: 800; color: #facc15; text-shadow: 0 0 15px rgba(250, 204, 21, 0.8); left: 0; z-index: 5; pointer-events: none; }
         .meteor-defs { position: absolute; bottom: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; padding: 10px; box-sizing: border-box; background: linear-gradient(transparent, rgba(15, 23, 42, 0.95) 25%); z-index: 10; }
         .meteor-def-btn { background: rgba(30, 41, 59, 0.95); border: 1px solid var(--glass-border); color: white; padding: 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; text-align: left; }
         .meteor-def-btn:hover { background: var(--primary); border-color: var(--primary-hover); box-shadow: 0 0 10px rgba(99, 102, 241, 0.4); }
 
-        /* Rune Scramble CSS */
         .scramble-tile { background: var(--glass); border: 2px solid var(--primary); color: white; padding: 10px 15px; border-radius: 8px; font-size: 1.3rem; font-weight: 800; cursor: pointer; transition: 0.2s; user-select: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); text-transform: uppercase; }
         .scramble-tile:hover { background: var(--primary); transform: translateY(-2px); }
         .scramble-slot { width: 35px; height: 45px; border-bottom: 3px solid var(--glass-border); margin: 0 5px; }
@@ -211,7 +208,6 @@
         .speaker-btn { cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; transition: all 0.3s ease; color: var(--text); }
         .speaker-btn:hover { background: var(--primary); transform: scale(1.15); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); color: white; }
 
-        /* NEW: Hover effects for game buttons */
         .game-btn { position: relative; overflow: hidden; }
         .game-btn-content { transition: opacity 0.3s ease, transform 0.3s ease; opacity: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .game-btn-desc { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; opacity: 0; transition: opacity 0.3s ease; font-size: 0.85rem; color: #cbd5e1; font-weight: normal; line-height: 1.4; pointer-events: none; text-align: center; }
@@ -302,10 +298,23 @@
     <div id="teacherLoginOverlay" class="hidden">
         <div class="panel" style="max-width: 420px; text-align: center; position: relative; background: #1e293b; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);">
             <h2 style="color: #cbd5e1; font-weight: 300; letter-spacing: 2px; margin-bottom: 5px; font-size: 0.9rem;">ADMINISTRATION</h2>
-            <h1 style="margin-top: 0; margin-bottom: 25px; color: white;">Educator Portal</h1>
-            <input type="text" id="teacherUserIn" placeholder="Teacher Username (e.g. teacher1)" style="background: #0f172a; border-color: #475569;">
-            <input type="password" id="teacherPassIn" placeholder="Password" style="background: #0f172a; border-color: #475569;">
-            <button class="main-btn" id="teacherLoginSubmit" onclick="handleTeacherAuth()" style="width: 100%; margin-top: 20px; background: #475569; box-shadow: none;">Authenticate</button>
+            
+            <div id="teacherLoginForm">
+                <h1 style="margin-top: 0; margin-bottom: 25px; color: white;">Educator Login</h1>
+                <input type="text" id="teacherUserIn" placeholder="Teacher Username" style="background: #0f172a; border-color: #475569;">
+                <input type="password" id="teacherPassIn" placeholder="Password" style="background: #0f172a; border-color: #475569;">
+                <button class="main-btn" id="teacherLoginSubmit" onclick="handleTeacherAuth('login', event)" style="width: 100%; margin-top: 20px; background: #475569; box-shadow: none;">Authenticate</button>
+                <div class="auth-switch" onclick="toggleTeacherAuthMode(true)">New Educator? Create an Account</div>
+            </div>
+
+            <div id="teacherRegForm" class="hidden">
+                <h1 style="margin-top: 0; margin-bottom: 25px; color: white;">Register Educator</h1>
+                <input type="text" id="teacherRegUser" placeholder="Choose Username" style="background: #0f172a; border-color: #475569;">
+                <input type="password" id="teacherRegPass" placeholder="Choose Password" style="background: #0f172a; border-color: #475569;">
+                <button class="main-btn" id="teacherRegSubmit" onclick="handleTeacherAuth('register', event)" style="width: 100%; margin-top: 20px; background: var(--accent); box-shadow: none;">Create Account</button>
+                <div class="auth-switch" onclick="toggleTeacherAuthMode(false)">Already registered? Log in</div>
+            </div>
+
             <button class="nav-btn" onclick="cancelTeacherLogin()" style="width: 100%; margin-top: 15px; background: transparent; border: none; font-size: 0.85rem; padding: 10px; color: #94a3b8;">&larr; Return to Application</button>
         </div>
     </div>
@@ -630,9 +639,9 @@
     </div>
 
 <script>
-    let TEACHER_ID = "Teacher 1"; 
+    let TEACHER_ID = ""; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynTCTFohNSTzKX4cD9IbhiblXeBEbLgIVja6H_bvug8WkIhoSeb-ca2nrRHRYyKYoSww/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwb-uq8Uu3LG0q5Ta63C7VrWKX7veXpB-4LmEc3tMgReBua7-T24udR_xOYsf0ETyvQ8w/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -882,6 +891,11 @@
 
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
     
+    function toggleTeacherAuthMode(isReg) {
+        document.getElementById('teacherLoginForm').classList.toggle('hidden', isReg);
+        document.getElementById('teacherRegForm').classList.toggle('hidden', !isReg);
+    }
+    
     function continueAsGuest() { 
         const guestDiv = document.getElementById('guestTeacherDiv');
         if (guestDiv.classList.contains('hidden')) {
@@ -900,8 +914,11 @@
     }
 
     async function handleAuth(type) {
-        let currentTeacherID = "Teacher 1";
-        if (type === 'register') currentTeacherID = document.getElementById('teacherSelect').value;
+        let currentTeacherID = "";
+        if (type === 'register') {
+            currentTeacherID = document.getElementById('teacherSelect').value;
+            if(!currentTeacherID) return alert("Please select an Educator.");
+        }
 
         const fullNameInput = document.getElementById('regFull').value, userInput = document.getElementById('userIn').value, passInput = document.getElementById('passIn').value, regUser = document.getElementById('regUser').value, regPass = document.getElementById('regPass').value;
         const btn = type === 'login' ? document.getElementById('loginSubmit') : document.getElementById('regSubmit');
@@ -931,13 +948,19 @@
     function showTeacherLogin() { localStorage.clear(); studentName = ""; document.getElementById('teacherLoginOverlay').classList.remove('hidden'); }
     function cancelTeacherLogin() { document.getElementById('teacherLoginOverlay').classList.add('hidden'); }
 
-    async function handleTeacherAuth() {
-        const user = document.getElementById('teacherUserIn').value, pass = document.getElementById('teacherPassIn').value;
+    async function handleTeacherAuth(type, event) {
+        const isLogin = type === 'login';
+        const user = document.getElementById(isLogin ? 'teacherUserIn' : 'teacherRegUser').value.trim();
+        const pass = document.getElementById(isLogin ? 'teacherPassIn' : 'teacherRegPass').value.trim();
+        
         if (!user || !pass) return alert("Please enter both username and password.");
-        const btn = document.getElementById('teacherLoginSubmit'); const oldText = btn.innerText; btn.innerText = "Authenticating..."; btn.disabled = true;
+        
+        const btn = event ? event.target : document.getElementById(isLogin ? 'teacherLoginSubmit' : 'teacherRegSubmit');
+        const oldText = btn.innerText; btn.innerText = "Authenticating..."; btn.disabled = true;
 
         try {
-            const urlStr = `${EXPORT_URL}?action=teacherLogin&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
+            const action = isLogin ? 'teacherLogin' : 'teacherRegister';
+            const urlStr = `${EXPORT_URL}?action=${action}&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`;
             const response = await fetch(urlStr); const result = await response.text(); 
             if (result.startsWith("Success:")) { 
                 TEACHER_ID = result.replace("Success: ", "").trim(); studentName = TEACHER_ID;
