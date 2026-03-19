@@ -169,7 +169,7 @@
             background: var(--glass);
             color: white;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             font-weight: bold;
             transition: 0.3s;
         }
@@ -257,13 +257,13 @@
                 
                 <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
                 
-                <div style="text-align: left; margin-bottom: 10px;">
-                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Guest Access - Select Educator</label>
+                <div id="guestTeacherDiv" class="hidden" style="text-align: left; margin-bottom: 10px;">
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Select Educator</label>
                     <select id="guestTeacherSelect">
                         <option value="">Loading Educators...</option>
                     </select>
                 </div>
-                <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
+                <button id="guestContinueBtn" class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
             </div>
             
             <div id="registerForm" class="hidden">
@@ -376,9 +376,9 @@
                     <div id="quizDifficultyArea">
                         <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
                         <div class="diff-selector">
-                            <button class="diff-btn" onclick="initQuiz('Easy')">Easy (5)</button>
-                            <button class="diff-btn" onclick="initQuiz('Medium')">Medium (10)</button>
-                            <button class="diff-btn" onclick="initQuiz('Expert')">Expert (All)</button>
+                            <button class="diff-btn" onclick="initQuiz('Easy')">Easy</button>
+                            <button class="diff-btn" onclick="initQuiz('Medium')">Medium</button>
+                            <button class="diff-btn" onclick="initQuiz('Expert')">Expert</button>
                         </div>
                     </div>
                     <div id="quizPlayArea" class="hidden">
@@ -397,9 +397,9 @@
                     <div id="matchDifficultyArea">
                         <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
                         <div class="diff-selector">
-                            <button class="diff-btn" onclick="initMatch('Easy')">Easy (5)</button>
-                            <button class="diff-btn" onclick="initMatch('Medium')">Medium (10)</button>
-                            <button class="diff-btn" onclick="initMatch('Expert')">Expert (All)</button>
+                            <button class="diff-btn" onclick="initMatch('Easy')">Easy</button>
+                            <button class="diff-btn" onclick="initMatch('Medium')">Medium</button>
+                            <button class="diff-btn" onclick="initMatch('Expert')">Expert</button>
                         </div>
                     </div>
                     <div id="matchPlayArea" class="hidden">
@@ -414,9 +414,9 @@
                     <div id="memoryDifficultyArea">
                         <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
                         <div class="diff-selector">
-                            <button class="diff-btn" onclick="initMemory('Easy')">Easy (6 Pairs)</button>
-                            <button class="diff-btn" onclick="initMemory('Medium')">Medium (10 Pairs)</button>
-                            <button class="diff-btn" onclick="initMemory('Expert')">Expert (All)</button>
+                            <button class="diff-btn" onclick="initMemory('Easy')">Easy</button>
+                            <button class="diff-btn" onclick="initMemory('Medium')">Medium</button>
+                            <button class="diff-btn" onclick="initMemory('Expert')">Expert</button>
                         </div>
                     </div>
                     <div id="memoryPlayArea" class="hidden">
@@ -433,10 +433,10 @@
                     <div id="meteorDifficultyArea">
                         <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
                         <div class="diff-selector" style="grid-template-columns: 1fr 1fr;">
-                            <button class="diff-btn" onclick="initMeteor('Easy')">Easy (10 Words)</button>
-                            <button class="diff-btn" onclick="initMeteor('Medium')">Medium (20 Words)</button>
-                            <button class="diff-btn" onclick="initMeteor('Expert')">Expert (All)</button>
-                            <button class="diff-btn" onclick="initMeteor('Infinity')" style="border-color: #a855f7; color: #e879f9; text-shadow: 0 0 5px rgba(168, 85, 247, 0.4);">Infinity (Endless)</button>
+                            <button class="diff-btn" onclick="initMeteor('Easy')">Easy</button>
+                            <button class="diff-btn" onclick="initMeteor('Medium')">Medium</button>
+                            <button class="diff-btn" onclick="initMeteor('Expert')">Expert</button>
+                            <button class="diff-btn" onclick="initMeteor('Infinity')" style="border-color: #a855f7; color: #e879f9; text-shadow: 0 0 5px rgba(168, 85, 247, 0.4);">Infinity</button>
                         </div>
                     </div>
                     <div id="meteorPlayArea" class="hidden">
@@ -788,14 +788,21 @@
 
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
     
+    // FIX: Guest Login UI Flow
     function continueAsGuest() { 
-        const guestTeacher = document.getElementById('guestTeacherSelect').value;
-        if(guestTeacher) { 
-            TEACHER_ID = guestTeacher; 
-            studentName = "Guest"; 
-            unlockApp(); 
+        const guestDiv = document.getElementById('guestTeacherDiv');
+        if (guestDiv.classList.contains('hidden')) {
+            guestDiv.classList.remove('hidden');
+            document.getElementById('guestContinueBtn').innerText = "Enter Guest Portal";
         } else {
-            alert("Please wait for the list of educators to load or verify your connection.");
+            const guestTeacher = document.getElementById('guestTeacherSelect').value;
+            if(guestTeacher) { 
+                TEACHER_ID = guestTeacher; 
+                studentName = "Guest"; 
+                unlockApp(); 
+            } else {
+                alert("Please wait for the list of educators to load or verify your connection.");
+            }
         }
     }
 
@@ -1011,7 +1018,8 @@
             if (c1.id === c2.id) {
                 setTimeout(() => { document.getElementById(`memCard-${c1.idx}`).classList.add('matched'); document.getElementById(`memCard-${c2.idx}`).classList.add('matched'); memMatched++; updateMemoryStats(); memFlipped = []; memIsAnimating = false; if (memMatched === memGoal) endMemory(); }, 500);
             } else {
-                setTimeout(() => { document.getElementById(`memCard-${c1.idx}`).classList.remove('flipped'); document.getElementById(`memCard-${c2.idx}`).classList.remove('flipped'); updateMemoryStats(); memFlipped = []; memIsAnimating = false; }, 1000);
+                // FIX: Increased delay from 1000ms to 2500ms to allow more reading time
+                setTimeout(() => { document.getElementById(`memCard-${c1.idx}`).classList.remove('flipped'); document.getElementById(`memCard-${c2.idx}`).classList.remove('flipped'); updateMemoryStats(); memFlipped = []; memIsAnimating = false; }, 2500);
             }
         }
     }
@@ -1043,7 +1051,7 @@
         if(meteorIdx >= meteorCards.length) {
             if(meteorDiff === 'Infinity') {
                 meteorCards.sort(() => 0.5 - Math.random());
-                meteorIdx = 0; // Infinite loop 
+                meteorIdx = 0; 
             } else {
                 return endMeteor(true); 
             }
@@ -1052,7 +1060,6 @@
         meteorCurrent = meteorCards[meteorIdx];
         meteorY = -40; 
         
-        // Speed scaling formula
         meteorSpeed = (window.innerWidth < 500 ? 0.35 : 0.6) + (meteorScore * 0.08);
 
         document.getElementById('meteorWordEl').innerText = meteorCurrent.t;
