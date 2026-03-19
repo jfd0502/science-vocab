@@ -12,6 +12,7 @@
             --text: #f8fafc; 
             --accent: #10b981; 
             --danger: #ef4444; 
+            --gold: #facc15;
             --glass: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
         }
@@ -155,24 +156,8 @@
             border-color: transparent;
         }
 
-        .diff-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .diff-btn {
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid var(--glass-border);
-            background: var(--glass);
-            color: white;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: bold;
-            transition: 0.3s;
-        }
+        .diff-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .diff-btn { padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--glass); color: white; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: 0.3s; }
         .diff-btn:hover { background: rgba(255,255,255,0.1); }
 
         .flashcard { height: 350px; perspective: 1200px; -webkit-perspective: 1200px; cursor: pointer; margin: 25px 0; }
@@ -233,7 +218,7 @@
         #logoutBtn:hover { background: var(--danger); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); transform: translateY(-2px); }
 
         .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
-        .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); }
+        .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); flex-wrap: wrap; gap: 10px; }
         .loading-text { text-align: center; color: var(--primary); font-style: italic; letter-spacing: 1px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
@@ -244,6 +229,31 @@
         .item-analysis-row { display: flex; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid var(--glass-border); align-items: center; }
         .item-analysis-bar-container { flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 0 15px; overflow: hidden; }
         .item-analysis-bar { height: 100%; background: var(--danger); }
+
+        /* ACHIEVEMENT BADGES UI */
+        #trophyBtn { background: var(--gold); border: none; color: #713f12; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(250, 204, 21, 0.2); }
+        #trophyBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(250, 204, 21, 0.5); }
+        
+        #trophyOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 30000; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(5px); opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+        #trophyOverlay.show { opacity: 1; pointer-events: auto; }
+        .trophy-panel { background: #1e293b; border: 1px solid var(--gold); border-radius: 24px; padding: 30px; width: 90%; max-width: 600px; box-shadow: 0 25px 50px -12px rgba(250, 204, 21, 0.15); max-height: 80vh; overflow-y: auto; text-align: center; }
+        
+        .badge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 20px; margin-top: 20px; }
+        .badge-card { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.3s ease; position: relative; }
+        .badge-card.unlocked { border-color: var(--gold); background: rgba(250, 204, 21, 0.05); box-shadow: 0 0 20px rgba(250, 204, 21, 0.1); }
+        .badge-icon { width: 50px; height: 50px; filter: grayscale(100%) opacity(0.3); transition: all 0.5s ease; color: var(--gold); }
+        .badge-card.unlocked .badge-icon { filter: grayscale(0%) opacity(1); transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.6)); }
+        .badge-title { font-size: 0.9rem; font-weight: 800; color: #94a3b8; }
+        .badge-card.unlocked .badge-title { color: var(--gold); }
+        .badge-desc { font-size: 0.7rem; color: #64748b; line-height: 1.3; }
+        .badge-card.unlocked .badge-desc { color: #cbd5e1; }
+
+        /* ACHIEVEMENT TOAST NOTIFICATION */
+        #badgeToast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 2px solid var(--gold); padding: 15px 25px; border-radius: 100px; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 30px rgba(250, 204, 21, 0.3); z-index: 40000; transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #badgeToast.show { bottom: 30px; }
+        .toast-icon { width: 30px; height: 30px; color: var(--gold); filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.8)); }
+        .toast-text-small { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+        .toast-text-large { font-size: 1rem; font-weight: 800; color: var(--gold); }
     </style>
 </head>
 <body>
@@ -319,12 +329,35 @@
         </div>
     </div>
 
+    <div id="badgeToast">
+        <div id="toastIconContainer"></div>
+        <div>
+            <div class="toast-text-small">Achievement Unlocked</div>
+            <div class="toast-text-large" id="toastTitle">Meteor Survivor!</div>
+        </div>
+    </div>
+
+    <div id="trophyOverlay">
+        <div class="trophy-panel">
+            <h1 style="color: var(--gold); margin-top: 0; margin-bottom: 5px;">Trophy Case</h1>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0; margin-bottom: 20px;">Complete challenges to unlock these badges!</p>
+            <div class="badge-grid" id="badgeGridArea"></div>
+            <button class="main-btn" onclick="closeTrophies()" style="margin-top: 30px; width: 100%; background: var(--glass);">Close Trophy Case</button>
+        </div>
+    </div>
+
     <div class="app-container">
         <div id="typingTitleContainer"></div>
 
         <div class="session-info-bar">
             <div id="studentWelcome" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Explorer: Guest</div>
-            <button id="logoutBtn" onclick="logout()">LOGOUT</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="trophyBtn" class="hidden" onclick="openTrophies()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                    Achievements
+                </button>
+                <button id="logoutBtn" onclick="logout()">LOGOUT</button>
+            </div>
         </div>
 
         <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">• Sync Online</div>
@@ -641,7 +674,7 @@
 <script>
     let TEACHER_ID = ""; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwb-uq8Uu3LG0q5Ta63C7VrWKX7veXpB-4LmEc3tMgReBua7-T24udR_xOYsf0ETyvQ8w/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynTCTFohNSTzKX4cD9IbhiblXeBEbLgIVja6H_bvug8WkIhoSeb-ca2nrRHRYyKYoSww/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -666,13 +699,22 @@
     let scrambleCards = [], scrambleIdx = 0, scrambleScore = 0, scrambleDiff = '';
     let currentScrambleWord = "", currentScrambledLetters = [], currentAssembledLetters = [];
 
+    // --- BADGE SYSTEM DEFINITIONS ---
+    let studentStats = { unlockedBadges: [], lastLoginDate: "", currentStreak: 0 };
+    const BADGES = {
+        quiz_whiz: { id: "quiz_whiz", title: "Quiz Whiz", desc: "Score 100% on any Quick Quiz.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>` },
+        expert_explorer: { id: "expert_explorer", title: "Expert Explorer", desc: "Achieve 100% accuracy on an Expert Quiz.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 22 22 22"></polygon><polyline points="12 2 12 12 18 12"></polyline></svg>` },
+        meteor_survivor: { id: "meteor_survivor", title: "Meteor Survivor", desc: "Score 20+ points in a single game of Meteor Strike.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.18 4.82a2 2 0 0 0-2.83 0L4.82 18.35a2 2 0 0 0 0 2.83 2 2 0 0 0 2.83 0l13.53-13.53a2 2 0 0 0 0-2.83z"></path><path d="M14 4h7v7"></path></svg>` },
+        matrix_hacker: { id: "matrix_hacker", title: "Matrix Hacker", desc: "Complete the Memory Matrix on Expert difficulty.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>` },
+        rune_master: { id: "rune_master", title: "Rune Master", desc: "Complete Rune Scramble on Expert with 100% accuracy.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>` },
+        consistency_key: { id: "consistency_key", title: "Consistency Key", desc: "Log in and study 3 days in a row.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>` }
+    };
+
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
-    let columns = [];
 
     const speakerSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
     const speakerSVG_large = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
-
     const heartFull = `<svg width="18" height="18" style="vertical-align:middle; margin: 0 2px;" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
     const heartEmpty = `<svg width="18" height="18" style="vertical-align:middle; margin: 0 2px;" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 
@@ -732,6 +774,98 @@
         }
     };
     window.addEventListener('resize', resizeCanvas);
+
+    // --- BADGE SYSTEM LOGIC ---
+    function initStudentStats() {
+        if (studentName === "Guest" || !studentName) return;
+        document.getElementById('trophyBtn').classList.remove('hidden');
+        
+        let storedStats = localStorage.getItem('vocabSojournStats_' + studentName);
+        if (storedStats) {
+            studentStats = JSON.parse(storedStats);
+        }
+        
+        // Check Streak
+        const today = new Date().toDateString();
+        if (studentStats.lastLoginDate !== today) {
+            let lastDate = new Date(studentStats.lastLoginDate);
+            let diffTime = Math.abs(new Date() - lastDate);
+            let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            
+            if (diffDays === 1 || studentStats.lastLoginDate === "") {
+                studentStats.currentStreak++;
+            } else if (diffDays > 1) {
+                studentStats.currentStreak = 1;
+            }
+            studentStats.lastLoginDate = today;
+            saveStudentStats();
+            
+            if (studentStats.currentStreak >= 3) {
+                triggerBadgeUnlock('consistency_key');
+            }
+        }
+    }
+
+    function saveStudentStats() {
+        if (studentName !== "Guest") {
+            localStorage.setItem('vocabSojournStats_' + studentName, JSON.stringify(studentStats));
+        }
+    }
+
+    function triggerBadgeUnlock(badgeId) {
+        if (studentName === "Guest" || studentStats.unlockedBadges.includes(badgeId)) return;
+        
+        studentStats.unlockedBadges.push(badgeId);
+        saveStudentStats();
+        
+        const badge = BADGES[badgeId];
+        const toast = document.getElementById('badgeToast');
+        document.getElementById('toastIconContainer').innerHTML = `<div class="toast-icon">${badge.icon}</div>`;
+        document.getElementById('toastTitle').innerText = badge.title + "!";
+        
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 4000);
+    }
+
+    function checkBadges(game, diff, scoreOrPct) {
+        if (studentName === "Guest") return;
+        
+        if (game === "Quiz" && scoreOrPct === "100%") {
+            triggerBadgeUnlock('quiz_whiz');
+            if (diff === "Expert") triggerBadgeUnlock('expert_explorer');
+        }
+        if (game === "Meteor" && parseInt(scoreOrPct) >= 20) {
+            triggerBadgeUnlock('meteor_survivor');
+        }
+        if (game === "Memory" && diff === "Expert") {
+            triggerBadgeUnlock('matrix_hacker');
+        }
+        if (game === "Anagrams" && diff === "Expert" && scoreOrPct === "100%") {
+            triggerBadgeUnlock('rune_master');
+        }
+    }
+
+    function openTrophies() {
+        const grid = document.getElementById('badgeGridArea');
+        let html = '';
+        Object.keys(BADGES).forEach(key => {
+            const b = BADGES[key];
+            const unlocked = studentStats.unlockedBadges.includes(key);
+            html += `
+                <div class="badge-card ${unlocked ? 'unlocked' : ''}">
+                    <div class="badge-icon">${b.icon}</div>
+                    <div class="badge-title">${b.title}</div>
+                    <div class="badge-desc">${unlocked ? b.desc : 'Locked. Keep exploring to reveal!'}</div>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+        document.getElementById('trophyOverlay').classList.add('show');
+    }
+
+    function closeTrophies() {
+        document.getElementById('trophyOverlay').classList.remove('show');
+    }
 
     async function fetchTeacherData(force = false) {
         try {
@@ -983,6 +1117,9 @@
         document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden');
         if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; 
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+        
+        initStudentStats();
+
         fetchTeacherData(true); 
         if (!skipAnim) { playWelcomeAnimation('student'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to your Vocabulary Journey.\nPlease select a unit..."; }
     }
@@ -1091,6 +1228,7 @@
         
         addHistory(`Quiz (${currentDifficulty})`, pct); 
         syncSessionToSheet(`Quiz (${currentDifficulty})`, pct, JSON.stringify(currentSessionDetails)); 
+        checkBadges('Quiz', currentDifficulty, pct);
     }
 
     function resetMatchUI() { document.getElementById('matchDifficultyArea').classList.remove('hidden'); document.getElementById('matchPlayArea').classList.add('hidden'); document.getElementById('matchEnd').classList.add('hidden'); }
@@ -1156,7 +1294,13 @@
         }
     }
     function updateMemoryStats() { document.getElementById('memoryAttempts').innerText = `Attempts: ${memAttempts}`; }
-    function endMemory() { document.getElementById('memoryPlayArea').classList.add('hidden'); const resultText = `${memAttempts} Attempts`; document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${resultText} (${memDifficulty})</h3><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`; document.getElementById('memoryEnd').classList.remove('hidden'); addHistory(`Memory (${memDifficulty})`, resultText); syncSessionToSheet(`Memory (${memDifficulty})`, resultText); }
+    function endMemory() { 
+        document.getElementById('memoryPlayArea').classList.add('hidden'); const resultText = `${memAttempts} Attempts`; 
+        document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${resultText} (${memDifficulty})</h3><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`; 
+        document.getElementById('memoryEnd').classList.remove('hidden'); addHistory(`Memory (${memDifficulty})`, resultText); 
+        syncSessionToSheet(`Memory (${memDifficulty})`, resultText); 
+        checkBadges('Memory', memDifficulty, resultText);
+    }
 
     function resetMeteorUI() { meteorActive = false; if(meteorAnim) cancelAnimationFrame(meteorAnim); document.getElementById('meteorDifficultyArea').classList.remove('hidden'); document.getElementById('meteorPlayArea').classList.add('hidden'); document.getElementById('meteorEnd').classList.add('hidden'); }
     
@@ -1226,6 +1370,7 @@
         const msg = won ? "You Survived the Storm!" : "Game Over!"; const resultText = `${meteorScore} Points`;
         document.getElementById('meteorEnd').innerHTML = `<h2 style="color: ${won ? 'var(--accent)' : 'var(--danger)'}; margin-bottom: 5px;">${msg}</h2><h3 style="margin-top:0;">Result: ${resultText} (${meteorDiff})</h3><button class="main-btn" onclick="resetMeteorUI()">Play Again</button>`;
         addHistory(`Meteor (${meteorDiff})`, resultText); syncSessionToSheet(`Meteor (${meteorDiff})`, resultText);
+        checkBadges('Meteor', meteorDiff, meteorScore);
     }
 
     function resetScrambleUI() {
@@ -1339,6 +1484,7 @@
         const pct = Math.round((scrambleScore/scrambleCards.length)*100) + "%"; 
         document.getElementById('scrambleEnd').innerHTML = `<h3>Result: ${pct} (${scrambleDiff})</h3><button class="main-btn" onclick="resetScrambleUI()">Restart</button>`;
         addHistory(`Anagrams (${scrambleDiff})`, pct); syncSessionToSheet(`Anagrams (${scrambleDiff})`, pct);
+        checkBadges('Anagrams', scrambleDiff, pct);
     }
 
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
