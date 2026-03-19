@@ -89,6 +89,9 @@
             cursor: pointer; font-weight: 600; 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .nav-btn:hover { 
             background: var(--primary); 
@@ -133,7 +136,7 @@
             flex: 1 1 auto; padding: 12px; font-size: 0.85rem; border: none; 
             border-radius: 10px; cursor: pointer; font-weight: 600;
             background: var(--glass); color: #94a3b8; transition: 0.3s;
-            text-align: center;
+            text-align: center; display: flex; align-items: center; justify-content: center;
         }
         .study-tabs button.active { 
             background: white; color: var(--bg);
@@ -316,7 +319,10 @@
                 <div class="study-tabs">
                     <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
                     <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
-                    <button id="tabGames" onclick="setStudyMode('games')">?? Study Games</button>
+                    <button id="tabGames" onclick="setStudyMode('games')">
+                        <svg width="16" height="16" style="vertical-align: text-bottom; margin-right: 4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m11-1v.01M15 11v.01"></path></svg>
+                        Study Games
+                    </button>
                 </div>
 
                 <div id="listMode">
@@ -340,10 +346,22 @@
                 <div id="gamesMenuMode" class="hidden">
                     <h3 style="text-align: center; margin-top: 0; color: #cbd5e1; font-weight: 600;">Select a Training Module</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <button class="nav-btn" onclick="setStudyMode('quiz')" style="padding: 25px 15px; font-size: 1rem; border-color: var(--primary);">?? Quick Quiz</button>
-                        <button class="nav-btn" onclick="setStudyMode('match')" style="padding: 25px 15px; font-size: 1rem; border-color: var(--accent);">?? Matching</button>
-                        <button class="nav-btn" onclick="setStudyMode('memory')" style="padding: 25px 15px; font-size: 1rem; border-color: #ec4899;">?? Memory Matrix</button>
-                        <button class="nav-btn" onclick="setStudyMode('meteor')" style="padding: 25px 15px; font-size: 1rem; border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.1);">?? Meteor Strike</button>
+                        <button class="nav-btn" onclick="setStudyMode('quiz')" style="padding: 25px 15px; font-size: 1rem; border-color: var(--primary); display: flex; flex-direction: column; gap: 10px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Quick Quiz
+                        </button>
+                        <button class="nav-btn" onclick="setStudyMode('match')" style="padding: 25px 15px; font-size: 1rem; border-color: var(--accent); display: flex; flex-direction: column; gap: 10px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            Matching
+                        </button>
+                        <button class="nav-btn" onclick="setStudyMode('memory')" style="padding: 25px 15px; font-size: 1rem; border-color: #ec4899; display: flex; flex-direction: column; gap: 10px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 12 12 17 22 12"></polyline><polyline points="2 17 12 22 22 17"></polyline></svg>
+                            Memory Matrix
+                        </button>
+                        <button class="nav-btn" onclick="setStudyMode('meteor')" style="padding: 25px 15px; font-size: 1rem; border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.1); display: flex; flex-direction: column; gap: 10px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                            Meteor Strike
+                        </button>
                     </div>
                 </div>
 
@@ -415,7 +433,7 @@
                         </div>
                     </div>
                     <div id="meteorPlayArea" class="hidden">
-                        <div id="meteorStats" style="text-align:center; font-weight:bold; color:#facc15; margin-bottom: 10px; font-size:1rem; letter-spacing: 2px;">Score: 0 | Lives: ??????</div>
+                        <div id="meteorStats" style="text-align:center; font-weight:bold; color:#facc15; margin-bottom: 10px; font-size:1rem; letter-spacing: 1px;">Score: 0 | Lives: </div>
                         <div class="meteor-board" id="meteorBoard">
                             <div id="meteorWordEl" class="meteor-word"></div>
                             <div id="meteorDefsEl" class="meteor-defs"></div>
@@ -534,10 +552,8 @@
     let mGoal = 0, mCorrect = 0, mTotal = 0;
     let flashcardList = [];
 
-    // Memory Logic Variables
     let memCards = [], memFlipped = [], memMatched = 0, memAttempts = 0, memGoal = 0, memIsAnimating = false, memDifficulty = "";
 
-    // Meteor Strike Logic Variables
     let meteorCards = [], meteorIdx = 0, meteorScore = 0, meteorLives = 3, meteorDiff = '';
     let meteorActive = false, meteorY = 0, meteorSpeed = 1, meteorAnim = null, meteorCurrent = null;
 
@@ -547,6 +563,10 @@
 
     const speakerSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
     const speakerSVG_large = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+
+    // Native SVGs to replace the life counter emojis
+    const heartFull = `<svg width="18" height="18" style="vertical-align:middle; margin: 0 2px;" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+    const heartEmpty = `<svg width="18" height="18" style="vertical-align:middle; margin: 0 2px;" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 
     function speakWord(event, word) {
         if (event) event.stopPropagation(); 
@@ -592,7 +612,6 @@
     
     window.onload = () => { 
         fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
-        
         const stored = localStorage.getItem('vocabSojournName');
         const storedT = localStorage.getItem('vocabSojournTeacher');
         const storedRole = localStorage.getItem('vocabSojournRole');
@@ -600,14 +619,8 @@
         if (stored) { 
             studentName = stored; 
             if(storedT) TEACHER_ID = storedT;
-            
-            if (storedRole === 'educator') {
-                document.getElementById('studentWelcome').innerText = "Educator: " + studentName; 
-                enterTeacherMode(true); 
-            } else {
-                document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; 
-                unlockApp(true); 
-            }
+            if (storedRole === 'educator') { document.getElementById('studentWelcome').innerText = "Educator: " + studentName; enterTeacherMode(true); } 
+            else { document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; unlockApp(true); }
         }
     };
     window.addEventListener('resize', resizeCanvas);
@@ -626,9 +639,7 @@
                     const listName = cols[3]; const unitName = cols[4]; 
                     if (!newUnits[unitName]) newUnits[unitName] = {}; 
                     if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
-                    if (term !== "Initialization") {
-                        newUnits[unitName][listName].push({t: term, d: def, img: img});
-                    }
+                    if (term !== "Initialization") newUnits[unitName][listName].push({t: term, d: def, img: img});
                 }
             });
             units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
@@ -638,29 +649,17 @@
     function playWelcomeAnimation(mode = 'student') {
         const text = mode === 'teacher' ? "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID : "Welcome to your Vocabulary Journey.\nPlease select a unit...";
         const container = document.getElementById('typingTitleContainer');
-        if ((mode === 'teacher' && hasAnimatedTeacherWelcome) || (mode === 'student' && hasAnimatedStudentWelcome)) { 
-            container.innerText = text; return; 
-        }
+        if ((mode === 'teacher' && hasAnimatedTeacherWelcome) || (mode === 'student' && hasAnimatedStudentWelcome)) { container.innerText = text; return; }
         container.innerHTML = '<span id="typingContent"></span><span class="blinking-cursor"></span>';
         const target = document.getElementById('typingContent');
         let i = 0;
         function type() {
-            if (i < text.length) { 
-                target.innerText += text.charAt(i); i++; 
-                setTimeout(type, 40); 
-            } else { 
-                if (mode === 'teacher') hasAnimatedTeacherWelcome = true;
-                else hasAnimatedStudentWelcome = true;
-            }
-        }
-        type();
+            if (i < text.length) { target.innerText += text.charAt(i); i++; setTimeout(type, 40); } 
+            else { if (mode === 'teacher') hasAnimatedTeacherWelcome = true; else hasAnimatedStudentWelcome = true; }
+        } type();
     }
 
-    function triggerSyncIndicator() {
-        const toast = document.getElementById('syncIndicator');
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2000);
-    }
+    function triggerSyncIndicator() { const toast = document.getElementById('syncIndicator'); toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
 
     function submitNewUnit() {
         const unitName = document.getElementById('newUnitName').value.trim(), listName = document.getElementById('newUnitListName').value.trim(), term = document.getElementById('newUnitTerm').value.trim(), def = document.getElementById('newUnitDef').value.trim(), img = document.getElementById('newUnitImg').value.trim();
@@ -670,8 +669,7 @@
         units[unitName][listName].push({ t: term, d: def, img: img });
         triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) });
-        document.getElementById('adminCreateUnitArea').classList.add('hidden');
-        renderAdminUnitSelection(); adminSelectUnit(unitName); adminSelectList(listName);
+        document.getElementById('adminCreateUnitArea').classList.add('hidden'); renderAdminUnitSelection(); adminSelectUnit(unitName); adminSelectList(listName);
     }
 
     function submitNewList() {
@@ -681,8 +679,7 @@
         units[adminSelectedUnit][listName].push({ t: term, d: def, img: img });
         triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) });
-        document.getElementById('adminCreateListArea').classList.add('hidden');
-        adminSelectUnit(adminSelectedUnit); adminSelectList(listName);
+        document.getElementById('adminCreateListArea').classList.add('hidden'); adminSelectUnit(adminSelectedUnit); adminSelectList(listName);
     }
 
     async function submitNewWord() { 
@@ -728,8 +725,7 @@
         if (!newUser || !newPass) return alert("Please enter both a new username and a new password.");
         if (!confirm(`Are you sure? This will update your login to "${newUser}" and permanently transfer all your lists and student data to this new identity.`)) return;
 
-        const btn = document.getElementById('updateTeacherBtn');
-        btn.innerText = "Transferring Data..."; btn.disabled = true;
+        const btn = document.getElementById('updateTeacherBtn'); btn.innerText = "Transferring Data..."; btn.disabled = true;
         
         try {
             fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "updateTeacherProfile", teacherID: TEACHER_ID, newUser: newUser, newPass: newPass }) });
@@ -751,26 +747,19 @@
     
     function enterApp() { 
         document.getElementById('landingPage').style.opacity = '0'; 
-        if (matrixInterval) clearInterval(matrixInterval); 
-        canvas.style.display = 'none'; 
+        if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; 
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
             if (studentName) {
                 if (localStorage.getItem('vocabSojournRole') === 'educator') enterTeacherMode();
                 else unlockApp(); 
-            } else {
-                document.getElementById('loginOverlay').classList.remove('hidden'); 
-            }
+            } else { document.getElementById('loginOverlay').classList.remove('hidden'); }
             renderUnitSelection(); 
         }, 800); 
     }
 
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
-    
-    function continueAsGuest() { 
-        const guestTeacher = prompt("Please enter the exact Educator ID you wish to view (e.g., Teacher 1):", "Teacher 1");
-        if(guestTeacher) { TEACHER_ID = guestTeacher.trim(); studentName = "Guest"; unlockApp(); }
-    }
+    function continueAsGuest() { const guestTeacher = prompt("Please enter the exact Educator ID you wish to view (e.g., Teacher 1):", "Teacher 1"); if(guestTeacher) { TEACHER_ID = guestTeacher.trim(); studentName = "Guest"; unlockApp(); } }
 
     async function handleAuth(type) {
         let currentTeacherID = "Teacher 1";
@@ -789,15 +778,12 @@
             }
 
             const response = await fetch(urlStr); const result = await response.text(); 
-            
             if (result.startsWith("Success:")) { 
                 let parts = result.replace("Success: ", "").trim().split("|");
                 studentName = parts[0]; 
                 if (!studentName || studentName === "") studentName = userInput || regUser; 
-                
                 if (type === 'login' && parts.length > 1) TEACHER_ID = parts[1].trim(); 
                 else if (type === 'register') TEACHER_ID = currentTeacherID; 
-                
                 localStorage.clear(); localStorage.setItem('vocabSojournName', studentName); localStorage.setItem('vocabSojournTeacher', TEACHER_ID); localStorage.setItem('vocabSojournRole', 'student');
                 unlockApp(); 
             } else { alert(result); } 
@@ -848,11 +834,8 @@
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
     
-    // REVISED SET STUDY MODE LOGIC
     function setStudyMode(mode) { 
-        // Global Game Cleanup
         if(meteorAnim) cancelAnimationFrame(meteorAnim); meteorActive = false;
-        
         ['tabList', 'tabFlash', 'tabGames'].forEach(t => document.getElementById(t).classList.remove('active')); 
         
         let tabToActivate = mode;
@@ -861,11 +844,8 @@
         
         ['listMode', 'flashMode', 'gamesMenuMode', 'quizMode', 'matchMode', 'memoryMode', 'meteorMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
         
-        if (mode === 'games') {
-            document.getElementById('gamesMenuMode').classList.remove('hidden');
-        } else {
-            document.getElementById(mode + 'Mode').classList.remove('hidden'); 
-        }
+        if (mode === 'games') document.getElementById('gamesMenuMode').classList.remove('hidden');
+        else document.getElementById(mode + 'Mode').classList.remove('hidden'); 
 
         const list = units[currentUnit][currentClass]; 
         if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
@@ -964,123 +944,55 @@
         } 
     }
 
-    function resetMemoryUI() {
-        document.getElementById('memoryDifficultyArea').classList.remove('hidden');
-        document.getElementById('memoryPlayArea').classList.add('hidden');
-        document.getElementById('memoryEnd').classList.add('hidden');
-    }
-
+    function resetMemoryUI() { document.getElementById('memoryDifficultyArea').classList.remove('hidden'); document.getElementById('memoryPlayArea').classList.add('hidden'); document.getElementById('memoryEnd').classList.add('hidden'); }
     function initMemory(diff) {
-        memDifficulty = diff;
-        const list = units[currentUnit][currentClass];
+        memDifficulty = diff; const list = units[currentUnit][currentClass];
         if (!list || !list.length) return;
-        
         let count = (diff === 'Easy') ? 6 : (diff === 'Medium') ? 10 : list.length;
         if (count > list.length) count = list.length;
-        
         const sub = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-        memGoal = sub.length;
-        memMatched = 0; memAttempts = 0; memFlipped = []; memIsAnimating = false;
-        
+        memGoal = sub.length; memMatched = 0; memAttempts = 0; memFlipped = []; memIsAnimating = false;
         memCards = [];
-        sub.forEach((item, idx) => {
-            memCards.push({ id: idx, text: item.t, type: 'word' });
-            memCards.push({ id: idx, text: item.d, type: 'def' });
-        });
+        sub.forEach((item, idx) => { memCards.push({ id: idx, text: item.t, type: 'word' }); memCards.push({ id: idx, text: item.d, type: 'def' }); });
         memCards.sort(() => 0.5 - Math.random());
         
-        document.getElementById('memoryDifficultyArea').classList.add('hidden');
-        document.getElementById('memoryPlayArea').classList.remove('hidden');
-        document.getElementById('memoryAttempts').innerText = "Attempts: 0";
-        
+        document.getElementById('memoryDifficultyArea').classList.add('hidden'); document.getElementById('memoryPlayArea').classList.remove('hidden'); document.getElementById('memoryAttempts').innerText = "Attempts: 0";
         const container = document.getElementById('memoryContainer');
         let cols = memCards.length <= 12 ? 'repeat(4, 1fr)' : 'repeat(4, 1fr)'; 
         if(window.innerWidth < 450) cols = 'repeat(3, 1fr)'; 
         container.style.gridTemplateColumns = cols;
-        
-        container.innerHTML = memCards.map((c, i) => `
-            <div class="memory-card" id="memCard-${i}" onclick="flipMemoryCard(${i})">
-                <div class="memory-inner">
-                    <div class="memory-front"></div>
-                    <div class="memory-back" style="font-size: ${c.type === 'def' ? '0.65rem' : '0.85rem'}">${c.text}</div>
-                </div>
-            </div>
-        `).join('');
+        container.innerHTML = memCards.map((c, i) => `<div class="memory-card" id="memCard-${i}" onclick="flipMemoryCard(${i})"><div class="memory-inner"><div class="memory-front"></div><div class="memory-back" style="font-size: ${c.type === 'def' ? '0.65rem' : '0.85rem'}">${c.text}</div></div></div>`).join('');
     }
-
     function flipMemoryCard(idx) {
-        if (memIsAnimating) return;
-        const cardEl = document.getElementById(`memCard-${idx}`);
+        if (memIsAnimating) return; const cardEl = document.getElementById(`memCard-${idx}`);
         if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
-        
-        cardEl.classList.add('flipped');
-        memFlipped.push({ idx: idx, id: memCards[idx].id });
+        cardEl.classList.add('flipped'); memFlipped.push({ idx: idx, id: memCards[idx].id });
         
         if (memFlipped.length === 2) {
-            memAttempts++;
-            memIsAnimating = true;
-            const c1 = memFlipped[0], c2 = memFlipped[1];
-            
+            memAttempts++; memIsAnimating = true; const c1 = memFlipped[0], c2 = memFlipped[1];
             if (c1.id === c2.id) {
-                setTimeout(() => {
-                    document.getElementById(`memCard-${c1.idx}`).classList.add('matched');
-                    document.getElementById(`memCard-${c2.idx}`).classList.add('matched');
-                    memMatched++; updateMemoryStats(); memFlipped = []; memIsAnimating = false;
-                    if (memMatched === memGoal) endMemory();
-                }, 500);
+                setTimeout(() => { document.getElementById(`memCard-${c1.idx}`).classList.add('matched'); document.getElementById(`memCard-${c2.idx}`).classList.add('matched'); memMatched++; updateMemoryStats(); memFlipped = []; memIsAnimating = false; if (memMatched === memGoal) endMemory(); }, 500);
             } else {
-                setTimeout(() => {
-                    document.getElementById(`memCard-${c1.idx}`).classList.remove('flipped');
-                    document.getElementById(`memCard-${c2.idx}`).classList.remove('flipped');
-                    updateMemoryStats(); memFlipped = []; memIsAnimating = false;
-                }, 1000);
+                setTimeout(() => { document.getElementById(`memCard-${c1.idx}`).classList.remove('flipped'); document.getElementById(`memCard-${c2.idx}`).classList.remove('flipped'); updateMemoryStats(); memFlipped = []; memIsAnimating = false; }, 1000);
             }
         }
     }
+    function updateMemoryStats() { document.getElementById('memoryAttempts').innerText = `Attempts: ${memAttempts}`; }
+    function endMemory() { document.getElementById('memoryPlayArea').classList.add('hidden'); const resultText = `${memAttempts} Attempts`; document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${resultText} (${memDifficulty})</h3><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`; document.getElementById('memoryEnd').classList.remove('hidden'); addHistory(`Memory (${memDifficulty})`, resultText); syncSessionToSheet(`Memory (${memDifficulty})`, resultText); }
 
-    function updateMemoryStats() {
-        document.getElementById('memoryAttempts').innerText = `Attempts: ${memAttempts}`;
-    }
-
-    function endMemory() {
-        document.getElementById('memoryPlayArea').classList.add('hidden');
-        const resultText = `${memAttempts} Attempts`;
-        document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${resultText} (${memDifficulty})</h3><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`;
-        document.getElementById('memoryEnd').classList.remove('hidden');
-        addHistory(`Memory (${memDifficulty})`, resultText);
-        syncSessionToSheet(`Memory (${memDifficulty})`, resultText);
-    }
-
-    // --- NEW: METEOR STRIKE LOGIC ---
-    function resetMeteorUI() {
-        meteorActive = false;
-        if(meteorAnim) cancelAnimationFrame(meteorAnim);
-        document.getElementById('meteorDifficultyArea').classList.remove('hidden');
-        document.getElementById('meteorPlayArea').classList.add('hidden');
-        document.getElementById('meteorEnd').classList.add('hidden');
-    }
-
+    function resetMeteorUI() { meteorActive = false; if(meteorAnim) cancelAnimationFrame(meteorAnim); document.getElementById('meteorDifficultyArea').classList.remove('hidden'); document.getElementById('meteorPlayArea').classList.add('hidden'); document.getElementById('meteorEnd').classList.add('hidden'); }
     function initMeteor(diff) {
-        meteorDiff = diff;
-        const list = units[currentUnit][currentClass];
+        meteorDiff = diff; const list = units[currentUnit][currentClass];
         if(!list || list.length < 3) return alert("You need at least 3 words in this list to play Meteor Strike!");
-        
         let count = (diff === 'Easy') ? 10 : (diff === 'Medium') ? 20 : list.length;
         if (count > list.length) count = list.length;
-
         meteorCards = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-        meteorScore = 0; 
-        meteorIdx = 0; 
-        meteorLives = 3; 
-        
-        document.getElementById('meteorDifficultyArea').classList.add('hidden');
-        document.getElementById('meteorPlayArea').classList.remove('hidden');
-        updateMeteorStats();
-        spawnMeteor();
+        meteorScore = 0; meteorIdx = 0; meteorLives = 3; 
+        document.getElementById('meteorDifficultyArea').classList.add('hidden'); document.getElementById('meteorPlayArea').classList.remove('hidden'); updateMeteorStats(); spawnMeteor();
     }
-
-    function updateMeteorStats() {
-        document.getElementById('meteorStats').innerText = `Score: ${meteorScore} | Lives: ${'??'.repeat(meteorLives)}${'??'.repeat(3 - meteorLives)}`;
+    
+    function updateMeteorStats() { 
+        document.getElementById('meteorStats').innerHTML = `Score: ${meteorScore} | Lives: ${heartFull.repeat(meteorLives)}${heartEmpty.repeat(3 - meteorLives)}`; 
     }
 
     function spawnMeteor() {
@@ -1088,10 +1000,10 @@
         if(meteorIdx >= meteorCards.length) return endMeteor(true); 
 
         meteorCurrent = meteorCards[meteorIdx];
-        meteorY = -30; 
+        meteorY = -40; // Start slightly higher to give more reading time
         
-        // Speed scaling formula
-        meteorSpeed = (window.innerWidth < 500 ? 0.8 : 1.2) + (meteorScore * 0.15);
+        // FIX: Much slower starting speed and gentler scaling curve
+        meteorSpeed = (window.innerWidth < 500 ? 0.35 : 0.6) + (meteorScore * 0.08);
 
         document.getElementById('meteorWordEl').innerText = meteorCurrent.t;
         
@@ -1100,9 +1012,7 @@
         let wrongOpts = list.filter(w => w.t !== meteorCurrent.t).sort(() => 0.5 - Math.random()).slice(0, 2);
         options = [...options, ...wrongOpts].sort(() => 0.5 - Math.random());
         
-        document.getElementById('meteorDefsEl').innerHTML = options.map(o => 
-            `<button class="meteor-def-btn" onclick="checkMeteor('${o.t.replace(/'/g, "\\'")}')">${o.d}</button>`
-        ).join('');
+        document.getElementById('meteorDefsEl').innerHTML = options.map(o => `<button class="meteor-def-btn" onclick="checkMeteor('${o.t.replace(/'/g, "\\'")}')">${o.d}</button>`).join('');
 
         meteorActive = true;
         if(meteorAnim) cancelAnimationFrame(meteorAnim);
@@ -1112,79 +1022,21 @@
     function meteorLoop() {
         if(!meteorActive) return;
         meteorY += meteorSpeed;
-        
-        const wordEl = document.getElementById('meteorWordEl');
-        const boardEl = document.getElementById('meteorBoard');
-        const defsEl = document.getElementById('meteorDefsEl');
-        
+        const wordEl = document.getElementById('meteorWordEl'); const boardEl = document.getElementById('meteorBoard'); const defsEl = document.getElementById('meteorDefsEl');
         if(wordEl) wordEl.style.top = meteorY + 'px';
-        
         const hitZone = boardEl.clientHeight - defsEl.clientHeight - 40;
-        
-        if(meteorY > hitZone) {
-            handleMeteorMiss();
-        } else {
-            meteorAnim = requestAnimationFrame(meteorLoop);
-        }
+        if(meteorY > hitZone) handleMeteorMiss(); else meteorAnim = requestAnimationFrame(meteorLoop);
     }
 
-    function checkMeteor(term) {
-        if(!meteorActive) return;
-        if(term === meteorCurrent.t) {
-            handleMeteorHit();
-        } else {
-            handleMeteorMiss();
-        }
-    }
-
-    function handleMeteorHit() {
-        meteorActive = false;
-        cancelAnimationFrame(meteorAnim);
-        meteorScore++;
-        meteorIdx++;
-        updateMeteorStats();
-        
-        const board = document.getElementById('meteorBoard');
-        board.style.background = 'rgba(16, 185, 129, 0.4)'; // Flash green
-        setTimeout(() => {
-            board.style.background = '#000';
-            spawnMeteor();
-        }, 150);
-    }
-
-    function handleMeteorMiss() {
-        meteorActive = false;
-        cancelAnimationFrame(meteorAnim);
-        meteorLives--;
-        meteorIdx++;
-        updateMeteorStats();
-        
-        const board = document.getElementById('meteorBoard');
-        board.style.background = 'rgba(239, 68, 68, 0.5)'; // Flash red
-        setTimeout(() => {
-            board.style.background = '#000';
-            spawnMeteor();
-        }, 300);
-    }
-
+    function checkMeteor(term) { if(!meteorActive) return; if(term === meteorCurrent.t) handleMeteorHit(); else handleMeteorMiss(); }
+    function handleMeteorHit() { meteorActive = false; cancelAnimationFrame(meteorAnim); meteorScore++; meteorIdx++; updateMeteorStats(); const board = document.getElementById('meteorBoard'); board.style.background = 'rgba(16, 185, 129, 0.4)'; setTimeout(() => { board.style.background = '#000'; spawnMeteor(); }, 150); }
+    function handleMeteorMiss() { meteorActive = false; cancelAnimationFrame(meteorAnim); meteorLives--; meteorIdx++; updateMeteorStats(); const board = document.getElementById('meteorBoard'); board.style.background = 'rgba(239, 68, 68, 0.5)'; setTimeout(() => { board.style.background = '#000'; spawnMeteor(); }, 300); }
     function endMeteor(won) {
-        meteorActive = false;
-        if(meteorAnim) cancelAnimationFrame(meteorAnim);
-        
-        document.getElementById('meteorPlayArea').classList.add('hidden');
-        document.getElementById('meteorEnd').classList.remove('hidden');
-        
-        const msg = won ? "You Survived the Storm!" : "Game Over!";
-        const resultText = `${meteorScore} Points`;
-        
-        document.getElementById('meteorEnd').innerHTML = `
-            <h2 style="color: ${won ? 'var(--accent)' : 'var(--danger)'}; margin-bottom: 5px;">${msg}</h2>
-            <h3 style="margin-top:0;">Result: ${resultText} (${meteorDiff})</h3>
-            <button class="main-btn" onclick="resetMeteorUI()">Play Again</button>
-        `;
-        
-        addHistory(`Meteor (${meteorDiff})`, resultText);
-        syncSessionToSheet(`Meteor (${meteorDiff})`, resultText);
+        meteorActive = false; if(meteorAnim) cancelAnimationFrame(meteorAnim);
+        document.getElementById('meteorPlayArea').classList.add('hidden'); document.getElementById('meteorEnd').classList.remove('hidden');
+        const msg = won ? "You Survived the Storm!" : "Game Over!"; const resultText = `${meteorScore} Points`;
+        document.getElementById('meteorEnd').innerHTML = `<h2 style="color: ${won ? 'var(--accent)' : 'var(--danger)'}; margin-bottom: 5px;">${msg}</h2><h3 style="margin-top:0;">Result: ${resultText} (${meteorDiff})</h3><button class="main-btn" onclick="resetMeteorUI()">Play Again</button>`;
+        addHistory(`Meteor (${meteorDiff})`, resultText); syncSessionToSheet(`Meteor (${meteorDiff})`, resultText);
     }
 
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
