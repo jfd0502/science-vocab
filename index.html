@@ -254,18 +254,24 @@
                 <input type="password" id="passIn" placeholder="Password">
                 <button class="main-btn" id="loginSubmit" onclick="handleAuth('login')" style="width: 100%; margin-top: 15px;">Enter Journey</button>
                 <div class="auth-switch" onclick="toggleAuthMode(true)">New here? Create an account</div>
+                
                 <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+                
+                <div style="text-align: left; margin-bottom: 10px;">
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Guest Access - Select Educator</label>
+                    <select id="guestTeacherSelect">
+                        <option value="">Loading Educators...</option>
+                    </select>
+                </div>
                 <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
             </div>
+            
             <div id="registerForm" class="hidden">
                 <h2 style="margin-top: 0;">Create Account</h2>
                 <div style="margin-bottom: 15px; text-align: left;">
                     <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Select Your Teacher</label>
                     <select id="teacherSelect">
-                        <option value="Teacher 1">Teacher 1</option>
-                        <option value="Teacher 2">Teacher 2</option>
-                        <option value="Teacher 3">Teacher 3</option>
-                        <option value="Teacher 4">Teacher 4</option>
+                        <option value="">Loading Educators...</option>
                     </select>
                 </div>
                 <input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)">
@@ -426,10 +432,11 @@
                     <div class="breadcrumb" onclick="setStudyMode('games')">&larr; Back to Games Menu</div>
                     <div id="meteorDifficultyArea">
                         <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
-                        <div class="diff-selector">
+                        <div class="diff-selector" style="grid-template-columns: 1fr 1fr;">
                             <button class="diff-btn" onclick="initMeteor('Easy')">Easy (10 Words)</button>
                             <button class="diff-btn" onclick="initMeteor('Medium')">Medium (20 Words)</button>
                             <button class="diff-btn" onclick="initMeteor('Expert')">Expert (All)</button>
+                            <button class="diff-btn" onclick="initMeteor('Infinity')" style="border-color: #a855f7; color: #e879f9; text-shadow: 0 0 5px rgba(168, 85, 247, 0.4);">Infinity (Endless)</button>
                         </div>
                     </div>
                     <div id="meteorPlayArea" class="hidden">
@@ -564,7 +571,6 @@
     const speakerSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
     const speakerSVG_large = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
 
-    // Native SVGs to replace the life counter emojis
     const heartFull = `<svg width="18" height="18" style="vertical-align:middle; margin: 0 2px;" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
     const heartEmpty = `<svg width="18" height="18" style="vertical-align:middle; margin: 0 2px;" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 
@@ -630,18 +636,40 @@
             const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
             const response = await fetch(url); const csvText = await response.text();
             const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
+            
             const newUnits = {}; 
+            let teachers = new Set();
             
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-                if (cols.length >= 6 && cols[5].trim() === TEACHER_ID.trim()) {
-                    const term = cols[0]; const def = cols[1]; const img = cols[2];
-                    const listName = cols[3]; const unitName = cols[4]; 
-                    if (!newUnits[unitName]) newUnits[unitName] = {}; 
-                    if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
-                    if (term !== "Initialization") newUnits[unitName][listName].push({t: term, d: def, img: img});
+                if (cols.length >= 6) {
+                    const tID = cols[5].trim();
+                    if (tID && tID !== "TeacherID" && tID !== "Initialization") teachers.add(tID);
+
+                    if (tID === TEACHER_ID.trim()) {
+                        const term = cols[0]; const def = cols[1]; const img = cols[2];
+                        const listName = cols[3]; const unitName = cols[4]; 
+                        if (!newUnits[unitName]) newUnits[unitName] = {}; 
+                        if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
+                        if (term !== "Initialization") newUnits[unitName][listName].push({t: term, d: def, img: img});
+                    }
                 }
             });
+            
+            const teacherList = Array.from(teachers).sort();
+            if(teacherList.length > 0) {
+                const updateDropdown = (id) => {
+                    const el = document.getElementById(id);
+                    if(el) {
+                        const val = el.value;
+                        el.innerHTML = teacherList.map(t => `<option value="${t}">${t}</option>`).join('');
+                        if(teacherList.includes(val)) el.value = val;
+                    }
+                };
+                updateDropdown('guestTeacherSelect');
+                updateDropdown('teacherSelect');
+            }
+
             units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
         } catch (e) { console.error("Fetch Error:", e); }
     }
@@ -759,7 +787,17 @@
     }
 
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
-    function continueAsGuest() { const guestTeacher = prompt("Please enter the exact Educator ID you wish to view (e.g., Teacher 1):", "Teacher 1"); if(guestTeacher) { TEACHER_ID = guestTeacher.trim(); studentName = "Guest"; unlockApp(); } }
+    
+    function continueAsGuest() { 
+        const guestTeacher = document.getElementById('guestTeacherSelect').value;
+        if(guestTeacher) { 
+            TEACHER_ID = guestTeacher; 
+            studentName = "Guest"; 
+            unlockApp(); 
+        } else {
+            alert("Please wait for the list of educators to load or verify your connection.");
+        }
+    }
 
     async function handleAuth(type) {
         let currentTeacherID = "Teacher 1";
@@ -981,28 +1019,40 @@
     function endMemory() { document.getElementById('memoryPlayArea').classList.add('hidden'); const resultText = `${memAttempts} Attempts`; document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${resultText} (${memDifficulty})</h3><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`; document.getElementById('memoryEnd').classList.remove('hidden'); addHistory(`Memory (${memDifficulty})`, resultText); syncSessionToSheet(`Memory (${memDifficulty})`, resultText); }
 
     function resetMeteorUI() { meteorActive = false; if(meteorAnim) cancelAnimationFrame(meteorAnim); document.getElementById('meteorDifficultyArea').classList.remove('hidden'); document.getElementById('meteorPlayArea').classList.add('hidden'); document.getElementById('meteorEnd').classList.add('hidden'); }
+    
     function initMeteor(diff) {
         meteorDiff = diff; const list = units[currentUnit][currentClass];
         if(!list || list.length < 3) return alert("You need at least 3 words in this list to play Meteor Strike!");
+        
         let count = (diff === 'Easy') ? 10 : (diff === 'Medium') ? 20 : list.length;
+        if (diff === 'Infinity') count = list.length; 
         if (count > list.length) count = list.length;
+        
         meteorCards = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
         meteorScore = 0; meteorIdx = 0; meteorLives = 3; 
         document.getElementById('meteorDifficultyArea').classList.add('hidden'); document.getElementById('meteorPlayArea').classList.remove('hidden'); updateMeteorStats(); spawnMeteor();
     }
     
     function updateMeteorStats() { 
-        document.getElementById('meteorStats').innerHTML = `Score: ${meteorScore} | Lives: ${heartFull.repeat(meteorLives)}${heartEmpty.repeat(3 - meteorLives)}`; 
+        document.getElementById('meteorStats').innerHTML = `Score: ${meteorScore} &nbsp;|&nbsp; Lives: ${heartFull.repeat(meteorLives)}${heartEmpty.repeat(3 - meteorLives)}`; 
     }
 
     function spawnMeteor() {
         if(meteorLives <= 0) return endMeteor(false);
-        if(meteorIdx >= meteorCards.length) return endMeteor(true); 
+        
+        if(meteorIdx >= meteorCards.length) {
+            if(meteorDiff === 'Infinity') {
+                meteorCards.sort(() => 0.5 - Math.random());
+                meteorIdx = 0; // Infinite loop 
+            } else {
+                return endMeteor(true); 
+            }
+        }
 
         meteorCurrent = meteorCards[meteorIdx];
-        meteorY = -40; // Start slightly higher to give more reading time
+        meteorY = -40; 
         
-        // FIX: Much slower starting speed and gentler scaling curve
+        // Speed scaling formula
         meteorSpeed = (window.innerWidth < 500 ? 0.35 : 0.6) + (meteorScore * 0.08);
 
         document.getElementById('meteorWordEl').innerText = meteorCurrent.t;
