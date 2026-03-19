@@ -740,16 +740,6 @@
     }
 
     // --- UPDATED MATRIX ENGINE ---
-    function updateMatrixWords() {
-        let terms = [];
-        for (let u in units) for (let l in units[u]) units[u][l].forEach(i => terms.push(i.t));
-        if (terms.length > 0) { 
-            allTerms = terms;
-            // Instantly update current falling words to the new list
-            columns.forEach(col => col.word = allTerms[Math.floor(Math.random() * allTerms.length)]);
-        }
-    }
-
     function drawMatrix() { 
         ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height); 
@@ -757,8 +747,13 @@
         ctx.font = "bold 15px monospace"; 
         columns.forEach((col, i) => { 
             ctx.fillText(col.word, i * 20, col.y); 
-            col.y += 18; // Slower fall speed
-            if (col.y > canvas.height && Math.random() > 0.95) { // Slower regeneration rate
+            col.y += 18; 
+            
+            if (Math.random() > 0.90) { 
+                col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
+            }
+
+            if (col.y > canvas.height && Math.random() > 0.95) { 
                 col.y = 0; 
                 col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
             } 
@@ -768,7 +763,7 @@
     window.onload = () => { 
         fetchTeacherData(); 
         resizeCanvas(); 
-        matrixInterval = setInterval(drawMatrix, 65); // Slower frame rate
+        matrixInterval = setInterval(drawMatrix, 65); 
         
         const stored = localStorage.getItem('vocabSojournName');
         const storedT = localStorage.getItem('vocabSojournTeacher');
@@ -783,7 +778,6 @@
     };
     window.addEventListener('resize', resizeCanvas);
 
-    // --- BADGE SYSTEM LOGIC ---
     function initStudentStats() {
         if (studentName === "Guest" || !studentName) return;
         document.getElementById('trophyBtn').classList.remove('hidden');
@@ -793,7 +787,6 @@
             studentStats = JSON.parse(storedStats);
         }
         
-        // Check Streak
         const today = new Date().toDateString();
         if (studentStats.lastLoginDate !== today) {
             let lastDate = new Date(studentStats.lastLoginDate);
@@ -875,6 +868,7 @@
         document.getElementById('trophyOverlay').classList.remove('show');
     }
 
+    // --- FIX: FETCH ALL WORDS FOR MATRIX ---
     async function fetchTeacherData(force = false) {
         try {
             const url = force ? `${SHEET_CSV_URL}&cachebust=${Date.now()}` : SHEET_CSV_URL;
@@ -883,16 +877,22 @@
             
             const newUnits = {}; 
             let teachers = new Set();
+            let globalTerms = []; 
             
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length >= 6) {
+                    const term = cols[0];
+                    const def = cols[1];
+                    const img = cols[2];
+                    const listName = cols[3];
+                    const unitName = cols[4];
                     const tID = cols[5].trim();
+                    
                     if (tID && tID !== "TeacherID" && tID !== "Initialization") teachers.add(tID);
+                    if (term && term !== "Initialization" && term !== "Term") globalTerms.push(term);
 
                     if (tID === TEACHER_ID.trim()) {
-                        const term = cols[0]; const def = cols[1]; const img = cols[2];
-                        const listName = cols[3]; const unitName = cols[4]; 
                         if (!newUnits[unitName]) newUnits[unitName] = {}; 
                         if (!newUnits[unitName][listName]) newUnits[unitName][listName] = []; 
                         if (term !== "Initialization") newUnits[unitName][listName].push({t: term, d: def, img: img});
@@ -914,7 +914,14 @@
                 updateDropdown('teacherSelect');
             }
 
-            units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
+            units = newUnits; isDataLoaded = true; 
+            
+            if (globalTerms.length > 0) {
+                allTerms = globalTerms;
+                columns.forEach(col => col.word = allTerms[Math.floor(Math.random() * allTerms.length)]);
+            }
+
+            renderUnitSelection(); renderAdminUnitSelection();
         } catch (e) { console.error("Fetch Error:", e); }
     }
 
