@@ -739,10 +739,15 @@
         })); 
     }
 
+    // --- UPDATED MATRIX ENGINE ---
     function updateMatrixWords() {
         let terms = [];
         for (let u in units) for (let l in units[u]) units[u][l].forEach(i => terms.push(i.t));
-        if (terms.length > 5) allTerms = terms;
+        if (terms.length > 0) { 
+            allTerms = terms;
+            // Instantly update current falling words to the new list
+            columns.forEach(col => col.word = allTerms[Math.floor(Math.random() * allTerms.length)]);
+        }
     }
 
     function drawMatrix() { 
@@ -752,8 +757,8 @@
         ctx.font = "bold 15px monospace"; 
         columns.forEach((col, i) => { 
             ctx.fillText(col.word, i * 20, col.y); 
-            col.y += 35; 
-            if (col.y > canvas.height && Math.random() > 0.9) { 
+            col.y += 18; // Slower fall speed
+            if (col.y > canvas.height && Math.random() > 0.95) { // Slower regeneration rate
                 col.y = 0; 
                 col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
             } 
@@ -761,7 +766,10 @@
     }
     
     window.onload = () => { 
-        fetchTeacherData(); resizeCanvas(); matrixInterval = setInterval(drawMatrix, 50); 
+        fetchTeacherData(); 
+        resizeCanvas(); 
+        matrixInterval = setInterval(drawMatrix, 65); // Slower frame rate
+        
         const stored = localStorage.getItem('vocabSojournName');
         const storedT = localStorage.getItem('vocabSojournTeacher');
         const storedRole = localStorage.getItem('vocabSojournRole');
