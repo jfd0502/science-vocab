@@ -126,10 +126,11 @@
             cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
             transition: color 0.3s; font-weight: 600;
         }
+        .breadcrumb:hover { color: white; }
 
-        .study-tabs { display: flex; gap: 5px; margin-bottom: 25px; flex-wrap: wrap; }
+        .study-tabs { display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
         .study-tabs button { 
-            flex: 1 1 auto; padding: 12px 8px; font-size: 0.75rem; border: none; 
+            flex: 1 1 auto; padding: 12px; font-size: 0.85rem; border: none; 
             border-radius: 10px; cursor: pointer; font-weight: 600;
             background: var(--glass); color: #94a3b8; transition: 0.3s;
             text-align: center;
@@ -137,6 +138,18 @@
         .study-tabs button.active { 
             background: white; color: var(--bg);
             box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+        
+        #tabGames {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5));
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        #tabGames.active {
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            color: white;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+            border-color: transparent;
         }
 
         .diff-selector {
@@ -167,88 +180,30 @@
         .back { background: var(--primary); color: white; transform: rotateY(180deg); font-size: 1.25rem; }
 
         /* Memory Matrix CSS */
-        .memory-grid { 
-            display: grid; 
-            gap: 10px; 
-            margin-top: 15px; 
-        }
-        .memory-card { 
-            aspect-ratio: 1 / 1; 
-            perspective: 1000px; 
-            cursor: pointer; 
-            min-height: 80px; 
-        }
-        .memory-inner { 
-            position: relative; 
-            width: 100%; 
-            height: 100%; 
-            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); 
-            transform-style: preserve-3d; 
-        }
+        .memory-grid { display: grid; gap: 10px; margin-top: 15px; }
+        .memory-card { aspect-ratio: 1 / 1; perspective: 1000px; cursor: pointer; min-height: 80px; }
+        .memory-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; }
         .memory-card.flipped .memory-inner { transform: rotateY(180deg); }
-        .memory-front, .memory-back { 
-            position: absolute; 
-            width: 100%; 
-            height: 100%; 
-            backface-visibility: hidden; 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 8px; 
-            text-align: center; 
-            box-sizing: border-box; 
-            border: 1px solid var(--glass-border); 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+        .memory-front, .memory-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 8px; text-align: center; box-sizing: border-box; border: 1px solid var(--glass-border); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .memory-front { background: rgba(255,255,255,0.05); }
         .memory-front::after { content: "?"; font-size: 2.5rem; color: rgba(255,255,255,0.2); font-weight: bold; }
-        .memory-back { 
-            background: var(--primary); 
-            color: white; 
-            transform: rotateY(180deg); 
-            font-weight: 600; 
-            overflow-y: auto; 
-            word-wrap: break-word;
-        }
+        .memory-back { background: var(--primary); color: white; transform: rotateY(180deg); font-weight: 600; overflow-y: auto; word-wrap: break-word; }
         .memory-card.matched .memory-back { background: var(--accent); }
+
+        /* Meteor Strike CSS */
+        .meteor-board { width: 100%; height: 450px; background: #000; position: relative; overflow: hidden; border-radius: 12px; border: 1px solid var(--glass-border); box-shadow: inset 0 0 30px rgba(0,0,0,0.8); transition: background 0.2s; }
+        .meteor-word { position: absolute; width: 100%; text-align: center; font-size: 1.8rem; font-weight: 800; color: #facc15; text-shadow: 0 0 15px rgba(250, 204, 21, 0.8); left: 0; z-index: 5; pointer-events: none; }
+        .meteor-defs { position: absolute; bottom: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; padding: 10px; box-sizing: border-box; background: linear-gradient(transparent, rgba(15, 23, 42, 0.95) 25%); z-index: 10; }
+        .meteor-def-btn { background: rgba(30, 41, 59, 0.95); border: 1px solid var(--glass-border); color: white; padding: 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; text-align: left; }
+        .meteor-def-btn:hover { background: var(--primary); border-color: var(--primary-hover); box-shadow: 0 0 10px rgba(99, 102, 241, 0.4); }
 
         .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
         .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
 
-        /* SVG Audio Speaker Button Styling */
-        .speaker-btn {
-            cursor: pointer;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 10px;
-            transition: all 0.3s ease;
-            color: var(--text);
-        }
-        .speaker-btn:hover {
-            background: var(--primary);
-            transform: scale(1.15);
-            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
-            color: white;
-        }
+        .speaker-btn { cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; transition: all 0.3s ease; color: var(--text); }
+        .speaker-btn:hover { background: var(--primary); transform: scale(1.15); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); color: white; }
 
-        input, select { 
-            background: rgba(0,0,0,0.2); 
-            border: 1px solid var(--glass-border); 
-            color: white; 
-            padding: 14px; 
-            border-radius: 12px; 
-            margin: 8px 0; 
-            width: 100%; 
-            box-sizing: border-box; 
-            font-size: 1rem;
-        }
+        input, select { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 14px; border-radius: 12px; margin: 8px 0; width: 100%; box-sizing: border-box; font-size: 1rem; }
         select option { background: #1e293b; color: white; }
 
         #landingPage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.8s ease; }
@@ -256,52 +211,18 @@
         .start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }
         
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); }
-        
         #teacherLoginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20000; display: flex; align-items: center; justify-content: center; background: #0f172a; transition: opacity 0.4s ease; }
         
-        .mode-toggle { 
-            position: fixed; 
-            top: 20px; 
-            left: 20px; 
-            z-index: 10002; 
-            background: var(--glass); 
-            color: #94a3b8; 
-            border: 1px solid var(--glass-border); 
-            border-radius: 10px; 
-            padding: 8px 16px; 
-            font-size: 0.7rem; 
-            cursor: pointer; 
-        }
-        
+        .mode-toggle { position: fixed; top: 20px; left: 20px; z-index: 10002; background: var(--glass); color: #94a3b8; border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 16px; font-size: 0.7rem; cursor: pointer; }
         .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; }
         .hidden { display: none !important; }
         .auth-switch { color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.85rem; margin-top: 10px; display: inline-block; }
         
-        #logoutBtn { 
-            background: rgba(239, 68, 68, 0.1); 
-            border: 1px solid var(--danger); 
-            color: #fca5a5; 
-            padding: 8px 16px; 
-            border-radius: 8px; 
-            font-size: 0.8rem; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-left: 10px; 
-            transition: all 0.3s ease; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        #logoutBtn:hover { 
-            background: var(--danger); 
-            color: white; 
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-            transform: translateY(-2px);
-        }
+        #logoutBtn { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: #fca5a5; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; margin-left: 10px; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
+        #logoutBtn:hover { background: var(--danger); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); transform: translateY(-2px); }
 
         .admin-entry { border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px; }
-        
         .session-info-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px 20px; border-radius: 15px; border: 1px solid var(--glass-border); }
-
         .loading-text { text-align: center; color: var(--primary); font-style: italic; letter-spacing: 1px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
@@ -313,9 +234,7 @@
 <body>
 
     <div id="syncIndicator">Syncing with Database...</div>
-
     <canvas id="matrixCanvas"></canvas>
-
     <button class="mode-toggle" id="teacherLoginBtn" onclick="showTeacherLogin()">Teacher Login</button>
 
     <div id="landingPage">
@@ -326,7 +245,6 @@
 
     <div id="loginOverlay" class="hidden">
         <div class="panel" style="max-width: 400px; text-align: center; position: relative; background: rgba(30, 41, 59, 0.95);">
-            
             <div id="loginForm">
                 <h2 style="margin-top: 0;">Student Login</h2>
                 <input type="text" id="userIn" placeholder="Username">
@@ -336,10 +254,8 @@
                 <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
                 <button class="nav-btn" onclick="continueAsGuest()" style="width: 100%; font-size: 0.85rem; padding: 12px;">Continue as Guest</button>
             </div>
-
             <div id="registerForm" class="hidden">
                 <h2 style="margin-top: 0;">Create Account</h2>
-                
                 <div style="margin-bottom: 15px; text-align: left;">
                     <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Select Your Teacher</label>
                     <select id="teacherSelect">
@@ -349,7 +265,6 @@
                         <option value="Teacher 4">Teacher 4</option>
                     </select>
                 </div>
-                
                 <input type="text" id="regFull" placeholder="Full Name (e.g. John Doe)">
                 <input type="text" id="regUser" placeholder="Choose Username">
                 <input type="password" id="regPass" placeholder="Choose Password">
@@ -363,10 +278,8 @@
         <div class="panel" style="max-width: 420px; text-align: center; position: relative; background: #1e293b; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);">
             <h2 style="color: #cbd5e1; font-weight: 300; letter-spacing: 2px; margin-bottom: 5px; font-size: 0.9rem;">ADMINISTRATION</h2>
             <h1 style="margin-top: 0; margin-bottom: 25px; color: white;">Educator Portal</h1>
-            
             <input type="text" id="teacherUserIn" placeholder="Teacher Username (e.g. teacher1)" style="background: #0f172a; border-color: #475569;">
             <input type="password" id="teacherPassIn" placeholder="Password" style="background: #0f172a; border-color: #475569;">
-            
             <button class="main-btn" id="teacherLoginSubmit" onclick="handleTeacherAuth()" style="width: 100%; margin-top: 20px; background: #475569; box-shadow: none;">Authenticate</button>
             <button class="nav-btn" onclick="cancelTeacherLogin()" style="width: 100%; margin-top: 15px; background: transparent; border: none; font-size: 0.85rem; padding: 10px; color: #94a3b8;">&larr; Return to Application</button>
         </div>
@@ -403,9 +316,7 @@
                 <div class="study-tabs">
                     <button id="tabList" class="active" onclick="setStudyMode('list')">List</button>
                     <button id="tabFlash" onclick="setStudyMode('flash')">Flashcards</button>
-                    <button id="tabQuiz" onclick="setStudyMode('quiz')">Quiz</button>
-                    <button id="tabMatch" onclick="setStudyMode('match')">Matching</button>
-                    <button id="tabMemory" onclick="setStudyMode('memory')">Memory</button>
+                    <button id="tabGames" onclick="setStudyMode('games')">?? Study Games</button>
                 </div>
 
                 <div id="listMode">
@@ -426,7 +337,18 @@
                     </div>
                 </div>
 
+                <div id="gamesMenuMode" class="hidden">
+                    <h3 style="text-align: center; margin-top: 0; color: #cbd5e1; font-weight: 600;">Select a Training Module</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <button class="nav-btn" onclick="setStudyMode('quiz')" style="padding: 25px 15px; font-size: 1rem; border-color: var(--primary);">?? Quick Quiz</button>
+                        <button class="nav-btn" onclick="setStudyMode('match')" style="padding: 25px 15px; font-size: 1rem; border-color: var(--accent);">?? Matching</button>
+                        <button class="nav-btn" onclick="setStudyMode('memory')" style="padding: 25px 15px; font-size: 1rem; border-color: #ec4899;">?? Memory Matrix</button>
+                        <button class="nav-btn" onclick="setStudyMode('meteor')" style="padding: 25px 15px; font-size: 1rem; border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.1);">?? Meteor Strike</button>
+                    </div>
+                </div>
+
                 <div id="quizMode" class="hidden">
+                    <div class="breadcrumb" onclick="setStudyMode('games')">&larr; Back to Games Menu</div>
                     <div id="quizDifficultyArea">
                         <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
                         <div class="diff-selector">
@@ -447,6 +369,7 @@
                 </div>
 
                 <div id="matchMode" class="hidden">
+                    <div class="breadcrumb" onclick="setStudyMode('games')">&larr; Back to Games Menu</div>
                     <div id="matchDifficultyArea">
                         <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
                         <div class="diff-selector">
@@ -463,6 +386,7 @@
                 </div>
 
                 <div id="memoryMode" class="hidden">
+                    <div class="breadcrumb" onclick="setStudyMode('games')">&larr; Back to Games Menu</div>
                     <div id="memoryDifficultyArea">
                         <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
                         <div class="diff-selector">
@@ -472,12 +396,32 @@
                         </div>
                     </div>
                     <div id="memoryPlayArea" class="hidden">
-                        <div style="text-align:center; font-weight:bold; color:var(--primary); margin-bottom: 10px; font-size:1rem;">
+                        <div style="text-align:center; font-weight:bold; color:#ec4899; margin-bottom: 10px; font-size:1rem;">
                             <div id="memoryAttempts">Attempts: 0</div>
                         </div>
                         <div id="memoryContainer" class="memory-grid"></div>
                     </div>
                     <div id="memoryEnd" class="hidden"></div>
+                </div>
+
+                <div id="meteorMode" class="hidden">
+                    <div class="breadcrumb" onclick="setStudyMode('games')">&larr; Back to Games Menu</div>
+                    <div id="meteorDifficultyArea">
+                        <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
+                        <div class="diff-selector">
+                            <button class="diff-btn" onclick="initMeteor('Easy')">Easy (10 Words)</button>
+                            <button class="diff-btn" onclick="initMeteor('Medium')">Medium (20 Words)</button>
+                            <button class="diff-btn" onclick="initMeteor('Expert')">Expert (All)</button>
+                        </div>
+                    </div>
+                    <div id="meteorPlayArea" class="hidden">
+                        <div id="meteorStats" style="text-align:center; font-weight:bold; color:#facc15; margin-bottom: 10px; font-size:1rem; letter-spacing: 2px;">Score: 0 | Lives: ??????</div>
+                        <div class="meteor-board" id="meteorBoard">
+                            <div id="meteorWordEl" class="meteor-word"></div>
+                            <div id="meteorDefsEl" class="meteor-defs"></div>
+                        </div>
+                    </div>
+                    <div id="meteorEnd" class="hidden"></div>
                 </div>
             </div>
         </div>
@@ -491,7 +435,6 @@
 
             <div id="adminContentArea">
                 <h3 id="adminHeader" style="margin-top: 0;">System Control</h3>
-                
                 <div id="adminUnitSelection">
                     <div style="display:flex; gap:10px; margin-bottom:15px;">
                         <button class="main-btn" onclick="showCreateUnitForm()" style="flex:1; background:var(--accent);">+ Create New Unit</button>
@@ -552,12 +495,10 @@
                 </div>
                 <div id="individualStudentView" class="hidden">
                     <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to All Students</div>
-                    
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h4 id="viewingStudentName" style="color: var(--accent); margin: 0;"></h4>
                         <button id="clearAllBtn" onclick="clearResultsPrompt()" style="background: var(--danger); border: none; color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer;">Clear All Results</button>
                     </div>
-
                     <div id="studentDetailTable"></div>
                 </div>
             </div>
@@ -572,13 +513,11 @@
                     <div id="profileUpdateMsg" style="margin-top: 15px; font-size: 0.85rem; color: var(--accent); text-align: center;"></div>
                 </div>
             </div>
-            
         </div>
     </div>
 
 <script>
     let TEACHER_ID = "Teacher 1"; 
-    
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
     const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynTCTFohNSTzKX4cD9IbhiblXeBEbLgIVja6H_bvug8WkIhoSeb-ca2nrRHRYyKYoSww/exec"; 
 
@@ -597,6 +536,10 @@
 
     // Memory Logic Variables
     let memCards = [], memFlipped = [], memMatched = 0, memAttempts = 0, memGoal = 0, memIsAnimating = false, memDifficulty = "";
+
+    // Meteor Strike Logic Variables
+    let meteorCards = [], meteorIdx = 0, meteorScore = 0, meteorLives = 3, meteorDiff = '';
+    let meteorActive = false, meteorY = 0, meteorSpeed = 1, meteorAnim = null, meteorCurrent = null;
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -905,17 +848,32 @@
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
     
+    // REVISED SET STUDY MODE LOGIC
     function setStudyMode(mode) { 
-        ['tabList', 'tabFlash', 'tabQuiz', 'tabMatch', 'tabMemory'].forEach(t => document.getElementById(t).classList.remove('active')); 
-        document.getElementById('tab' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active'); 
-        ['listMode', 'flashMode', 'quizMode', 'matchMode', 'memoryMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
-        document.getElementById(mode + 'Mode').classList.remove('hidden'); 
+        // Global Game Cleanup
+        if(meteorAnim) cancelAnimationFrame(meteorAnim); meteorActive = false;
+        
+        ['tabList', 'tabFlash', 'tabGames'].forEach(t => document.getElementById(t).classList.remove('active')); 
+        
+        let tabToActivate = mode;
+        if(['games', 'quiz', 'match', 'memory', 'meteor'].includes(mode)) tabToActivate = 'games';
+        document.getElementById('tab' + tabToActivate.charAt(0).toUpperCase() + tabToActivate.slice(1)).classList.add('active'); 
+        
+        ['listMode', 'flashMode', 'gamesMenuMode', 'quizMode', 'matchMode', 'memoryMode', 'meteorMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
+        
+        if (mode === 'games') {
+            document.getElementById('gamesMenuMode').classList.remove('hidden');
+        } else {
+            document.getElementById(mode + 'Mode').classList.remove('hidden'); 
+        }
+
         const list = units[currentUnit][currentClass]; 
         if (mode === 'list') { renderFullList(list); updateHistoryUI(); } 
         if (mode === 'flash') { cardIdx = 0; flashcardList = [...list].sort(() => 0.5 - Math.random()); updateCard(); } 
         if (mode === 'quiz') resetQuizUI();
         if (mode === 'match') resetMatchUI();
         if (mode === 'memory') resetMemoryUI();
+        if (mode === 'meteor') resetMeteorUI();
     }
 
     function renderFullList(list) { 
@@ -1006,7 +964,6 @@
         } 
     }
 
-    // --- FIX: Updated Memory Matrix Logic (Attempts Only) ---
     function resetMemoryUI() {
         document.getElementById('memoryDifficultyArea').classList.remove('hidden');
         document.getElementById('memoryPlayArea').classList.add('hidden');
@@ -1090,10 +1047,144 @@
         const resultText = `${memAttempts} Attempts`;
         document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${resultText} (${memDifficulty})</h3><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`;
         document.getElementById('memoryEnd').classList.remove('hidden');
-        
-        // Write the total attempts to the session history and backend sheet
         addHistory(`Memory (${memDifficulty})`, resultText);
         syncSessionToSheet(`Memory (${memDifficulty})`, resultText);
+    }
+
+    // --- NEW: METEOR STRIKE LOGIC ---
+    function resetMeteorUI() {
+        meteorActive = false;
+        if(meteorAnim) cancelAnimationFrame(meteorAnim);
+        document.getElementById('meteorDifficultyArea').classList.remove('hidden');
+        document.getElementById('meteorPlayArea').classList.add('hidden');
+        document.getElementById('meteorEnd').classList.add('hidden');
+    }
+
+    function initMeteor(diff) {
+        meteorDiff = diff;
+        const list = units[currentUnit][currentClass];
+        if(!list || list.length < 3) return alert("You need at least 3 words in this list to play Meteor Strike!");
+        
+        let count = (diff === 'Easy') ? 10 : (diff === 'Medium') ? 20 : list.length;
+        if (count > list.length) count = list.length;
+
+        meteorCards = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        meteorScore = 0; 
+        meteorIdx = 0; 
+        meteorLives = 3; 
+        
+        document.getElementById('meteorDifficultyArea').classList.add('hidden');
+        document.getElementById('meteorPlayArea').classList.remove('hidden');
+        updateMeteorStats();
+        spawnMeteor();
+    }
+
+    function updateMeteorStats() {
+        document.getElementById('meteorStats').innerText = `Score: ${meteorScore} | Lives: ${'??'.repeat(meteorLives)}${'??'.repeat(3 - meteorLives)}`;
+    }
+
+    function spawnMeteor() {
+        if(meteorLives <= 0) return endMeteor(false);
+        if(meteorIdx >= meteorCards.length) return endMeteor(true); 
+
+        meteorCurrent = meteorCards[meteorIdx];
+        meteorY = -30; 
+        
+        // Speed scaling formula
+        meteorSpeed = (window.innerWidth < 500 ? 0.8 : 1.2) + (meteorScore * 0.15);
+
+        document.getElementById('meteorWordEl').innerText = meteorCurrent.t;
+        
+        const list = units[currentUnit][currentClass];
+        let options = [meteorCurrent];
+        let wrongOpts = list.filter(w => w.t !== meteorCurrent.t).sort(() => 0.5 - Math.random()).slice(0, 2);
+        options = [...options, ...wrongOpts].sort(() => 0.5 - Math.random());
+        
+        document.getElementById('meteorDefsEl').innerHTML = options.map(o => 
+            `<button class="meteor-def-btn" onclick="checkMeteor('${o.t.replace(/'/g, "\\'")}')">${o.d}</button>`
+        ).join('');
+
+        meteorActive = true;
+        if(meteorAnim) cancelAnimationFrame(meteorAnim);
+        meteorLoop();
+    }
+
+    function meteorLoop() {
+        if(!meteorActive) return;
+        meteorY += meteorSpeed;
+        
+        const wordEl = document.getElementById('meteorWordEl');
+        const boardEl = document.getElementById('meteorBoard');
+        const defsEl = document.getElementById('meteorDefsEl');
+        
+        if(wordEl) wordEl.style.top = meteorY + 'px';
+        
+        const hitZone = boardEl.clientHeight - defsEl.clientHeight - 40;
+        
+        if(meteorY > hitZone) {
+            handleMeteorMiss();
+        } else {
+            meteorAnim = requestAnimationFrame(meteorLoop);
+        }
+    }
+
+    function checkMeteor(term) {
+        if(!meteorActive) return;
+        if(term === meteorCurrent.t) {
+            handleMeteorHit();
+        } else {
+            handleMeteorMiss();
+        }
+    }
+
+    function handleMeteorHit() {
+        meteorActive = false;
+        cancelAnimationFrame(meteorAnim);
+        meteorScore++;
+        meteorIdx++;
+        updateMeteorStats();
+        
+        const board = document.getElementById('meteorBoard');
+        board.style.background = 'rgba(16, 185, 129, 0.4)'; // Flash green
+        setTimeout(() => {
+            board.style.background = '#000';
+            spawnMeteor();
+        }, 150);
+    }
+
+    function handleMeteorMiss() {
+        meteorActive = false;
+        cancelAnimationFrame(meteorAnim);
+        meteorLives--;
+        meteorIdx++;
+        updateMeteorStats();
+        
+        const board = document.getElementById('meteorBoard');
+        board.style.background = 'rgba(239, 68, 68, 0.5)'; // Flash red
+        setTimeout(() => {
+            board.style.background = '#000';
+            spawnMeteor();
+        }, 300);
+    }
+
+    function endMeteor(won) {
+        meteorActive = false;
+        if(meteorAnim) cancelAnimationFrame(meteorAnim);
+        
+        document.getElementById('meteorPlayArea').classList.add('hidden');
+        document.getElementById('meteorEnd').classList.remove('hidden');
+        
+        const msg = won ? "You Survived the Storm!" : "Game Over!";
+        const resultText = `${meteorScore} Points`;
+        
+        document.getElementById('meteorEnd').innerHTML = `
+            <h2 style="color: ${won ? 'var(--accent)' : 'var(--danger)'}; margin-bottom: 5px;">${msg}</h2>
+            <h3 style="margin-top:0;">Result: ${resultText} (${meteorDiff})</h3>
+            <button class="main-btn" onclick="resetMeteorUI()">Play Again</button>
+        `;
+        
+        addHistory(`Meteor (${meteorDiff})`, resultText);
+        syncSessionToSheet(`Meteor (${meteorDiff})`, resultText);
     }
 
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
@@ -1110,7 +1201,7 @@
                     let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
                     if (!name || String(name).trim() === "") name = "Anonymous";
                     if (t) { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-                    if (!isNaN(s) && s !== '' && !String(s).includes('%') && !String(s).includes('Attempts')) s = Math.round(parseFloat(s) * 100) + "%";
+                    if (!isNaN(s) && s !== '' && !String(s).includes('%') && !String(s).includes('Attempts') && !String(s).includes('Points')) s = Math.round(parseFloat(s) * 100) + "%";
                     rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
                 }
             } renderStudentList(); 
