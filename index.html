@@ -200,6 +200,11 @@
         .meteor-def-btn { background: rgba(30, 41, 59, 0.95); border: 1px solid var(--glass-border); color: white; padding: 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; text-align: left; }
         .meteor-def-btn:hover { background: var(--primary); border-color: var(--primary-hover); box-shadow: 0 0 10px rgba(99, 102, 241, 0.4); }
 
+        /* Rune Scramble CSS */
+        .scramble-tile { background: var(--glass); border: 2px solid var(--primary); color: white; padding: 10px 15px; border-radius: 8px; font-size: 1.3rem; font-weight: 800; cursor: pointer; transition: 0.2s; user-select: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); text-transform: uppercase; }
+        .scramble-tile:hover { background: var(--primary); transform: translateY(-2px); }
+        .scramble-slot { width: 35px; height: 45px; border-bottom: 3px solid var(--glass-border); margin: 0 5px; }
+
         .vocab-img { max-width: 100%; max-height: 150px; border-radius: 12px; margin-bottom: 20px; object-fit: cover; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
         .list-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-right: 15px; }
 
@@ -364,9 +369,13 @@
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 12 12 17 22 12"></polyline><polyline points="2 17 12 22 22 17"></polyline></svg>
                             Memory Matrix
                         </button>
-                        <button class="nav-btn" onclick="setStudyMode('meteor')" style="padding: 25px 15px; font-size: 1rem; border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.1); display: flex; flex-direction: column; gap: 10px;">
+                        <button class="nav-btn" onclick="setStudyMode('meteor')" style="padding: 25px 15px; font-size: 1rem; border-color: #facc15; display: flex; flex-direction: column; gap: 10px;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                             Meteor Strike
+                        </button>
+                        <button class="nav-btn" onclick="setStudyMode('scramble')" style="padding: 25px 15px; font-size: 1rem; border-color: #10b981; grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg>
+                            Rune Scramble
                         </button>
                     </div>
                 </div>
@@ -448,6 +457,26 @@
                     </div>
                     <div id="meteorEnd" class="hidden"></div>
                 </div>
+
+                <div id="scrambleMode" class="hidden">
+                    <div class="breadcrumb" onclick="setStudyMode('games')">&larr; Back to Games Menu</div>
+                    <div id="scrambleDifficultyArea">
+                        <div style="text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Select Difficulty</div>
+                        <div class="diff-selector">
+                            <button class="diff-btn" onclick="initScramble('Easy')">Easy</button>
+                            <button class="diff-btn" onclick="initScramble('Medium')">Medium</button>
+                            <button class="diff-btn" onclick="initScramble('Expert')">Expert</button>
+                        </div>
+                    </div>
+                    <div id="scramblePlayArea" class="hidden">
+                        <div id="scrambleStats" style="text-align:right; font-weight:bold; color:#10b981; margin-bottom: 10px;">Progress: 0 / 0</div>
+                        <div id="scrambleDef" style="font-size: 1.1rem; margin-bottom:20px; text-align: center; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--glass-border);"></div>
+                        <div id="scrambleAssembled" style="min-height: 60px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; margin-bottom: 30px; gap: 5px;"></div>
+                        <div id="scramblePool" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; border-top: 1px dashed var(--glass-border); padding-top: 20px;"></div>
+                    </div>
+                    <div id="scrambleEnd" class="hidden"></div>
+                </div>
+
             </div>
         </div>
 
@@ -514,7 +543,11 @@
             </div>
 
             <div id="adminAnalyticsArea" class="hidden">
-                <h3 style="margin-top: 0;">Student Insights</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin-top: 0; margin-bottom: 0;">Student Insights</h3>
+                    <button onclick="exportAnalyticsCSV()" class="main-btn" style="padding: 8px 12px; font-size: 0.8rem; background: var(--accent);">?? Export CSV</button>
+                </div>
+
                 <div id="studentListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="loading-text">Fetching records...</div>
                 </div>
@@ -563,6 +596,10 @@
 
     let meteorCards = [], meteorIdx = 0, meteorScore = 0, meteorLives = 3, meteorDiff = '';
     let meteorActive = false, meteorY = 0, meteorSpeed = 1, meteorAnim = null, meteorCurrent = null;
+
+    // Rune Scramble Variables
+    let scrambleCards = [], scrambleIdx = 0, scrambleScore = 0, scrambleDiff = '';
+    let currentScrambleWord = "", currentScrambledLetters = [], currentAssembledLetters = [];
 
     const canvas = document.getElementById('matrixCanvas');
     const ctx = canvas.getContext('2d');
@@ -788,7 +825,6 @@
 
     function toggleAuthMode(isReg) { document.getElementById('loginForm').classList.toggle('hidden', isReg); document.getElementById('registerForm').classList.toggle('hidden', !isReg); }
     
-    // FIX: Guest Login UI Flow
     function continueAsGuest() { 
         const guestDiv = document.getElementById('guestTeacherDiv');
         if (guestDiv.classList.contains('hidden')) {
@@ -884,10 +920,10 @@
         ['tabList', 'tabFlash', 'tabGames'].forEach(t => document.getElementById(t).classList.remove('active')); 
         
         let tabToActivate = mode;
-        if(['games', 'quiz', 'match', 'memory', 'meteor'].includes(mode)) tabToActivate = 'games';
+        if(['games', 'quiz', 'match', 'memory', 'meteor', 'scramble'].includes(mode)) tabToActivate = 'games';
         document.getElementById('tab' + tabToActivate.charAt(0).toUpperCase() + tabToActivate.slice(1)).classList.add('active'); 
         
-        ['listMode', 'flashMode', 'gamesMenuMode', 'quizMode', 'matchMode', 'memoryMode', 'meteorMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
+        ['listMode', 'flashMode', 'gamesMenuMode', 'quizMode', 'matchMode', 'memoryMode', 'meteorMode', 'scrambleMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
         
         if (mode === 'games') document.getElementById('gamesMenuMode').classList.remove('hidden');
         else document.getElementById(mode + 'Mode').classList.remove('hidden'); 
@@ -899,6 +935,7 @@
         if (mode === 'match') resetMatchUI();
         if (mode === 'memory') resetMemoryUI();
         if (mode === 'meteor') resetMeteorUI();
+        if (mode === 'scramble') resetScrambleUI();
     }
 
     function renderFullList(list) { 
@@ -1018,7 +1055,6 @@
             if (c1.id === c2.id) {
                 setTimeout(() => { document.getElementById(`memCard-${c1.idx}`).classList.add('matched'); document.getElementById(`memCard-${c2.idx}`).classList.add('matched'); memMatched++; updateMemoryStats(); memFlipped = []; memIsAnimating = false; if (memMatched === memGoal) endMemory(); }, 500);
             } else {
-                // FIX: Increased delay from 1000ms to 2500ms to allow more reading time
                 setTimeout(() => { document.getElementById(`memCard-${c1.idx}`).classList.remove('flipped'); document.getElementById(`memCard-${c2.idx}`).classList.remove('flipped'); updateMemoryStats(); memFlipped = []; memIsAnimating = false; }, 2500);
             }
         }
@@ -1027,64 +1063,39 @@
     function endMemory() { document.getElementById('memoryPlayArea').classList.add('hidden'); const resultText = `${memAttempts} Attempts`; document.getElementById('memoryEnd').innerHTML = `<h3>Result: ${resultText} (${memDifficulty})</h3><button class="main-btn" onclick="resetMemoryUI()">Restart</button>`; document.getElementById('memoryEnd').classList.remove('hidden'); addHistory(`Memory (${memDifficulty})`, resultText); syncSessionToSheet(`Memory (${memDifficulty})`, resultText); }
 
     function resetMeteorUI() { meteorActive = false; if(meteorAnim) cancelAnimationFrame(meteorAnim); document.getElementById('meteorDifficultyArea').classList.remove('hidden'); document.getElementById('meteorPlayArea').classList.add('hidden'); document.getElementById('meteorEnd').classList.add('hidden'); }
-    
     function initMeteor(diff) {
         meteorDiff = diff; const list = units[currentUnit][currentClass];
         if(!list || list.length < 3) return alert("You need at least 3 words in this list to play Meteor Strike!");
-        
         let count = (diff === 'Easy') ? 10 : (diff === 'Medium') ? 20 : list.length;
         if (diff === 'Infinity') count = list.length; 
         if (count > list.length) count = list.length;
-        
         meteorCards = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
         meteorScore = 0; meteorIdx = 0; meteorLives = 3; 
         document.getElementById('meteorDifficultyArea').classList.add('hidden'); document.getElementById('meteorPlayArea').classList.remove('hidden'); updateMeteorStats(); spawnMeteor();
     }
-    
-    function updateMeteorStats() { 
-        document.getElementById('meteorStats').innerHTML = `Score: ${meteorScore} &nbsp;|&nbsp; Lives: ${heartFull.repeat(meteorLives)}${heartEmpty.repeat(3 - meteorLives)}`; 
-    }
-
+    function updateMeteorStats() { document.getElementById('meteorStats').innerHTML = `Score: ${meteorScore} &nbsp;|&nbsp; Lives: ${heartFull.repeat(meteorLives)}${heartEmpty.repeat(3 - meteorLives)}`; }
     function spawnMeteor() {
         if(meteorLives <= 0) return endMeteor(false);
-        
         if(meteorIdx >= meteorCards.length) {
-            if(meteorDiff === 'Infinity') {
-                meteorCards.sort(() => 0.5 - Math.random());
-                meteorIdx = 0; 
-            } else {
-                return endMeteor(true); 
-            }
+            if(meteorDiff === 'Infinity') { meteorCards.sort(() => 0.5 - Math.random()); meteorIdx = 0; } 
+            else { return endMeteor(true); }
         }
-
-        meteorCurrent = meteorCards[meteorIdx];
-        meteorY = -40; 
-        
+        meteorCurrent = meteorCards[meteorIdx]; meteorY = -40; 
         meteorSpeed = (window.innerWidth < 500 ? 0.35 : 0.6) + (meteorScore * 0.08);
-
         document.getElementById('meteorWordEl').innerText = meteorCurrent.t;
-        
-        const list = units[currentUnit][currentClass];
-        let options = [meteorCurrent];
+        const list = units[currentUnit][currentClass]; let options = [meteorCurrent];
         let wrongOpts = list.filter(w => w.t !== meteorCurrent.t).sort(() => 0.5 - Math.random()).slice(0, 2);
         options = [...options, ...wrongOpts].sort(() => 0.5 - Math.random());
-        
         document.getElementById('meteorDefsEl').innerHTML = options.map(o => `<button class="meteor-def-btn" onclick="checkMeteor('${o.t.replace(/'/g, "\\'")}')">${o.d}</button>`).join('');
-
-        meteorActive = true;
-        if(meteorAnim) cancelAnimationFrame(meteorAnim);
-        meteorLoop();
+        meteorActive = true; if(meteorAnim) cancelAnimationFrame(meteorAnim); meteorLoop();
     }
-
     function meteorLoop() {
-        if(!meteorActive) return;
-        meteorY += meteorSpeed;
+        if(!meteorActive) return; meteorY += meteorSpeed;
         const wordEl = document.getElementById('meteorWordEl'); const boardEl = document.getElementById('meteorBoard'); const defsEl = document.getElementById('meteorDefsEl');
         if(wordEl) wordEl.style.top = meteorY + 'px';
         const hitZone = boardEl.clientHeight - defsEl.clientHeight - 40;
         if(meteorY > hitZone) handleMeteorMiss(); else meteorAnim = requestAnimationFrame(meteorLoop);
     }
-
     function checkMeteor(term) { if(!meteorActive) return; if(term === meteorCurrent.t) handleMeteorHit(); else handleMeteorMiss(); }
     function handleMeteorHit() { meteorActive = false; cancelAnimationFrame(meteorAnim); meteorScore++; meteorIdx++; updateMeteorStats(); const board = document.getElementById('meteorBoard'); board.style.background = 'rgba(16, 185, 129, 0.4)'; setTimeout(() => { board.style.background = '#000'; spawnMeteor(); }, 150); }
     function handleMeteorMiss() { meteorActive = false; cancelAnimationFrame(meteorAnim); meteorLives--; meteorIdx++; updateMeteorStats(); const board = document.getElementById('meteorBoard'); board.style.background = 'rgba(239, 68, 68, 0.5)'; setTimeout(() => { board.style.background = '#000'; spawnMeteor(); }, 300); }
@@ -1096,9 +1107,145 @@
         addHistory(`Meteor (${meteorDiff})`, resultText); syncSessionToSheet(`Meteor (${meteorDiff})`, resultText);
     }
 
-    function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
-    function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
+    // --- NEW: RUNE SCRAMBLE LOGIC ---
+    function resetScrambleUI() {
+        document.getElementById('scrambleDifficultyArea').classList.remove('hidden');
+        document.getElementById('scramblePlayArea').classList.add('hidden');
+        document.getElementById('scrambleEnd').classList.add('hidden');
+    }
     
+    function initScramble(diff) {
+        scrambleDiff = diff;
+        const list = units[currentUnit][currentClass];
+        if (!list || !list.length) return;
+        
+        let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
+        if (count > list.length) count = list.length;
+        
+        scrambleCards = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
+        scrambleScore = 0; 
+        scrambleIdx = 0;
+        
+        document.getElementById('scrambleDifficultyArea').classList.add('hidden');
+        document.getElementById('scramblePlayArea').classList.remove('hidden');
+        document.getElementById('scrambleStats').innerText = `Progress: 0 / ${scrambleCards.length}`;
+        
+        renderScramble();
+    }
+
+    function renderScramble() {
+        if (scrambleIdx >= scrambleCards.length) return endScramble();
+        
+        let card = scrambleCards[scrambleIdx];
+        currentScrambleWord = card.t.toUpperCase();
+        
+        // Break into letters, ignore spaces for the pool
+        currentScrambledLetters = currentScrambleWord.split('').map((char, i) => ({char, id: i, used: false}));
+        
+        // Shuffle the pool
+        for(let i = currentScrambledLetters.length - 1; i > 0; i--){
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentScrambledLetters[i], currentScrambledLetters[j]] = [currentScrambledLetters[j], currentScrambledLetters[i]];
+        }
+        
+        // Make sure it's not identical to the start if length > 2
+        if (currentScrambledLetters.map(l=>l.char).join('') === currentScrambleWord && currentScrambleWord.length > 2) {
+            [currentScrambledLetters[0], currentScrambledLetters[1]] = [currentScrambledLetters[1], currentScrambledLetters[0]];
+        }
+        
+        currentAssembledLetters = [];
+        document.getElementById('scrambleDef').innerText = card.d;
+        updateScrambleBoard();
+    }
+
+    function updateScrambleBoard() {
+        let assembledHTML = '';
+        for(let i=0; i<currentScrambleWord.length; i++) {
+            if (currentScrambleWord[i] === ' ') {
+                assembledHTML += `<div style="display:inline-block; width:20px;"></div>`;
+            } else if(currentAssembledLetters[i]) {
+                assembledHTML += `<div class="scramble-tile" onclick="removeScrambleLetter(${i})">${currentAssembledLetters[i].char}</div>`;
+            } else {
+                assembledHTML += `<div class="scramble-slot"></div>`;
+            }
+        }
+        document.getElementById('scrambleAssembled').innerHTML = assembledHTML;
+        
+        let poolHTML = '';
+        currentScrambledLetters.forEach((l, i) => {
+            if(!l.used && l.char !== ' ') {
+                poolHTML += `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`;
+            }
+        });
+        document.getElementById('scramblePool').innerHTML = poolHTML;
+        
+        // Check win condition (comparing only non-space characters)
+        const wordNoSpaces = currentScrambleWord.replace(/ /g, '');
+        if(currentAssembledLetters.length === wordNoSpaces.length && currentAssembledLetters.length > 0) {
+            let attempt = currentAssembledLetters.map(x => x.char).join('');
+            if(attempt === wordNoSpaces) {
+                scrambleScore++;
+                document.getElementById('scrambleStats').innerText = `Progress: ${scrambleScore} / ${scrambleCards.length}`;
+                document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--accent); font-weight:bold; font-size:1.5rem; text-transform: uppercase;">${currentScrambleWord}</div>`;
+                document.getElementById('scramblePool').innerHTML = '';
+                setTimeout(() => { scrambleIdx++; renderScramble(); }, 1200);
+            } else {
+                document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--danger); font-weight:bold; font-size:1.5rem;">Try Again!</div>`;
+                setTimeout(() => {
+                    currentAssembledLetters.forEach(a => currentScrambledLetters[a.poolIdx].used = false);
+                    currentAssembledLetters = [];
+                    updateScrambleBoard();
+                }, 800);
+            }
+        }
+    }
+
+    function selectScrambleLetter(poolIdx) {
+        currentScrambledLetters[poolIdx].used = true;
+        currentAssembledLetters.push({ char: currentScrambledLetters[poolIdx].char, poolIdx: poolIdx });
+        updateScrambleBoard();
+    }
+
+    function removeScrambleLetter(assembledIdx) {
+        // Adjust for spaces in the display logic vs array logic
+        let removed = currentAssembledLetters.splice(assembledIdx, 1)[0];
+        currentScrambledLetters[removed.poolIdx].used = false;
+        updateScrambleBoard();
+    }
+
+    function endScramble() {
+        document.getElementById('scramblePlayArea').classList.add('hidden');
+        document.getElementById('scrambleEnd').classList.remove('hidden');
+        const pct = Math.round((scrambleScore/scrambleCards.length)*100) + "%"; 
+        document.getElementById('scrambleEnd').innerHTML = `<h3>Result: ${pct} (${scrambleDiff})</h3><button class="main-btn" onclick="resetScrambleUI()">Restart</button>`;
+        addHistory(`Anagrams (${scrambleDiff})`, pct); syncSessionToSheet(`Anagrams (${scrambleDiff})`, pct);
+    }
+
+
+    // --- DATA EXPORT Logic ---
+    function exportAnalyticsCSV() {
+        if (!rawAnalytics || rawAnalytics.length === 0) return alert("No data available to export.");
+        
+        let csvData = "Date/Time,Student,Unit,List,Mode,Score\n";
+        
+        rawAnalytics.forEach(row => {
+            // Safely format for CSV compatibility 
+            const escapeCsv = (str) => `"${String(str).replace(/"/g, '""')}"`;
+            csvData += `${escapeCsv(row.timestamp)},${escapeCsv(row.student)},${escapeCsv(row.unit)},${escapeCsv(row.list)},${escapeCsv(row.mode)},${escapeCsv(row.score)}\n`;
+        });
+        
+        // Generate Blob to bypass browser URL length limitations
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Vocab_Sojourn_Analytics_${TEACHER_ID.replace(/\s+/g,"_")}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); document.getElementById('adminProfileArea').classList.toggle('hidden', tab !== 'profile'); document.getElementById('tabContentBtn').style.background = tab === 'content' ? 'var(--primary)' : 'var(--glass)'; document.getElementById('tabAnalyticsBtn').style.background = tab === 'analytics' ? 'var(--accent)' : 'var(--glass)'; document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)'; if (tab === 'analytics') fetchResultsAnalytics(); }
     
     async function fetchResultsAnalytics() { 
