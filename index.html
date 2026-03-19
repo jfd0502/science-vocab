@@ -597,7 +597,6 @@
     let meteorCards = [], meteorIdx = 0, meteorScore = 0, meteorLives = 3, meteorDiff = '';
     let meteorActive = false, meteorY = 0, meteorSpeed = 1, meteorAnim = null, meteorCurrent = null;
 
-    // Rune Scramble Variables
     let scrambleCards = [], scrambleIdx = 0, scrambleScore = 0, scrambleDiff = '';
     let currentScrambleWord = "", currentScrambledLetters = [], currentAssembledLetters = [];
 
@@ -1107,7 +1106,7 @@
         addHistory(`Meteor (${meteorDiff})`, resultText); syncSessionToSheet(`Meteor (${meteorDiff})`, resultText);
     }
 
-    // --- NEW: RUNE SCRAMBLE LOGIC ---
+    // --- RUNE SCRAMBLE LOGIC (FIXED SPACING LOGIC) ---
     function resetScrambleUI() {
         document.getElementById('scrambleDifficultyArea').classList.remove('hidden');
         document.getElementById('scramblePlayArea').classList.add('hidden');
@@ -1139,16 +1138,13 @@
         let card = scrambleCards[scrambleIdx];
         currentScrambleWord = card.t.toUpperCase();
         
-        // Break into letters, ignore spaces for the pool
         currentScrambledLetters = currentScrambleWord.split('').map((char, i) => ({char, id: i, used: false}));
         
-        // Shuffle the pool
         for(let i = currentScrambledLetters.length - 1; i > 0; i--){
             const j = Math.floor(Math.random() * (i + 1));
             [currentScrambledLetters[i], currentScrambledLetters[j]] = [currentScrambledLetters[j], currentScrambledLetters[i]];
         }
         
-        // Make sure it's not identical to the start if length > 2
         if (currentScrambledLetters.map(l=>l.char).join('') === currentScrambleWord && currentScrambleWord.length > 2) {
             [currentScrambledLetters[0], currentScrambledLetters[1]] = [currentScrambledLetters[1], currentScrambledLetters[0]];
         }
@@ -1160,13 +1156,18 @@
 
     function updateScrambleBoard() {
         let assembledHTML = '';
+        let letterIdx = 0; // Tracks position within the non-space clicked letters array
+        
         for(let i=0; i<currentScrambleWord.length; i++) {
             if (currentScrambleWord[i] === ' ') {
                 assembledHTML += `<div style="display:inline-block; width:20px;"></div>`;
-            } else if(currentAssembledLetters[i]) {
-                assembledHTML += `<div class="scramble-tile" onclick="removeScrambleLetter(${i})">${currentAssembledLetters[i].char}</div>`;
             } else {
-                assembledHTML += `<div class="scramble-slot"></div>`;
+                if(currentAssembledLetters[letterIdx]) {
+                    assembledHTML += `<div class="scramble-tile" onclick="removeScrambleLetter(${letterIdx})">${currentAssembledLetters[letterIdx].char}</div>`;
+                } else {
+                    assembledHTML += `<div class="scramble-slot"></div>`;
+                }
+                letterIdx++;
             }
         }
         document.getElementById('scrambleAssembled').innerHTML = assembledHTML;
@@ -1179,14 +1180,13 @@
         });
         document.getElementById('scramblePool').innerHTML = poolHTML;
         
-        // Check win condition (comparing only non-space characters)
         const wordNoSpaces = currentScrambleWord.replace(/ /g, '');
         if(currentAssembledLetters.length === wordNoSpaces.length && currentAssembledLetters.length > 0) {
             let attempt = currentAssembledLetters.map(x => x.char).join('');
             if(attempt === wordNoSpaces) {
                 scrambleScore++;
                 document.getElementById('scrambleStats').innerText = `Progress: ${scrambleScore} / ${scrambleCards.length}`;
-                document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--accent); font-weight:bold; font-size:1.5rem; text-transform: uppercase;">${currentScrambleWord}</div>`;
+                document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--accent); font-weight:bold; font-size:1.5rem; text-transform: uppercase; letter-spacing: 2px;">${currentScrambleWord}</div>`;
                 document.getElementById('scramblePool').innerHTML = '';
                 setTimeout(() => { scrambleIdx++; renderScramble(); }, 1200);
             } else {
@@ -1207,7 +1207,6 @@
     }
 
     function removeScrambleLetter(assembledIdx) {
-        // Adjust for spaces in the display logic vs array logic
         let removed = currentAssembledLetters.splice(assembledIdx, 1)[0];
         currentScrambledLetters[removed.poolIdx].used = false;
         updateScrambleBoard();
@@ -1221,29 +1220,19 @@
         addHistory(`Anagrams (${scrambleDiff})`, pct); syncSessionToSheet(`Anagrams (${scrambleDiff})`, pct);
     }
 
-
-    // --- DATA EXPORT Logic ---
     function exportAnalyticsCSV() {
         if (!rawAnalytics || rawAnalytics.length === 0) return alert("No data available to export.");
-        
         let csvData = "Date/Time,Student,Unit,List,Mode,Score\n";
-        
         rawAnalytics.forEach(row => {
-            // Safely format for CSV compatibility 
             const escapeCsv = (str) => `"${String(str).replace(/"/g, '""')}"`;
             csvData += `${escapeCsv(row.timestamp)},${escapeCsv(row.student)},${escapeCsv(row.unit)},${escapeCsv(row.list)},${escapeCsv(row.mode)},${escapeCsv(row.score)}\n`;
         });
-        
-        // Generate Blob to bypass browser URL length limitations
         const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        
         const link = document.createElement("a");
         link.setAttribute("href", url);
         link.setAttribute("download", `Vocab_Sojourn_Analytics_${TEACHER_ID.replace(/\s+/g,"_")}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
     function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); document.getElementById('adminProfileArea').classList.toggle('hidden', tab !== 'profile'); document.getElementById('tabContentBtn').style.background = tab === 'content' ? 'var(--primary)' : 'var(--glass)'; document.getElementById('tabAnalyticsBtn').style.background = tab === 'analytics' ? 'var(--accent)' : 'var(--glass)'; document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)'; if (tab === 'analytics') fetchResultsAnalytics(); }
