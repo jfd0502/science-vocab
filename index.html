@@ -237,6 +237,10 @@
         .analytics-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; }
         .analytics-table th { text-align: left; padding: 10px; border-bottom: 2px solid var(--glass-border); color: var(--primary); }
         .analytics-table td { padding: 10px; border-bottom: 1px solid var(--glass-border); }
+        
+        .item-analysis-row { display: flex; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid var(--glass-border); align-items: center; }
+        .item-analysis-bar-container { flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 0 15px; overflow: hidden; }
+        .item-analysis-bar { height: 100%; background: var(--danger); }
     </style>
 </head>
 <body>
@@ -545,12 +549,16 @@
             <div id="adminAnalyticsArea" class="hidden">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 style="margin-top: 0; margin-bottom: 0;">Student Insights</h3>
-                    <button onclick="exportAnalyticsCSV()" class="main-btn" style="padding: 8px 12px; font-size: 0.8rem; background: var(--accent);">?? Export CSV</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="showItemAnalysis()" class="main-btn" style="padding: 8px 12px; font-size: 0.8rem; background: var(--primary);">?? Item Analysis</button>
+                        <button onclick="exportAnalyticsCSV()" class="main-btn" style="padding: 8px 12px; font-size: 0.8rem; background: var(--accent);">?? Export CSV</button>
+                    </div>
                 </div>
 
                 <div id="studentListGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="loading-text">Fetching records...</div>
                 </div>
+                
                 <div id="individualStudentView" class="hidden">
                     <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to All Students</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -559,6 +567,19 @@
                     </div>
                     <div id="studentDetailTable"></div>
                 </div>
+
+                <div id="itemAnalysisView" class="hidden">
+                    <div class="breadcrumb" onclick="backToStudentList()">&larr; Back to Student List</div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                        <h4 style="margin-top: 0; color: var(--accent);">Most Frequently Missed Words (Quiz)</h4>
+                        <label style="font-size: 0.8rem; color: #94a3b8;">Filter by Unit/List:</label>
+                        <select id="itemAnalysisFilter" onchange="renderItemAnalysisBoard()">
+                            <option value="All">All Units & Lists</option>
+                        </select>
+                    </div>
+                    <div id="itemAnalysisBoard" style="background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid var(--glass-border); padding: 15px;"></div>
+                </div>
+
             </div>
 
             <div id="adminProfileArea" class="hidden">
@@ -577,7 +598,7 @@
 <script>
     let TEACHER_ID = "Teacher 1"; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynTCTFohNSTzKX4cD9IbhiblXeBEbLgIVja6H_bvug8WkIhoSeb-ca2nrRHRYyKYoSww/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwaONrdh9wavH7acbCZugy29qLucM1cC7oi7o8wC3ilvRRrDvUtX__j0nrb5xx_UwaQjg/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -589,6 +610,9 @@
     let currentViewingStudent = ""; 
 
     let qPool = [], qIdx = 0, qScore = 0, currentDifficulty = "";
+    // NEW: Analytics tracker for Quiz
+    let currentSessionDetails = { correct: [], missed: [] }; 
+
     let mGoal = 0, mCorrect = 0, mTotal = 0;
     let flashcardList = [];
 
@@ -615,20 +639,14 @@
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel(); 
             let utterance = new SpeechSynthesisUtterance(word);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.9; 
+            utterance.lang = 'en-US'; utterance.rate = 0.9; 
             window.speechSynthesis.speak(utterance);
-        } else {
-            alert("Sorry, your browser doesn't support text-to-speech features.");
-        }
+        } else { alert("Sorry, your browser doesn't support text-to-speech features."); }
     }
 
     function resizeCanvas() { 
         canvas.width = window.innerWidth; canvas.height = window.innerHeight; 
-        columns = Array(Math.floor(canvas.width / 20)).fill(0).map(() => ({
-            y: Math.random() * canvas.height,
-            word: allTerms[Math.floor(Math.random() * allTerms.length)]
-        })); 
+        columns = Array(Math.floor(canvas.width / 20)).fill(0).map(() => ({ y: Math.random() * canvas.height, word: allTerms[Math.floor(Math.random() * allTerms.length)] })); 
     }
 
     function updateMatrixWords() {
@@ -638,17 +656,11 @@
     }
 
     function drawMatrix() { 
-        ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height); 
-        ctx.fillStyle = "#3b82f6"; 
-        ctx.font = "bold 15px monospace"; 
+        ctx.fillStyle = "rgba(10, 15, 28, 0.15)"; ctx.fillRect(0, 0, canvas.width, canvas.height); 
+        ctx.fillStyle = "#3b82f6"; ctx.font = "bold 15px monospace"; 
         columns.forEach((col, i) => { 
-            ctx.fillText(col.word, i * 20, col.y); 
-            col.y += 35; 
-            if (col.y > canvas.height && Math.random() > 0.9) { 
-                col.y = 0; 
-                col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
-            } 
+            ctx.fillText(col.word, i * 20, col.y); col.y += 35; 
+            if (col.y > canvas.height && Math.random() > 0.9) { col.y = 0; col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; } 
         }); 
     }
     
@@ -673,8 +685,7 @@
             const response = await fetch(url); const csvText = await response.text();
             const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
             
-            const newUnits = {}; 
-            let teachers = new Set();
+            const newUnits = {}; let teachers = new Set();
             
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
@@ -702,8 +713,7 @@
                         if(teacherList.includes(val)) el.value = val;
                     }
                 };
-                updateDropdown('guestTeacherSelect');
-                updateDropdown('teacherSelect');
+                updateDropdown('guestTeacherSelect'); updateDropdown('teacherSelect');
             }
 
             units = newUnits; isDataLoaded = true; updateMatrixWords(); renderUnitSelection(); renderAdminUnitSelection();
@@ -728,10 +738,8 @@
     function submitNewUnit() {
         const unitName = document.getElementById('newUnitName').value.trim(), listName = document.getElementById('newUnitListName').value.trim(), term = document.getElementById('newUnitTerm').value.trim(), def = document.getElementById('newUnitDef').value.trim(), img = document.getElementById('newUnitImg').value.trim();
         if (!unitName || !listName || !term || !def) return alert("Unit Name, List Name, Term, and Definition are all required.");
-        if (!units[unitName]) units[unitName] = {};
-        if (!units[unitName][listName]) units[unitName][listName] = [];
-        units[unitName][listName].push({ t: term, d: def, img: img });
-        triggerSyncIndicator();
+        if (!units[unitName]) units[unitName] = {}; if (!units[unitName][listName]) units[unitName][listName] = [];
+        units[unitName][listName].push({ t: term, d: def, img: img }); triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: unitName, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) });
         document.getElementById('adminCreateUnitArea').classList.add('hidden'); renderAdminUnitSelection(); adminSelectUnit(unitName); adminSelectList(listName);
     }
@@ -740,8 +748,7 @@
         const listName = document.getElementById('newListName').value.trim(), term = document.getElementById('newListTerm').value.trim(), def = document.getElementById('newListDef').value.trim(), img = document.getElementById('newListImg').value.trim();
         if (!listName || !term || !def) return alert("All fields except image required.");
         if (!units[adminSelectedUnit][listName]) units[adminSelectedUnit][listName] = [];
-        units[adminSelectedUnit][listName].push({ t: term, d: def, img: img });
-        triggerSyncIndicator();
+        units[adminSelectedUnit][listName].push({ t: term, d: def, img: img }); triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: adminSelectedUnit, list: listName, term: term, def: def, img: img, teacherID: TEACHER_ID }) });
         document.getElementById('adminCreateListArea').classList.add('hidden'); adminSelectUnit(adminSelectedUnit); adminSelectList(listName);
     }
@@ -749,37 +756,32 @@
     async function submitNewWord() { 
         const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
         if(!t || !d) return alert("Fill fields");
-        units[u][l].push({t, d, img: i}); 
-        renderAdminWordList(); triggerSyncIndicator();
+        units[u][l].push({t, d, img: i}); renderAdminWordList(); triggerSyncIndicator();
         document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: u, list: l, term: t, def: d, img: i, teacherID: TEACHER_ID }) });
     }
 
     async function saveEdit(u, l, idx) { 
         const nt = document.getElementById(`t-${idx}`).value, nd = document.getElementById(`d-${idx}`).value, ni = document.getElementById(`i-${idx}`).value;
-        const oldTerm = units[u][l][idx].t;
-        units[u][l][idx] = {t: nt, d: nd, img: ni}; 
-        triggerSyncIndicator();
+        const oldTerm = units[u][l][idx].t; units[u][l][idx] = {t: nt, d: nd, img: ni}; triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "updateWord", unit: u, list: l, oldTerm, newTerm: nt, newDef: nd, newImg: ni, teacherID: TEACHER_ID }) }); 
     }
 
     async function deleteWord(u, l, idx) {
         if(!confirm("Are you sure?")) return;
-        const termToDelete = units[u][l][idx].t;
-        units[u][l].splice(idx, 1); 
-        renderAdminWordList(); triggerSyncIndicator();
+        const termToDelete = units[u][l][idx].t; units[u][l].splice(idx, 1); renderAdminWordList(); triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) });
     }
 
-    async function syncSessionToSheet(mode, score) { 
+    // UPDATED: Now passes an optional 'details' JSON string for item analysis.
+    async function syncSessionToSheet(mode, score, details = "") { 
         if (studentName === "Guest") return; 
-        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID }) }); 
+        fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "recordSession", student: studentName, unit: currentUnit, list: currentClass, mode: mode, score: score, teacherID: TEACHER_ID, details: details }) }); 
     }
 
     async function clearResultsPrompt() {
         if (!confirm(`Clear all results for ${currentViewingStudent}?`)) return;
-        const btn = document.getElementById('clearAllBtn');
-        btn.innerText = "Clearing..."; btn.disabled = true;
+        const btn = document.getElementById('clearAllBtn'); btn.innerText = "Clearing..."; btn.disabled = true;
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID }) });
         setTimeout(() => { alert("Results cleared."); fetchResultsAnalytics(); btn.innerText = "Clear All Results"; btn.disabled = false; }, 800);
     }
@@ -790,17 +792,14 @@
         if (!confirm(`Are you sure? This will update your login to "${newUser}" and permanently transfer all your lists and student data to this new identity.`)) return;
 
         const btn = document.getElementById('updateTeacherBtn'); btn.innerText = "Transferring Data..."; btn.disabled = true;
-        
         try {
             fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "updateTeacherProfile", teacherID: TEACHER_ID, newUser: newUser, newPass: newPass }) });
             TEACHER_ID = newUser; studentName = TEACHER_ID;
             localStorage.setItem('vocabSojournName', TEACHER_ID); localStorage.setItem('vocabSojournTeacher', TEACHER_ID);
-            
             document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
             document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID;
             document.getElementById('profileUpdateMsg').innerText = "Credentials & Database updated securely. Welcome, " + TEACHER_ID + "!";
             setTimeout(() => { document.getElementById('profileUpdateMsg').innerText = ""; }, 5000);
-            
             document.getElementById('updateTeacherUser').value = ""; document.getElementById('updateTeacherPass').value = "";
         } catch(e) { alert("Error updating profile."); console.error(e); } finally { btn.innerText = "Update Identity & Transfer Data"; btn.disabled = false; }
     }
@@ -827,17 +826,11 @@
     function continueAsGuest() { 
         const guestDiv = document.getElementById('guestTeacherDiv');
         if (guestDiv.classList.contains('hidden')) {
-            guestDiv.classList.remove('hidden');
-            document.getElementById('guestContinueBtn').innerText = "Enter Guest Portal";
+            guestDiv.classList.remove('hidden'); document.getElementById('guestContinueBtn').innerText = "Enter Guest Portal";
         } else {
             const guestTeacher = document.getElementById('guestTeacherSelect').value;
-            if(guestTeacher) { 
-                TEACHER_ID = guestTeacher; 
-                studentName = "Guest"; 
-                unlockApp(); 
-            } else {
-                alert("Please wait for the list of educators to load or verify your connection.");
-            }
+            if(guestTeacher) { TEACHER_ID = guestTeacher; studentName = "Guest"; unlockApp(); } 
+            else { alert("Please wait for the list of educators to load or verify your connection."); }
         }
     }
 
@@ -965,35 +958,57 @@
     
     function changeCard(dir) { if (!flashcardList.length) return; cardIdx = (cardIdx + dir + flashcardList.length) % flashcardList.length; updateCard(); }
 
+    // --- QUIZ WITH ITEM ANALYSIS TRACKING ---
     function resetQuizUI() { document.getElementById('quizDifficultyArea').classList.remove('hidden'); document.getElementById('quizPlayArea').classList.add('hidden'); document.getElementById('quizEnd').classList.add('hidden'); }
+    
     function initQuiz(diff) {
         currentDifficulty = diff; const list = units[currentUnit][currentClass];
         if (!list || !list.length) return;
         let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
         qPool = [...list].sort(() => 0.5 - Math.random()).slice(0, count); qScore = 0; qIdx = 0;
+        
+        // Reset Tracker
+        currentSessionDetails = { correct: [], missed: [] }; 
+        
         document.getElementById('quizDifficultyArea').classList.add('hidden'); document.getElementById('quizPlayArea').classList.remove('hidden');
         document.getElementById('quizStats').innerText = `Accuracy: 0%`; renderQuiz();
     }
+
     function renderQuiz() { 
         if (qIdx >= qPool.length) { endQuiz(); return; } 
         const list = units[currentUnit][currentClass]; const correct = qPool[qIdx]; 
         const options = [correct, ...list.filter(i => i.t !== correct.t).sort(() => 0.5 - Math.random()).slice(0, 3)].sort(() => 0.5 - Math.random()); 
         document.getElementById('quizQuestion').innerText = `Definition of: ${correct.t}?`; 
-        document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t})">${o.d}</div>`).join(''); 
+        document.getElementById('quizOptions').innerHTML = options.map(o => `<div class="nav-btn" style="margin-bottom: 10px; display: block; text-align: left; padding: 15px;" onclick="checkQuiz(this, ${o.t === correct.t}, '${correct.t.replace(/'/g, "\\'")}')">${o.d}</div>`).join(''); 
         document.getElementById('nextQuizBtn').classList.add('hidden'); 
     }
-    function checkQuiz(el, isCorrect) { 
+
+    function checkQuiz(el, isCorrect, correctTerm) { 
         if (!document.getElementById('nextQuizBtn').classList.contains('hidden')) return; 
-        if (isCorrect) { qScore++; el.style.background = 'var(--accent)'; } else { el.style.background = 'var(--danger)'; } 
+        
+        // Track the word for item analysis
+        if (isCorrect) { 
+            qScore++; el.style.background = 'var(--accent)'; 
+            currentSessionDetails.correct.push(correctTerm);
+        } else { 
+            el.style.background = 'var(--danger)'; 
+            currentSessionDetails.missed.push(correctTerm);
+        } 
+        
         qIdx++; document.getElementById('quizStats').innerText = `Accuracy: ${Math.round((qScore/qIdx)*100)}%`; 
         document.getElementById('nextQuizBtn').classList.remove('hidden'); 
     }
+
     function endQuiz() { 
         document.getElementById('quizPlayArea').classList.add('hidden'); 
         const pct = Math.round((qScore/qPool.length)*100) + "%"; 
         document.getElementById('quizEnd').innerHTML = `<h3>Result: ${pct} (${currentDifficulty})</h3><button class="main-btn" onclick="resetQuizUI()">Restart</button>`; 
         document.getElementById('quizEnd').classList.remove('hidden'); 
-        addHistory(`Quiz (${currentDifficulty})`, pct); syncSessionToSheet(`Quiz (${currentDifficulty})`, pct); 
+        
+        addHistory(`Quiz (${currentDifficulty})`, pct); 
+        
+        // Save the detailed JSON string to the backend!
+        syncSessionToSheet(`Quiz (${currentDifficulty})`, pct, JSON.stringify(currentSessionDetails)); 
     }
 
     function resetMatchUI() { document.getElementById('matchDifficultyArea').classList.remove('hidden'); document.getElementById('matchPlayArea').classList.add('hidden'); document.getElementById('matchEnd').classList.add('hidden'); }
@@ -1106,119 +1121,127 @@
         addHistory(`Meteor (${meteorDiff})`, resultText); syncSessionToSheet(`Meteor (${meteorDiff})`, resultText);
     }
 
-    // --- RUNE SCRAMBLE LOGIC (FIXED SPACING LOGIC) ---
-    function resetScrambleUI() {
-        document.getElementById('scrambleDifficultyArea').classList.remove('hidden');
-        document.getElementById('scramblePlayArea').classList.add('hidden');
-        document.getElementById('scrambleEnd').classList.add('hidden');
-    }
-    
+    function resetScrambleUI() { document.getElementById('scrambleDifficultyArea').classList.remove('hidden'); document.getElementById('scramblePlayArea').classList.add('hidden'); document.getElementById('scrambleEnd').classList.add('hidden'); }
     function initScramble(diff) {
-        scrambleDiff = diff;
-        const list = units[currentUnit][currentClass];
+        scrambleDiff = diff; const list = units[currentUnit][currentClass];
         if (!list || !list.length) return;
-        
         let count = (diff === 'Easy') ? 5 : (diff === 'Medium') ? 10 : list.length;
         if (count > list.length) count = list.length;
-        
         scrambleCards = [...list].sort(() => 0.5 - Math.random()).slice(0, count);
-        scrambleScore = 0; 
-        scrambleIdx = 0;
-        
-        document.getElementById('scrambleDifficultyArea').classList.add('hidden');
-        document.getElementById('scramblePlayArea').classList.remove('hidden');
-        document.getElementById('scrambleStats').innerText = `Progress: 0 / ${scrambleCards.length}`;
-        
+        scrambleScore = 0; scrambleIdx = 0;
+        document.getElementById('scrambleDifficultyArea').classList.add('hidden'); document.getElementById('scramblePlayArea').classList.remove('hidden'); document.getElementById('scrambleStats').innerText = `Progress: 0 / ${scrambleCards.length}`;
         renderScramble();
     }
-
     function renderScramble() {
         if (scrambleIdx >= scrambleCards.length) return endScramble();
-        
-        let card = scrambleCards[scrambleIdx];
-        currentScrambleWord = card.t.toUpperCase();
-        
+        let card = scrambleCards[scrambleIdx]; currentScrambleWord = card.t.toUpperCase();
         currentScrambledLetters = currentScrambleWord.split('').map((char, i) => ({char, id: i, used: false}));
-        
-        for(let i = currentScrambledLetters.length - 1; i > 0; i--){
-            const j = Math.floor(Math.random() * (i + 1));
-            [currentScrambledLetters[i], currentScrambledLetters[j]] = [currentScrambledLetters[j], currentScrambledLetters[i]];
-        }
-        
-        if (currentScrambledLetters.map(l=>l.char).join('') === currentScrambleWord && currentScrambleWord.length > 2) {
-            [currentScrambledLetters[0], currentScrambledLetters[1]] = [currentScrambledLetters[1], currentScrambledLetters[0]];
-        }
-        
-        currentAssembledLetters = [];
-        document.getElementById('scrambleDef').innerText = card.d;
-        updateScrambleBoard();
+        for(let i = currentScrambledLetters.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [currentScrambledLetters[i], currentScrambledLetters[j]] = [currentScrambledLetters[j], currentScrambledLetters[i]]; }
+        if (currentScrambledLetters.map(l=>l.char).join('') === currentScrambleWord && currentScrambleWord.length > 2) { [currentScrambledLetters[0], currentScrambledLetters[1]] = [currentScrambledLetters[1], currentScrambledLetters[0]]; }
+        currentAssembledLetters = []; document.getElementById('scrambleDef').innerText = card.d; updateScrambleBoard();
     }
-
     function updateScrambleBoard() {
-        let assembledHTML = '';
-        let letterIdx = 0; // Tracks position within the non-space clicked letters array
-        
+        let assembledHTML = ''; let letterIdx = 0;
         for(let i=0; i<currentScrambleWord.length; i++) {
-            if (currentScrambleWord[i] === ' ') {
-                assembledHTML += `<div style="display:inline-block; width:20px;"></div>`;
-            } else {
-                if(currentAssembledLetters[letterIdx]) {
-                    assembledHTML += `<div class="scramble-tile" onclick="removeScrambleLetter(${letterIdx})">${currentAssembledLetters[letterIdx].char}</div>`;
-                } else {
-                    assembledHTML += `<div class="scramble-slot"></div>`;
-                }
+            if (currentScrambleWord[i] === ' ') { assembledHTML += `<div style="display:inline-block; width:20px;"></div>`; } 
+            else {
+                if(currentAssembledLetters[letterIdx]) { assembledHTML += `<div class="scramble-tile" onclick="removeScrambleLetter(${letterIdx})">${currentAssembledLetters[letterIdx].char}</div>`; } 
+                else { assembledHTML += `<div class="scramble-slot"></div>`; }
                 letterIdx++;
             }
         }
         document.getElementById('scrambleAssembled').innerHTML = assembledHTML;
-        
         let poolHTML = '';
-        currentScrambledLetters.forEach((l, i) => {
-            if(!l.used && l.char !== ' ') {
-                poolHTML += `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`;
-            }
-        });
+        currentScrambledLetters.forEach((l, i) => { if(!l.used && l.char !== ' ') { poolHTML += `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`; } });
         document.getElementById('scramblePool').innerHTML = poolHTML;
         
         const wordNoSpaces = currentScrambleWord.replace(/ /g, '');
         if(currentAssembledLetters.length === wordNoSpaces.length && currentAssembledLetters.length > 0) {
             let attempt = currentAssembledLetters.map(x => x.char).join('');
             if(attempt === wordNoSpaces) {
-                scrambleScore++;
-                document.getElementById('scrambleStats').innerText = `Progress: ${scrambleScore} / ${scrambleCards.length}`;
+                scrambleScore++; document.getElementById('scrambleStats').innerText = `Progress: ${scrambleScore} / ${scrambleCards.length}`;
                 document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--accent); font-weight:bold; font-size:1.5rem; text-transform: uppercase; letter-spacing: 2px;">${currentScrambleWord}</div>`;
                 document.getElementById('scramblePool').innerHTML = '';
                 setTimeout(() => { scrambleIdx++; renderScramble(); }, 1200);
             } else {
                 document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--danger); font-weight:bold; font-size:1.5rem;">Try Again!</div>`;
-                setTimeout(() => {
-                    currentAssembledLetters.forEach(a => currentScrambledLetters[a.poolIdx].used = false);
-                    currentAssembledLetters = [];
-                    updateScrambleBoard();
-                }, 800);
+                setTimeout(() => { currentAssembledLetters.forEach(a => currentScrambledLetters[a.poolIdx].used = false); currentAssembledLetters = []; updateScrambleBoard(); }, 800);
             }
         }
     }
-
-    function selectScrambleLetter(poolIdx) {
-        currentScrambledLetters[poolIdx].used = true;
-        currentAssembledLetters.push({ char: currentScrambledLetters[poolIdx].char, poolIdx: poolIdx });
-        updateScrambleBoard();
-    }
-
-    function removeScrambleLetter(assembledIdx) {
-        let removed = currentAssembledLetters.splice(assembledIdx, 1)[0];
-        currentScrambledLetters[removed.poolIdx].used = false;
-        updateScrambleBoard();
-    }
-
+    function selectScrambleLetter(poolIdx) { currentScrambledLetters[poolIdx].used = true; currentAssembledLetters.push({ char: currentScrambledLetters[poolIdx].char, poolIdx: poolIdx }); updateScrambleBoard(); }
+    function removeScrambleLetter(assembledIdx) { let removed = currentAssembledLetters.splice(assembledIdx, 1)[0]; currentScrambledLetters[removed.poolIdx].used = false; updateScrambleBoard(); }
     function endScramble() {
-        document.getElementById('scramblePlayArea').classList.add('hidden');
-        document.getElementById('scrambleEnd').classList.remove('hidden');
+        document.getElementById('scramblePlayArea').classList.add('hidden'); document.getElementById('scrambleEnd').classList.remove('hidden');
         const pct = Math.round((scrambleScore/scrambleCards.length)*100) + "%"; 
         document.getElementById('scrambleEnd').innerHTML = `<h3>Result: ${pct} (${scrambleDiff})</h3><button class="main-btn" onclick="resetScrambleUI()">Restart</button>`;
         addHistory(`Anagrams (${scrambleDiff})`, pct); syncSessionToSheet(`Anagrams (${scrambleDiff})`, pct);
     }
+
+    function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
+    function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
+    
+    // --- ADMIN ANALYTICS & ITEM ANALYSIS ---
+    function switchAdminTab(tab) { 
+        document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); 
+        document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); 
+        document.getElementById('adminProfileArea').classList.toggle('hidden', tab !== 'profile'); 
+        document.getElementById('tabContentBtn').style.background = tab === 'content' ? 'var(--primary)' : 'var(--glass)'; 
+        document.getElementById('tabAnalyticsBtn').style.background = tab === 'analytics' ? 'var(--accent)' : 'var(--glass)'; 
+        document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)'; 
+        
+        document.getElementById('individualStudentView').classList.add('hidden');
+        document.getElementById('itemAnalysisView').classList.add('hidden');
+        
+        if (tab === 'analytics') {
+            document.getElementById('studentListGrid').classList.remove('hidden');
+            fetchResultsAnalytics(); 
+        }
+    }
+    
+    async function fetchResultsAnalytics() { 
+        try { 
+            const response = await fetch(`${EXPORT_URL}?action=getAnalytics&teacherID=${TEACHER_ID}&cb=${Date.now()}`); 
+            const data = await response.json(); 
+            rawAnalytics = [];
+            for (let i = 0; i < data.length; i++) {
+                let row = data[i]; if (!row || row.length < 6) continue;
+                if (row[6] === TEACHER_ID) {
+                    let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5], details = row[7] || "{}"; 
+                    if (!name || String(name).trim() === "") name = "Anonymous";
+                    if (t) { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+                    if (!isNaN(s) && s !== '' && !String(s).includes('%') && !String(s).includes('Attempts') && !String(s).includes('Points')) s = Math.round(parseFloat(s) * 100) + "%";
+                    rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t, details: details });
+                }
+            } 
+            renderStudentList(); 
+        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
+    }
+
+    function renderStudentList() { 
+        const grid = document.getElementById('studentListGrid'); 
+        document.getElementById('individualStudentView').classList.add('hidden'); 
+        document.getElementById('itemAnalysisView').classList.add('hidden');
+        grid.classList.remove('hidden'); 
+        let studentSet = [...new Set(rawAnalytics.map(r => r.student))]; 
+        if (studentSet.length === 0) { grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">No records found for ${TEACHER_ID}.</div>`; return; } 
+        grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); 
+    }
+
+    function viewStudentDetail(name) { 
+        currentViewingStudent = name; 
+        document.getElementById('studentListGrid').classList.add('hidden'); 
+        const view = document.getElementById('individualStudentView'); 
+        view.classList.remove('hidden'); 
+        document.getElementById('viewingStudentName').innerText = "History for: " + name; 
+        const filtered = rawAnalytics.filter(r => r.student === name); 
+        let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; 
+        filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); 
+        html += `</table>`; 
+        document.getElementById('studentDetailTable').innerHTML = html; 
+    }
+    
+    function backToStudentList() { renderStudentList(); }
 
     function exportAnalyticsCSV() {
         if (!rawAnalytics || rawAnalytics.length === 0) return alert("No data available to export.");
@@ -1235,27 +1258,77 @@
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
-    function switchAdminTab(tab) { document.getElementById('adminContentArea').classList.toggle('hidden', tab !== 'content'); document.getElementById('adminAnalyticsArea').classList.toggle('hidden', tab !== 'analytics'); document.getElementById('adminProfileArea').classList.toggle('hidden', tab !== 'profile'); document.getElementById('tabContentBtn').style.background = tab === 'content' ? 'var(--primary)' : 'var(--glass)'; document.getElementById('tabAnalyticsBtn').style.background = tab === 'analytics' ? 'var(--accent)' : 'var(--glass)'; document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)'; if (tab === 'analytics') fetchResultsAnalytics(); }
-    
-    async function fetchResultsAnalytics() { 
-        try { 
-            const response = await fetch(`${EXPORT_URL}?action=getAnalytics&teacherID=${TEACHER_ID}&cb=${Date.now()}`); const data = await response.json(); rawAnalytics = [];
-            for (let i = 0; i < data.length; i++) {
-                let row = data[i]; if (!row || row.length < 6) continue;
-                if (row[6] === TEACHER_ID) {
-                    let t = row[0], name = row[1], u = row[2], l = row[3], m = row[4], s = row[5]; 
-                    if (!name || String(name).trim() === "") name = "Anonymous";
-                    if (t) { const dateObj = new Date(t); if (!isNaN(dateObj)) t = dateObj.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
-                    if (!isNaN(s) && s !== '' && !String(s).includes('%') && !String(s).includes('Attempts') && !String(s).includes('Points')) s = Math.round(parseFloat(s) * 100) + "%";
-                    rawAnalytics.push({ student: name, unit: u, list: l, mode: m, score: s, timestamp: t });
-                }
-            } renderStudentList(); 
-        } catch (e) { document.getElementById('studentListGrid').innerText = "Unable to load analytics."; } 
+    // --- NEW: ITEM ANALYSIS RENDERER ---
+    function showItemAnalysis() {
+        document.getElementById('studentListGrid').classList.add('hidden');
+        document.getElementById('individualStudentView').classList.add('hidden');
+        document.getElementById('itemAnalysisView').classList.remove('hidden');
+
+        // Populate Filter Dropdown
+        const filterEl = document.getElementById('itemAnalysisFilter');
+        let optionsHtml = `<option value="All">All Units & Lists</option>`;
+        
+        let uniqueGroupings = new Set();
+        rawAnalytics.forEach(r => {
+            if(r.mode && r.mode.includes("Quiz")) uniqueGroupings.add(`${r.unit} > ${r.list}`);
+        });
+
+        Array.from(uniqueGroupings).sort().forEach(group => {
+            optionsHtml += `<option value="${group}">${group}</option>`;
+        });
+        
+        filterEl.innerHTML = optionsHtml;
+        renderItemAnalysisBoard();
     }
 
-    function renderStudentList() { const grid = document.getElementById('studentListGrid'); document.getElementById('individualStudentView').classList.add('hidden'); grid.classList.remove('hidden'); let studentSet = [...new Set(rawAnalytics.map(r => r.student))]; if (studentSet.length === 0) { grid.innerHTML = `<div class="loading-text" style="grid-column: 1 / -1;">No records found for ${TEACHER_ID}.</div>`; return; } grid.innerHTML = studentSet.map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join(''); }
-    function viewStudentDetail(name) { currentViewingStudent = name; document.getElementById('studentListGrid').classList.add('hidden'); const view = document.getElementById('individualStudentView'); view.classList.remove('hidden'); document.getElementById('viewingStudentName').innerText = "History for: " + name; const filtered = rawAnalytics.filter(r => r.student === name); let html = `<table class="analytics-table"><tr><th>Date/Time</th><th>Unit</th><th>List</th><th>Mode</th><th>Score</th></tr>`; filtered.reverse().forEach(r => { html += `<tr><td>${r.timestamp}</td><td>${r.unit}</td><td>${r.list}</td><td>${r.mode}</td><td>${r.score}</td></tr>`; }); html += `</table>`; document.getElementById('studentDetailTable').innerHTML = html; }
-    function backToStudentList() { renderStudentList(); }
+    function renderItemAnalysisBoard() {
+        const filterVal = document.getElementById('itemAnalysisFilter').value;
+        const board = document.getElementById('itemAnalysisBoard');
+        
+        let missedCounts = {};
+        let maxMissed = 0;
+
+        rawAnalytics.forEach(r => {
+            if (r.mode && r.mode.includes("Quiz") && r.details) {
+                const group = `${r.unit} > ${r.list}`;
+                if (filterVal === "All" || filterVal === group) {
+                    try {
+                        const parsed = JSON.parse(r.details);
+                        if (parsed.missed && Array.isArray(parsed.missed)) {
+                            parsed.missed.forEach(word => {
+                                missedCounts[word] = (missedCounts[word] || 0) + 1;
+                                if(missedCounts[word] > maxMissed) maxMissed = missedCounts[word];
+                            });
+                        }
+                    } catch(e) { /* Ignore parsing errors on old data */ }
+                }
+            }
+        });
+
+        const sortedMissed = Object.keys(missedCounts).map(word => ({ word: word, count: missedCounts[word] })).sort((a, b) => b.count - a.count);
+
+        if (sortedMissed.length === 0) {
+            board.innerHTML = `<div class="loading-text">No missed quiz words recorded yet.</div>`;
+            return;
+        }
+
+        let html = '';
+        sortedMissed.forEach(item => {
+            const widthPct = Math.max(5, (item.count / maxMissed) * 100);
+            html += `
+                <div class="item-analysis-row">
+                    <div style="width: 120px; font-weight: bold; font-size: 0.85rem; color: white;">${item.word}</div>
+                    <div class="item-analysis-bar-container">
+                        <div class="item-analysis-bar" style="width: ${widthPct}%"></div>
+                    </div>
+                    <div style="width: 30px; text-align: right; font-weight: bold; color: var(--danger); font-size: 0.9rem;">${item.count}</div>
+                </div>
+            `;
+        });
+        board.innerHTML = html;
+    }
+
+
     function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u}')">${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; }
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
