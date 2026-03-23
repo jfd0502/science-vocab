@@ -725,8 +725,15 @@
         columns.forEach((col, i) => { 
             ctx.fillText(col.word, i * 20, col.y); 
             col.y += 18; 
-            if (Math.random() > 0.90) { col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; }
-            if (col.y > canvas.height && Math.random() > 0.95) { col.y = 0; col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; } 
+            
+            if (Math.random() > 0.90) { 
+                col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
+            }
+
+            if (col.y > canvas.height && Math.random() > 0.95) { 
+                col.y = 0; 
+                col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
+            } 
         }); 
     }
     
@@ -760,9 +767,15 @@
             let lastDate = new Date(studentStats.lastLoginDate);
             let diffTime = Math.abs(new Date() - lastDate);
             let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            if (diffDays === 1 || studentStats.lastLoginDate === "") { studentStats.currentStreak++; } 
-            else if (diffDays > 1) { studentStats.currentStreak = 1; }
-            studentStats.lastLoginDate = today; saveStudentStats();
+            
+            if (diffDays === 1 || studentStats.lastLoginDate === "") {
+                studentStats.currentStreak++;
+            } else if (diffDays > 1) {
+                studentStats.currentStreak = 1;
+            }
+            studentStats.lastLoginDate = today;
+            saveStudentStats();
+            
             if (studentStats.currentStreak >= 3) { triggerBadgeUnlock('consistency_key'); }
         }
     }
@@ -802,7 +815,9 @@
             const response = await fetch(url); const csvText = await response.text();
             const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
             
-            const newUnits = {}; let teachers = new Set(); let globalTerms = []; 
+            const newUnits = {}; 
+            let teachers = new Set();
+            let globalTerms = []; 
             
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
@@ -830,25 +845,39 @@
                         if(teacherList.includes(val)) el.value = val;
                     }
                 };
-                updateDropdown('guestTeacherSelect'); updateDropdown('teacherSelect');
+                updateDropdown('guestTeacherSelect');
+                updateDropdown('teacherSelect');
             }
 
             units = newUnits; isDataLoaded = true; 
-            if (globalTerms.length > 0) { allTerms = globalTerms; columns.forEach(col => col.word = allTerms[Math.floor(Math.random() * allTerms.length)]); }
+            
+            if (globalTerms.length > 0) {
+                allTerms = globalTerms;
+                columns.forEach(col => col.word = allTerms[Math.floor(Math.random() * allTerms.length)]);
+            }
+
             renderUnitSelection(); renderAdminUnitSelection();
         } catch (e) { console.error("Fetch Error:", e); }
     }
 
     async function fetchRegClasses(teacherID) {
         const classEl = document.getElementById('regClassSelect');
-        if (!teacherID) { classEl.innerHTML = `<option value="Unassigned">Select Educator First...</option>`; return; }
+        if (!teacherID) {
+            classEl.innerHTML = `<option value="Unassigned">Select Educator First...</option>`;
+            return;
+        }
         classEl.innerHTML = `<option value="">Loading Classes...</option>`;
         try {
             const response = await fetch(`${EXPORT_URL}?action=getClasses&teacherID=${encodeURIComponent(teacherID)}`);
             const classes = await response.json();
-            if (classes.length > 0) { classEl.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join(''); } 
-            else { classEl.innerHTML = `<option value="Unassigned">Unassigned (No classes created yet)</option>`; }
-        } catch(e) { classEl.innerHTML = `<option value="Unassigned">Unassigned</option>`; }
+            if (classes.length > 0) {
+                classEl.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join('');
+            } else {
+                classEl.innerHTML = `<option value="Unassigned">Unassigned (No classes created yet)</option>`;
+            }
+        } catch(e) {
+            classEl.innerHTML = `<option value="Unassigned">Unassigned</option>`;
+        }
     }
 
     function playWelcomeAnimation(mode = 'student') {
@@ -913,6 +942,7 @@
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) });
     }
 
+    // --- NEW: TRANSFER UI & LOGIC ---
     function showTransferUI(idx) {
         document.getElementById(`transfer-ui-${idx}`).classList.toggle('hidden');
     }
@@ -937,20 +967,21 @@
         if(!confirm(`Move this word to '${newList}'?`)) return;
 
         const item = units[u][l][idx];
-        units[u][l].splice(idx, 1); 
+        units[u][l].splice(idx, 1); // Remove from old list locally
         
         if (!units[u][newList]) units[u][newList] = [];
-        units[u][newList].push(item); 
+        units[u][newList].push(item); // Add to new list locally
         
         renderAdminWordList();
         triggerSyncIndicator();
         
+        // Execute Delete and Add calls consecutively
         try {
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: item.t, teacherID: TEACHER_ID }) });
             setTimeout(() => {
                 fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: u, list: newList, term: item.t, def: item.d, img: item.img || '', teacherID: TEACHER_ID }) });
                 showToast(`Transferred to ${newList}!`, "success");
-            }, 600); 
+            }, 600); // Slight delay prevents Apps Script race condition
         } catch(e) { showToast("Network Error during transfer.", "error"); }
     }
 
@@ -961,7 +992,8 @@
 
     async function clearResultsPrompt() {
         if (!confirm(`Clear all results for ${currentViewingStudent}?`)) return;
-        const btn = document.getElementById('clearAllBtn'); btn.innerText = "Clearing..."; btn.disabled = true;
+        const btn = document.getElementById('clearAllBtn');
+        btn.innerText = "Clearing..."; btn.disabled = true;
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "clearStudentResults", student: currentViewingStudent, teacherID: TEACHER_ID }) });
         setTimeout(() => { showToast("Results cleared.", "success"); fetchResultsAnalytics(); btn.innerText = "Clear All Results"; btn.disabled = false; }, 800);
     }
@@ -971,14 +1003,18 @@
         if (!newUser || !newPass) return showToast("Please enter both a new username and a new password.", "error");
         if (!confirm(`Are you sure? This will update your login to "${newUser}" and permanently transfer all your lists and student data to this new identity.`)) return;
 
-        const btn = document.getElementById('updateTeacherBtn'); btn.innerText = "Transferring Data..."; btn.disabled = true;
+        const btn = document.getElementById('updateTeacherBtn');
+        btn.innerText = "Transferring Data..."; btn.disabled = true;
         
         try {
             fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "updateTeacherProfile", teacherID: TEACHER_ID, newUser: newUser, newPass: newPass }) });
             TEACHER_ID = newUser; studentName = TEACHER_ID;
             localStorage.setItem('vocabSojournName', TEACHER_ID); localStorage.setItem('vocabSojournTeacher', TEACHER_ID);
-            document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID; document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID;
+            
+            document.getElementById('studentWelcome').innerText = "Educator: " + TEACHER_ID;
+            document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID;
             showToast("Credentials updated securely!", "success");
+            
             document.getElementById('updateTeacherUser').value = ""; document.getElementById('updateTeacherPass').value = "";
         } catch(e) { showToast("Error updating profile.", "error"); console.error(e); } finally { btn.innerText = "Update Identity & Transfer Data"; btn.disabled = false; }
     }
@@ -1010,16 +1046,24 @@
             document.getElementById('guestContinueBtn').innerText = "Enter Guest Portal";
         } else {
             const guestTeacher = document.getElementById('guestTeacherSelect').value;
-            if(guestTeacher) { TEACHER_ID = guestTeacher; studentName = "Guest"; unlockApp(); } 
-            else { showToast("Please wait for the list of educators to load.", "error"); }
+            if(guestTeacher) { 
+                TEACHER_ID = guestTeacher; 
+                studentName = "Guest"; 
+                unlockApp(); 
+            } else {
+                showToast("Please wait for the list of educators to load.", "error");
+            }
         }
     }
 
     async function handleAuth(type) {
-        let currentTeacherID = ""; let classPeriodStr = "";
+        let currentTeacherID = "";
+        let classPeriodStr = "";
+        
         if (type === 'register') {
             currentTeacherID = document.getElementById('teacherSelect').value;
             if(!currentTeacherID) return showToast("Please select an Educator.", "error");
+            
             classPeriodStr = document.getElementById('regClassSelect').value;
             if(!classPeriodStr) return showToast("Please select a Class Period.", "error");
         }
@@ -1041,7 +1085,8 @@
                 let parts = result.replace("Success: ", "").trim().split("|");
                 studentName = parts[0]; 
                 if (!studentName || studentName === "") studentName = userInput || regUser; 
-                if (type === 'login' && parts.length > 1) TEACHER_ID = parts[1].trim(); else if (type === 'register') TEACHER_ID = currentTeacherID; 
+                if (type === 'login' && parts.length > 1) TEACHER_ID = parts[1].trim(); 
+                else if (type === 'register') TEACHER_ID = currentTeacherID; 
                 localStorage.clear(); localStorage.setItem('vocabSojournName', studentName); localStorage.setItem('vocabSojournTeacher', TEACHER_ID); localStorage.setItem('vocabSojournRole', 'student');
                 unlockApp(); 
             } else { showToast(result, "error"); } 
@@ -1055,6 +1100,7 @@
         const isLogin = type === 'login';
         const user = document.getElementById(isLogin ? 'teacherUserIn' : 'teacherRegUser').value.trim();
         const pass = document.getElementById(isLogin ? 'teacherPassIn' : 'teacherRegPass').value.trim();
+        
         if (!user || !pass) return showToast("Please enter both username and password.", "error");
         
         const btn = event ? event.target : document.getElementById(isLogin ? 'teacherLoginSubmit' : 'teacherRegSubmit');
@@ -1085,14 +1131,17 @@
         document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden');
         if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; 
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        initStudentStats(); fetchTeacherData(true); 
+        
+        initStudentStats();
+        fetchTeacherData(true); 
+        
         if (!skipAnim) { playWelcomeAnimation('student'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to your Vocabulary Journey.\nPlease select a unit..."; }
     }
 
     function logout() { if(confirm("Logout?")) { localStorage.clear(); studentName = ""; location.reload(); } }
     
-    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u}')">${u}</button>`).join('') : '<div class="loading-text">No units found.</div>'; }
-    function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l}')">${l}</button>`).join(''); }
+    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u.replace(/'/g, "\\'")}')">${u}</button>`).join('') : '<div class="loading-text">No units found.</div>'; }
+    function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l.replace(/'/g, "\\'")}')">${l}</button>`).join(''); }
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
     function backToLists() { document.getElementById('studyInterface').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); }
@@ -1100,15 +1149,25 @@
     function setStudyMode(mode) { 
         if(meteorAnim) cancelAnimationFrame(meteorAnim); meteorActive = false;
         ['tabList', 'tabFlash', 'tabGames', 'tabHistory'].forEach(t => document.getElementById(t).classList.remove('active')); 
-        let tabToActivate = mode; if(['games', 'quiz', 'match', 'memory', 'meteor', 'scramble'].includes(mode)) tabToActivate = 'games';
+        
+        let tabToActivate = mode;
+        if(['games', 'quiz', 'match', 'memory', 'meteor', 'scramble'].includes(mode)) tabToActivate = 'games';
         document.getElementById('tab' + tabToActivate.charAt(0).toUpperCase() + tabToActivate.slice(1)).classList.add('active'); 
+        
         ['listMode', 'flashMode', 'gamesMenuMode', 'quizMode', 'matchMode', 'memoryMode', 'meteorMode', 'scrambleMode', 'historyMode'].forEach(m => document.getElementById(m).classList.add('hidden')); 
-        if (mode === 'games') document.getElementById('gamesMenuMode').classList.remove('hidden'); else document.getElementById(mode + 'Mode').classList.remove('hidden'); 
+        
+        if (mode === 'games') document.getElementById('gamesMenuMode').classList.remove('hidden');
+        else document.getElementById(mode + 'Mode').classList.remove('hidden'); 
+
         const list = units[currentUnit][currentClass]; 
         if (mode === 'list') { renderFullList(list); } 
         if (mode === 'history') { updateHistoryUI(); }
         if (mode === 'flash') { cardIdx = 0; flashcardList = [...list].sort(() => 0.5 - Math.random()); updateCard(); } 
-        if (mode === 'quiz') resetQuizUI(); if (mode === 'match') resetMatchUI(); if (mode === 'memory') resetMemoryUI(); if (mode === 'meteor') resetMeteorUI(); if (mode === 'scramble') resetScrambleUI();
+        if (mode === 'quiz') resetQuizUI();
+        if (mode === 'match') resetMatchUI();
+        if (mode === 'memory') resetMemoryUI();
+        if (mode === 'meteor') resetMeteorUI();
+        if (mode === 'scramble') resetScrambleUI();
     }
 
     function renderFullList(list) { 
@@ -1321,7 +1380,10 @@
     }
 
     function addHistory(mode, score) { sessionHistory.unshift({ mode, score, list: currentClass, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }); }
-    function updateHistoryUI() { const container = document.getElementById('historyEntries'); container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; }
+    function updateHistoryUI() { 
+        const container = document.getElementById('historyEntries'); 
+        container.innerHTML = sessionHistory.length ? sessionHistory.map(h => `<div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;"><span><span style="color: #94a3b8; margin-right: 8px;">[${h.time}]</span>${h.mode} <span style="color: #64748b;">(${h.list})</span></span><span style="font-weight: bold; color: var(--accent);">${h.score}</span></div>`).join('') : "No attempts yet."; 
+    }
     
     // --- ADMIN AREA FLOW ---
     function switchAdminTab(tab) { 
@@ -1335,6 +1397,7 @@
         document.getElementById('tabRosterBtn').style.background = tab === 'roster' ? '#8b5cf6' : 'var(--glass)'; 
         document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)'; 
         
+        // Reset sub-views to keep things clean
         document.getElementById('individualStudentView').classList.add('hidden');
         document.getElementById('itemAnalysisView').classList.add('hidden');
         document.getElementById('studentListContainer').classList.add('hidden');
@@ -1408,7 +1471,7 @@
         if(!classArray.includes("Unassigned")) classArray.push("Unassigned");
 
         grid.innerHTML = classArray.map(c => `
-            <button class="nav-btn" onclick="viewClass('${c}')">
+            <button class="nav-btn" onclick="viewClass('${c.replace(/'/g, "\\'")}')">
                 <svg width="20" height="20" style="margin-right:10px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 ${c}
             </button>
@@ -1433,7 +1496,7 @@
             return;
         }
         
-        grid.innerHTML = studentsInClass.sort().map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s}')">${s}</button>`).join('');
+        grid.innerHTML = studentsInClass.sort().map(s => `<button class="nav-btn" onclick="viewStudentDetail('${s.replace(/'/g, "\\'")}')">${s}</button>`).join('');
     }
 
     function backToClassList() { 
@@ -1578,7 +1641,7 @@
         if(!classArray.includes("Unassigned")) classArray.push("Unassigned");
 
         grid.innerHTML = classArray.map(c => `
-            <button class="nav-btn" onclick="viewRosterClass('${c}')">
+            <button class="nav-btn" onclick="viewRosterClass('${c.replace(/'/g, "\\'")}')">
                 <svg width="20" height="20" style="margin-right:10px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 ${c}
             </button>
@@ -1607,8 +1670,8 @@
                     <div style="font-weight: bold; color: white;">${s.fullName} <span style="font-size:0.75rem; color:#94a3b8; font-weight:normal;">(${s.username})</span></div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button onclick="resetPasswordPrompt('${s.username}')" class="main-btn" style="padding: 6px 10px; font-size: 0.75rem; background: #f59e0b;">Reset Pass</button>
-                    <button onclick="deleteStudentPrompt('${s.username}')" class="main-btn" style="padding: 6px 10px; font-size: 0.75rem; background: var(--danger);">Delete</button>
+                    <button onclick="resetPasswordPrompt('${s.username.replace(/'/g, "\\'")}')" class="main-btn" style="padding: 6px 10px; font-size: 0.75rem; background: #f59e0b;">Reset Pass</button>
+                    <button onclick="deleteStudentPrompt('${s.username.replace(/'/g, "\\'")}')" class="main-btn" style="padding: 6px 10px; font-size: 0.75rem; background: var(--danger);">Delete</button>
                 </div>
             </div>
         `).join('');
@@ -1643,6 +1706,87 @@
         } catch(e) {
             showToast("Error deleting student.", "error");
         }
+    }
+
+    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u.replace(/'/g, "\\'")}')">${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; }
+    function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l.replace(/'/g, "\\'")}')">${l}</button>`).join(''); }
+    function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
+    function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
+    function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
+    
+    function showTransferUI(idx) {
+        document.getElementById(`transfer-ui-${idx}`).classList.toggle('hidden');
+    }
+    
+    function toggleNewListInput(idx) {
+        const sel = document.getElementById(`transfer-sel-${idx}`).value;
+        const input = document.getElementById(`transfer-new-${idx}`);
+        if (sel === '__NEW__') { input.classList.remove('hidden'); } else { input.classList.add('hidden'); }
+    }
+
+    async function confirmTransfer(u, l, idx) {
+        const sel = document.getElementById(`transfer-sel-${idx}`).value;
+        let newList = sel;
+        
+        if (sel === '__NEW__') {
+            newList = document.getElementById(`transfer-new-${idx}`).value.trim();
+            if (!newList) return showToast("Please enter a name for the new list.", "error");
+        } else if (!sel) {
+            return showToast("Please select a destination list.", "error");
+        }
+
+        if(!confirm(`Move this word to '${newList}'?`)) return;
+
+        const item = units[u][l][idx];
+        units[u][l].splice(idx, 1); 
+        
+        if (!units[u][newList]) units[u][newList] = [];
+        units[u][newList].push(item); 
+        
+        renderAdminWordList();
+        triggerSyncIndicator();
+        
+        try {
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: item.t, teacherID: TEACHER_ID }) });
+            setTimeout(() => {
+                fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: u, list: newList, term: item.t, def: item.d, img: item.img || '', teacherID: TEACHER_ID }) });
+                showToast(`Transferred to ${newList}!`, "success");
+            }, 600); 
+        } catch(e) { showToast("Network Error during transfer.", "error"); }
+    }
+
+    function renderAdminWordList() { 
+        const u = adminSelectedUnit, l = adminSelectedList; 
+        const escU = u.replace(/'/g, "\\'"), escL = l.replace(/'/g, "\\'");
+        
+        document.getElementById('adminHeader').innerText = `${u} > ${l}`; 
+        
+        const availableLists = Object.keys(units[u]);
+
+        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `
+            <div class="admin-entry">
+                <input type="text" id="t-${idx}" value="${item.t.replace(/"/g, '&quot;')}" placeholder="Term" onkeypress="if(event.key === 'Enter') saveEdit('${escU}','${escL}',${idx})">
+                <input type="text" id="d-${idx}" value="${item.d.replace(/"/g, '&quot;')}" placeholder="Definition" onkeypress="if(event.key === 'Enter') saveEdit('${escU}','${escL}',${idx})">
+                <input type="text" id="i-${idx}" value="${item.img ? item.img.replace(/"/g, '&quot;') : ''}" placeholder="Image URL" onkeypress="if(event.key === 'Enter') saveEdit('${escU}','${escL}',${idx})">
+                
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="main-btn" onclick="saveEdit('${escU}','${escL}',${idx})" style="flex:2; background:var(--accent);">Update</button>
+                    <button class="main-btn" onclick="showTransferUI(${idx})" style="flex:2; background:#8b5cf6;">Transfer</button>
+                    <button class="main-btn" onclick="deleteWord('${escU}','${escL}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
+                </div>
+
+                <div id="transfer-ui-${idx}" class="hidden" style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed #8b5cf6;">
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Destination List</label>
+                    <select id="transfer-sel-${idx}" style="margin-bottom: 10px;" onchange="toggleNewListInput(${idx})">
+                        <option value="">-- Select Destination --</option>
+                        ${availableLists.filter(listName => listName !== l).map(listName => `<option value="${listName.replace(/"/g, '&quot;')}">${listName}</option>`).join('')}
+                        <option value="__NEW__">+ Create New List</option>
+                    </select>
+                    <input type="text" id="transfer-new-${idx}" class="hidden" placeholder="Name of New List" style="margin-bottom: 10px;">
+                    <button class="main-btn" onclick="confirmTransfer('${escU}','${escL}',${idx})" style="width:100%; background: #8b5cf6;">Confirm Transfer</button>
+                </div>
+            </div>
+        `).join(''); 
     }
 </script>
 </body>
