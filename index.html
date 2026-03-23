@@ -273,7 +273,7 @@
             </div>
         </div>
 
-        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">• Sync Online</div>
+        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">â€¢ Sync Online</div>
         
         <div id="studyView" class="panel">
             <div id="unitSelection">
@@ -619,7 +619,7 @@
 <script>
     let TEACHER_ID = ""; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwdIky4YZ9hbajEEqcqpR6GtiZbk97zKEcZvJjkQO-1tOpkcnZlbD4lTqePrLftLQG_KQ/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynTCTFohNSTzKX4cD9IbhiblXeBEbLgIVja6H_bvug8WkIhoSeb-ca2nrRHRYyKYoSww/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -907,6 +907,7 @@
     async function submitNewWord() { 
         const u = adminSelectedUnit, l = adminSelectedList, t = document.getElementById('newT').value, d = document.getElementById('newD').value, i = document.getElementById('newI').value;
         if(!t || !d) return showToast("Please fill out all required fields.", "error");
+        if (!units[u][l]) units[u][l] = [];
         units[u][l].push({t, d, img: i}); 
         renderAdminWordList(); triggerSyncIndicator();
         document.getElementById('newT').value = ""; document.getElementById('newD').value = ""; document.getElementById('newI').value = "";
@@ -927,6 +928,49 @@
         units[u][l].splice(idx, 1); 
         renderAdminWordList(); triggerSyncIndicator();
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) });
+    }
+
+    // --- NEW: TRANSFER UI & LOGIC ---
+    function showTransferUI(idx) {
+        document.getElementById(`transfer-ui-${idx}`).classList.toggle('hidden');
+    }
+    
+    function toggleNewListInput(idx) {
+        const sel = document.getElementById(`transfer-sel-${idx}`).value;
+        const input = document.getElementById(`transfer-new-${idx}`);
+        if (sel === '__NEW__') { input.classList.remove('hidden'); } else { input.classList.add('hidden'); }
+    }
+
+    async function confirmTransfer(u, l, idx) {
+        const sel = document.getElementById(`transfer-sel-${idx}`).value;
+        let newList = sel;
+        
+        if (sel === '__NEW__') {
+            newList = document.getElementById(`transfer-new-${idx}`).value.trim();
+            if (!newList) return showToast("Please enter a name for the new list.", "error");
+        } else if (!sel) {
+            return showToast("Please select a destination list.", "error");
+        }
+
+        if(!confirm(`Move this word to '${newList}'?`)) return;
+
+        const item = units[u][l][idx];
+        units[u][l].splice(idx, 1); // Remove from old list locally
+        
+        if (!units[u][newList]) units[u][newList] = [];
+        units[u][newList].push(item); // Add to new list locally
+        
+        renderAdminWordList();
+        triggerSyncIndicator();
+        
+        // Execute Delete and Add calls consecutively
+        try {
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: item.t, teacherID: TEACHER_ID }) });
+            setTimeout(() => {
+                fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: u, list: newList, term: item.t, def: item.d, img: item.img || '', teacherID: TEACHER_ID }) });
+                showToast(`Transferred to ${newList}!`, "success");
+            }, 600); // Slight delay prevents Apps Script race condition
+        } catch(e) { showToast("Network Error during transfer.", "error"); }
     }
 
     async function syncSessionToSheet(mode, score, details = "") { 
@@ -1337,7 +1381,6 @@
         document.getElementById('tabRosterBtn').style.background = tab === 'roster' ? '#8b5cf6' : 'var(--glass)'; 
         document.getElementById('tabProfileBtn').style.background = tab === 'profile' ? '#f59e0b' : 'var(--glass)'; 
         
-        // Reset sub-views to keep things clean
         document.getElementById('individualStudentView').classList.add('hidden');
         document.getElementById('itemAnalysisView').classList.add('hidden');
         document.getElementById('studentListContainer').classList.add('hidden');
@@ -1650,7 +1693,81 @@
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
     function backToAdminLists() { document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); }
-    function renderAdminWordList() { const u = adminSelectedUnit, l = adminSelectedList; document.getElementById('adminHeader').innerText = `${u} > ${l}`; document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `<div class="admin-entry"><input type="text" id="t-${idx}" value="${item.t}" placeholder="Term" onkeypress="if(event.key === 'Enter') saveEdit('${u}','${l}',${idx})"><input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition" onkeypress="if(event.key === 'Enter') saveEdit('${u}','${l}',${idx})"><input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL" onkeypress="if(event.key === 'Enter') saveEdit('${u}','${l}',${idx})"><div style="display:flex; gap:10px; margin-top:10px;"><button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update Word</button><button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button></div></div>`).join(''); }
+    
+    // --- UPDATED ADMIN WORD LIST WITH TRANSFER UI ---
+    function showTransferUI(idx) {
+        document.getElementById(`transfer-ui-${idx}`).classList.toggle('hidden');
+    }
+    
+    function toggleNewListInput(idx) {
+        const sel = document.getElementById(`transfer-sel-${idx}`).value;
+        const input = document.getElementById(`transfer-new-${idx}`);
+        if (sel === '__NEW__') { input.classList.remove('hidden'); } else { input.classList.add('hidden'); }
+    }
+
+    async function confirmTransfer(u, l, idx) {
+        const sel = document.getElementById(`transfer-sel-${idx}`).value;
+        let newList = sel;
+        
+        if (sel === '__NEW__') {
+            newList = document.getElementById(`transfer-new-${idx}`).value.trim();
+            if (!newList) return showToast("Please enter a name for the new list.", "error");
+        } else if (!sel) {
+            return showToast("Please select a destination list.", "error");
+        }
+
+        if(!confirm(`Move this word to '${newList}'?`)) return;
+
+        const item = units[u][l][idx];
+        units[u][l].splice(idx, 1); // Remove from old list locally
+        
+        if (!units[u][newList]) units[u][newList] = [];
+        units[u][newList].push(item); // Add to new list locally
+        
+        renderAdminWordList();
+        triggerSyncIndicator();
+        
+        // Execute Delete and Add calls consecutively
+        try {
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: item.t, teacherID: TEACHER_ID }) });
+            setTimeout(() => {
+                fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: u, list: newList, term: item.t, def: item.d, img: item.img || '', teacherID: TEACHER_ID }) });
+                showToast(`Transferred to ${newList}!`, "success");
+            }, 600); // Slight delay prevents Apps Script race condition
+        } catch(e) { showToast("Network Error during transfer.", "error"); }
+    }
+
+    function renderAdminWordList() { 
+        const u = adminSelectedUnit, l = adminSelectedList; 
+        document.getElementById('adminHeader').innerText = `${u} > ${l}`; 
+        
+        const availableLists = Object.keys(units[u]);
+
+        document.getElementById('adminWordList').innerHTML = units[u][l].map((item, idx) => `
+            <div class="admin-entry">
+                <input type="text" id="t-${idx}" value="${item.t}" placeholder="Term" onkeypress="if(event.key === 'Enter') saveEdit('${u}','${l}',${idx})">
+                <input type="text" id="d-${idx}" value="${item.d}" placeholder="Definition" onkeypress="if(event.key === 'Enter') saveEdit('${u}','${l}',${idx})">
+                <input type="text" id="i-${idx}" value="${item.img || ''}" placeholder="Image URL" onkeypress="if(event.key === 'Enter') saveEdit('${u}','${l}',${idx})">
+                
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="main-btn" onclick="saveEdit('${u}','${l}',${idx})" style="flex:2; background:var(--accent);">Update</button>
+                    <button class="main-btn" onclick="showTransferUI(${idx})" style="flex:2; background:#8b5cf6;">Transfer</button>
+                    <button class="main-btn" onclick="deleteWord('${u}','${l}',${idx})" style="flex:1; background:var(--danger);">Delete</button>
+                </div>
+
+                <div id="transfer-ui-${idx}" class="hidden" style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed #8b5cf6;">
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Destination List</label>
+                    <select id="transfer-sel-${idx}" style="margin-bottom: 10px;" onchange="toggleNewListInput(${idx})">
+                        <option value="">-- Select Destination --</option>
+                        ${availableLists.filter(listName => listName !== l).map(listName => `<option value="${listName}">${listName}</option>`).join('')}
+                        <option value="__NEW__">+ Create New List</option>
+                    </select>
+                    <input type="text" id="transfer-new-${idx}" class="hidden" placeholder="Name of New List" style="margin-bottom: 10px;">
+                    <button class="main-btn" onclick="confirmTransfer('${u}','${l}',${idx})" style="width:100%; background: #8b5cf6;">Confirm Transfer</button>
+                </div>
+            </div>
+        `).join(''); 
+    }
 </script>
 </body>
 </html>
