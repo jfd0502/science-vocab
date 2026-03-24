@@ -27,19 +27,17 @@
             min-height: 100vh; position: relative; overflow-x: hidden; 
         }
 
-        /* AMBIENT GLOW BACKGROUND (BULLETPROOF FIX) */
-        .bg-orbs { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: hidden; }
-        .orb { position: absolute; border-radius: 50%; animation: floatOrb 20s infinite alternate ease-in-out; }
-        .orb-1 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, rgba(99, 102, 241, 0) 70%); top: -200px; left: -200px; }
-        .orb-2 { width: 800px; height: 800px; background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(168, 85, 247, 0) 70%); bottom: -300px; right: -200px; animation-delay: -10s; }
-        .orb-3 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0) 70%); top: 20%; left: 40%; animation-duration: 25s; animation-delay: -5s; }
+        /* AMBIENT GLOW BACKGROUND */
+        .bg-orbs { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity 1.5s ease-in-out; }
+        .bg-orbs.show { opacity: 1; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(120px); transform: translate3d(0,0,0); }
+        .orb-1 { width: 500px; height: 500px; background: var(--primary); top: -100px; left: -100px; opacity: 0.6; animation: floatOrb1 20s infinite alternate ease-in-out; }
+        .orb-2 { width: 600px; height: 600px; background: #a855f7; bottom: -150px; right: -100px; opacity: 0.45; animation: floatOrb2 22s infinite alternate ease-in-out; }
+        .orb-3 { width: 450px; height: 450px; background: var(--accent); top: 20%; left: 40%; opacity: 0.35; animation: floatOrb3 25s infinite alternate ease-in-out; }
         
-        @keyframes floatOrb {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(50px, -70px) scale(1.1); }
-            66% { transform: translate(-50px, 50px) scale(0.9); }
-            100% { transform: translate(0, 0) scale(1); }
-        }
+        @keyframes floatOrb1 { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(80px, 80px, 0) scale(1.1); } }
+        @keyframes floatOrb2 { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(-80px, -50px, 0) scale(1.1); } }
+        @keyframes floatOrb3 { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(50px, -80px, 0) scale(1.2); } }
 
         #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; transition: opacity 0.8s ease; }
 
@@ -1035,6 +1033,10 @@
         document.getElementById('landingPage').style.opacity = '0'; 
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
+            
+            // FADE IN ORBS HERE
+            document.querySelector('.bg-orbs').classList.add('show'); 
+            
             if (studentName) {
                 if (localStorage.getItem('vocabSojournRole') === 'educator') enterTeacherMode();
                 else unlockApp(); 
@@ -1128,6 +1130,10 @@
 
     function enterTeacherMode(skipAnim = false) {
         document.getElementById('teacherLoginOverlay').classList.add('hidden'); document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studyView').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden'); 
+        if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; 
+        
+        document.querySelector('.bg-orbs').classList.add('show'); 
+        
         document.getElementById('adminView').classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         fetchTeacherData(true); switchAdminTab('content'); 
         if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID; }
@@ -1135,6 +1141,10 @@
 
     function unlockApp(skipAnim = false) { 
         document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden');
+        if (matrixInterval) clearInterval(matrixInterval); canvas.style.display = 'none'; 
+        
+        document.querySelector('.bg-orbs').classList.add('show'); 
+        
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         
         initStudentStats();
