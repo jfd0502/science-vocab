@@ -28,16 +28,16 @@
         }
 
         /* AMBIENT GLOW BACKGROUND (BULLETPROOF FIX) */
-        .bg-orbs { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity 1.5s ease-in-out; }
+        .bg-orbs { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity 1.5s ease-in-out; }
         .bg-orbs.show { opacity: 1; }
-        .orb { position: absolute; border-radius: 50%; }
-        .orb-1 { width: 800px; height: 800px; background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, rgba(99, 102, 241, 0) 60%); top: -200px; left: -200px; animation: floatOrb1 20s infinite alternate ease-in-out; }
-        .orb-2 { width: 900px; height: 900px; background: radial-gradient(circle, rgba(168, 85, 247, 0.45) 0%, rgba(168, 85, 247, 0) 60%); bottom: -300px; right: -200px; animation: floatOrb2 22s infinite alternate ease-in-out; }
-        .orb-3 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0) 60%); top: 10%; left: 30%; animation: floatOrb3 25s infinite alternate ease-in-out; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); }
+        .orb-1 { width: 500px; height: 500px; background: rgba(99, 102, 241, 0.6); top: -100px; left: -100px; animation: floatOrb1 20s infinite alternate ease-in-out; }
+        .orb-2 { width: 600px; height: 600px; background: rgba(168, 85, 247, 0.5); bottom: -150px; right: -100px; animation: floatOrb2 22s infinite alternate ease-in-out; }
+        .orb-3 { width: 400px; height: 400px; background: rgba(16, 185, 129, 0.4); top: 20%; left: 30%; animation: floatOrb3 25s infinite alternate ease-in-out; }
         
-        @keyframes floatOrb1 { 0% { transform: translate(0, 0); } 100% { transform: translate(100px, 100px); } }
-        @keyframes floatOrb2 { 0% { transform: translate(0, 0); } 100% { transform: translate(-100px, -80px); } }
-        @keyframes floatOrb3 { 0% { transform: translate(0, 0); } 100% { transform: translate(80px, -100px); } }
+        @keyframes floatOrb1 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(80px, 80px) scale(1.1); } }
+        @keyframes floatOrb2 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-80px, -50px) scale(1.1); } }
+        @keyframes floatOrb3 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, -80px) scale(1.2); } }
 
         #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; transition: opacity 0.8s ease; }
 
