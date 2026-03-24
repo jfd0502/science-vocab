@@ -28,7 +28,7 @@
         }
 
         /* AMBIENT GLOW BACKGROUND (BULLETPROOF FIX) */
-        .bg-orbs { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity 1.5s ease-in-out; }
+        .bg-orbs { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity 1.5s ease-in-out; }
         .bg-orbs.show { opacity: 1; }
         .orb { position: absolute; border-radius: 50%; filter: blur(80px); }
         .orb-1 { width: 500px; height: 500px; background: rgba(99, 102, 241, 0.6); top: -100px; left: -100px; animation: floatOrb1 20s infinite alternate ease-in-out; }
