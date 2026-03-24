@@ -1829,6 +1829,15 @@
             </div>
         `).join(''); 
     }
-</script>
-</body>
+<script>
+        // Wait for the HTML to load, then add the 'show' class to trigger the CSS transition
+        document.addEventListener('DOMContentLoaded', () => {
+            const orbContainer = document.querySelector('.bg-orbs');
+            if (orbContainer) {
+                orbContainer.classList.add('show');
+            }
+        });
+    </script>
+
+    </body>
 </html>
