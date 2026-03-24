@@ -27,18 +27,18 @@
             min-height: 100vh; position: relative; overflow-x: hidden; 
         }
 
-        /* AMBIENT GLOW BACKGROUND */
-        .bg-orbs { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; pointer-events: none; }
-        .orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.3; animation: floatOrb 20s infinite ease-in-out; }
-        .orb-1 { width: 500px; height: 500px; background: var(--primary); top: -150px; left: -150px; }
-        .orb-2 { width: 600px; height: 600px; background: #a855f7; bottom: -200px; right: -150px; animation-delay: -10s; }
-        .orb-3 { width: 400px; height: 400px; background: var(--accent); top: 30%; left: 50%; animation-duration: 25s; animation-delay: -5s; opacity: 0.15; }
+        /* AMBIENT GLOW BACKGROUND (BULLETPROOF FIX) */
+        .bg-orbs { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: hidden; }
+        .orb { position: absolute; border-radius: 50%; mix-blend-mode: screen; animation: floatOrb 20s infinite alternate ease-in-out; transform: translateZ(0); }
+        .orb-1 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, rgba(99, 102, 241, 0) 70%); top: -200px; left: -200px; }
+        .orb-2 { width: 800px; height: 800px; background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(168, 85, 247, 0) 70%); bottom: -300px; right: -200px; animation-delay: -10s; }
+        .orb-3 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0) 70%); top: 20%; left: 40%; animation-duration: 25s; animation-delay: -5s; }
         
         @keyframes floatOrb {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(40px, -60px) scale(1.1); }
-            66% { transform: translate(-40px, 40px) scale(0.9); }
-            100% { transform: translate(0, 0) scale(1); }
+            0% { transform: translate(0, 0) scale(1) translateZ(0); }
+            33% { transform: translate(50px, -70px) scale(1.1) translateZ(0); }
+            66% { transform: translate(-50px, 50px) scale(0.9) translateZ(0); }
+            100% { transform: translate(0, 0) scale(1) translateZ(0); }
         }
 
         #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; transition: opacity 0.8s ease; }
@@ -124,8 +124,9 @@
         .welcome-title { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: white; text-shadow: 0 0 30px rgba(99,102,241,0.5); }
         .start-btn { background: white; color: black; border: none; padding: 20px 40px; font-size: 1.1rem; font-weight: 800; border-radius: 100px; cursor: pointer; transition: 0.4s; }
         
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8); }
-        #teacherLoginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20000; display: flex; align-items: center; justify-content: center; background: #0f172a; transition: opacity 0.4s ease; }
+        /* FROSTED GLASS LOGIN OVERLAYS */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        #teacherLoginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20000; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: opacity 0.4s ease; }
         
         .mode-toggle { position: fixed; top: 20px; left: 20px; z-index: 10002; background: var(--glass); color: #94a3b8; border: 1px solid var(--glass-border); border-radius: 10px; padding: 8px 16px; font-size: 0.7rem; cursor: pointer; }
         .list-item { display: flex; align-items: center; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent; }
@@ -496,7 +497,7 @@
             </div>
         </div>
 
-        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.95);">
+        <div id="adminView" class="panel hidden" style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px);">
             <div style="display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap;">
                 <button id="tabContentBtn" class="main-btn" style="flex: 1;" onclick="switchAdminTab('content')">Content</button>
                 <button id="tabAnalyticsBtn" class="main-btn" style="flex: 1; background: var(--glass);" onclick="switchAdminTab('analytics')">Results</button>
@@ -680,7 +681,6 @@
 
     let studentStats = { unlockedBadges: [], lastLoginDate: "", currentStreak: 0, expertPerfects: [] };
     
-    // Caching and Toast Fix variables
     let toastTimeout = null;
     let hasFetchedAnalytics = false;
     let hasFetchedRoster = false;
@@ -974,20 +974,21 @@
         if(!confirm(`Move this word to '${newList}'?`)) return;
 
         const item = units[u][l][idx];
-        units[u][l].splice(idx, 1); 
+        units[u][l].splice(idx, 1); // Remove from old list locally
         
         if (!units[u][newList]) units[u][newList] = [];
-        units[u][newList].push(item); 
+        units[u][newList].push(item); // Add to new list locally
         
         renderAdminWordList();
         triggerSyncIndicator();
         
+        // Execute Delete and Add calls consecutively
         try {
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: item.t, teacherID: TEACHER_ID }) });
             setTimeout(() => {
                 fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "addWord", unit: u, list: newList, term: item.t, def: item.d, img: item.img || '', teacherID: TEACHER_ID }) });
                 showToast(`Transferred to ${newList}!`, "success");
-            }, 600); 
+            }, 600); // Slight delay prevents Apps Script race condition
         } catch(e) { showToast("Network Error during transfer.", "error"); }
     }
 
