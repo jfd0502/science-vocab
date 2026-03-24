@@ -56,6 +56,10 @@
         #tabGames { background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.5)); color: white; border: 1px solid rgba(255,255,255,0.2); }
         #tabGames.active { background: linear-gradient(135deg, var(--primary), #a855f7); color: white; box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); border-color: transparent; }
 
+        /* SCOREBOARD GLOW CSS */
+        #tabHistory { background: linear-gradient(135deg, rgba(250, 204, 21, 0.3), rgba(245, 158, 11, 0.3)); color: var(--gold); border: 1px solid rgba(250, 204, 21, 0.4); }
+        #tabHistory.active { background: linear-gradient(135deg, var(--gold), #d97706); color: #0f172a; box-shadow: 0 0 20px rgba(250, 204, 21, 0.6); border-color: transparent; font-weight: 800; }
+
         .diff-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .diff-btn { padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: var(--glass); color: white; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: 0.3s; }
         .diff-btn:hover { background: rgba(255,255,255,0.1); }
@@ -624,7 +628,7 @@
 <script>
     let TEACHER_ID = ""; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwdIky4YZ9hbajEEqcqpR6GtiZbk97zKEcZvJjkQO-1tOpkcnZlbD4lTqePrLftLQG_KQ/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbynATS5RefNUIT1-mojNfvWA0pbVNxowDpRkwNRPlwYyCuTEyV6yRCrm0SSj_SOuKe6/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -654,9 +658,8 @@
     let scrambleCards = [], scrambleIdx = 0, scrambleScore = 0, scrambleDiff = '';
     let currentScrambleWord = "", currentScrambledLetters = [], currentAssembledLetters = [];
 
-    let studentStats = { unlockedBadges: [], lastLoginDate: "", currentStreak: 0 };
+    let studentStats = { unlockedBadges: [], lastLoginDate: "", currentStreak: 0, expertPerfects: [] };
     
-    // Caching and Toast Fix variables
     let toastTimeout = null;
     let hasFetchedAnalytics = false;
     let hasFetchedRoster = false;
@@ -667,7 +670,8 @@
         meteor_survivor: { id: "meteor_survivor", title: "Meteor Survivor", desc: "Score 20+ points in a single game of Meteor Strike.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.18 4.82a2 2 0 0 0-2.83 0L4.82 18.35a2 2 0 0 0 0 2.83 2 2 0 0 0 2.83 0l13.53-13.53a2 2 0 0 0 0-2.83z"></path><path d="M14 4h7v7"></path></svg>` },
         matrix_hacker: { id: "matrix_hacker", title: "Matrix Hacker", desc: "Complete the Memory Matrix on Expert difficulty.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>` },
         rune_master: { id: "rune_master", title: "Rune Master", desc: "Complete Rune Scramble on Expert with 100% accuracy.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>` },
-        consistency_key: { id: "consistency_key", title: "Consistency Key", desc: "Log in and study 3 days in a row.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>` }
+        consistency_key: { id: "consistency_key", title: "Consistency Key", desc: "Log in and study 3 days in a row.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>` },
+        master_scholar: { id: "master_scholar", title: "Master Scholar", desc: "Complete every list in the unit on Expert with 100% accuracy.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>` }
     };
 
     const canvas = document.getElementById('matrixCanvas');
@@ -680,6 +684,14 @@
 
     const successSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
     const errorSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+
+    function getUnitIcon(name) {
+        let n = name.toLowerCase();
+        if (n.includes('earth')) return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg>`;
+        if (n.includes('life') || n.includes('bio')) return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;"><path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"/><path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"/><path d="M17 6l-2.5 2.5"/><path d="M14 8l-2 2"/><path d="M7 18l2.5-2.5"/><path d="M3.15 14.35l4 4"/><path d="M20.85 9.65l-4-4"/></svg>`;
+        if (n.includes('physic') || n.includes('chem')) return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(45 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-45 12 12)"/></svg>`;
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`;
+    }
 
     function showToast(message, type = 'error') {
         const toast = document.getElementById('appToast');
@@ -726,15 +738,8 @@
         columns.forEach((col, i) => { 
             ctx.fillText(col.word, i * 20, col.y); 
             col.y += 18; 
-            
-            if (Math.random() > 0.90) { 
-                col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
-            }
-
-            if (col.y > canvas.height && Math.random() > 0.95) { 
-                col.y = 0; 
-                col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; 
-            } 
+            if (Math.random() > 0.90) { col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; }
+            if (col.y > canvas.height && Math.random() > 0.95) { col.y = 0; col.word = allTerms[Math.floor(Math.random() * allTerms.length)]; } 
         }); 
     }
     
@@ -762,21 +767,16 @@
         
         let storedStats = localStorage.getItem('vocabSojournStats_' + studentName);
         if (storedStats) { studentStats = JSON.parse(storedStats); }
+        if (!studentStats.expertPerfects) { studentStats.expertPerfects = []; }
         
         const today = new Date().toDateString();
         if (studentStats.lastLoginDate !== today) {
             let lastDate = new Date(studentStats.lastLoginDate);
             let diffTime = Math.abs(new Date() - lastDate);
             let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            
-            if (diffDays === 1 || studentStats.lastLoginDate === "") {
-                studentStats.currentStreak++;
-            } else if (diffDays > 1) {
-                studentStats.currentStreak = 1;
-            }
-            studentStats.lastLoginDate = today;
-            saveStudentStats();
-            
+            if (diffDays === 1 || studentStats.lastLoginDate === "") { studentStats.currentStreak++; } 
+            else if (diffDays > 1) { studentStats.currentStreak = 1; }
+            studentStats.lastLoginDate = today; saveStudentStats();
             if (studentStats.currentStreak >= 3) { triggerBadgeUnlock('consistency_key'); }
         }
     }
@@ -798,6 +798,19 @@
         if (game === "Meteor" && parseInt(scoreOrPct) >= 20) { triggerBadgeUnlock('meteor_survivor'); }
         if (game === "Memory" && diff === "Expert") { triggerBadgeUnlock('matrix_hacker'); }
         if (game === "Anagrams" && diff === "Expert" && scoreOrPct === "100%") { triggerBadgeUnlock('rune_master'); }
+
+        if (diff === "Expert" && scoreOrPct === "100%") {
+            const currentId = currentUnit + '::' + currentClass;
+            if (!studentStats.expertPerfects.includes(currentId)) {
+                studentStats.expertPerfects.push(currentId);
+                saveStudentStats();
+            }
+            let totalLists = 0;
+            for (let u in units) { totalLists += Object.keys(units[u]).length; }
+            if (totalLists > 0 && studentStats.expertPerfects.length >= totalLists) {
+                triggerBadgeUnlock('master_scholar');
+            }
+        }
     }
 
     function openTrophies() {
@@ -816,9 +829,7 @@
             const response = await fetch(url); const csvText = await response.text();
             const rows = csvText.split(/\r?\n/).filter(r => r.trim().length > 0);
             
-            const newUnits = {}; 
-            let teachers = new Set();
-            let globalTerms = []; 
+            const newUnits = {}; let teachers = new Set(); let globalTerms = []; 
             
             rows.slice(1).forEach(row => {
                 const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
@@ -846,39 +857,25 @@
                         if(teacherList.includes(val)) el.value = val;
                     }
                 };
-                updateDropdown('guestTeacherSelect');
-                updateDropdown('teacherSelect');
+                updateDropdown('guestTeacherSelect'); updateDropdown('teacherSelect');
             }
 
             units = newUnits; isDataLoaded = true; 
-            
-            if (globalTerms.length > 0) {
-                allTerms = globalTerms;
-                columns.forEach(col => col.word = allTerms[Math.floor(Math.random() * allTerms.length)]);
-            }
-
+            if (globalTerms.length > 0) { allTerms = globalTerms; columns.forEach(col => col.word = allTerms[Math.floor(Math.random() * allTerms.length)]); }
             renderUnitSelection(); renderAdminUnitSelection();
         } catch (e) { console.error("Fetch Error:", e); }
     }
 
     async function fetchRegClasses(teacherID) {
         const classEl = document.getElementById('regClassSelect');
-        if (!teacherID) {
-            classEl.innerHTML = `<option value="Unassigned">Select Educator First...</option>`;
-            return;
-        }
+        if (!teacherID) { classEl.innerHTML = `<option value="Unassigned">Select Educator First...</option>`; return; }
         classEl.innerHTML = `<option value="">Loading Classes...</option>`;
         try {
             const response = await fetch(`${EXPORT_URL}?action=getClasses&teacherID=${encodeURIComponent(teacherID)}`);
             const classes = await response.json();
-            if (classes.length > 0) {
-                classEl.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join('');
-            } else {
-                classEl.innerHTML = `<option value="Unassigned">Unassigned (No classes created yet)</option>`;
-            }
-        } catch(e) {
-            classEl.innerHTML = `<option value="Unassigned">Unassigned</option>`;
-        }
+            if (classes.length > 0) { classEl.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join(''); } 
+            else { classEl.innerHTML = `<option value="Unassigned">Unassigned (No classes created yet)</option>`; }
+        } catch(e) { classEl.innerHTML = `<option value="Unassigned">Unassigned</option>`; }
     }
 
     function playWelcomeAnimation(mode = 'student') {
@@ -943,6 +940,7 @@
         fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteWord", unit: u, list: l, term: termToDelete, teacherID: TEACHER_ID }) });
     }
 
+    // --- NEW: TRANSFER UI & LOGIC ---
     function showTransferUI(idx) {
         document.getElementById(`transfer-ui-${idx}`).classList.toggle('hidden');
     }
@@ -1103,7 +1101,7 @@
         
         if (!user || !pass) return showToast("Please enter both username and password.", "error");
         
-        const btn = event ? event.target : document.getElementById(isLogin ? 'teacherLoginSubmit' : 'teacherRegSubmit');
+        const btn = document.getElementById(isLogin ? 'teacherLoginSubmit' : 'teacherRegSubmit');
         const oldText = btn.innerText; btn.innerText = "Authenticating..."; btn.disabled = true;
 
         try {
@@ -1140,7 +1138,13 @@
 
     function logout() { if(confirm("Logout?")) { localStorage.clear(); studentName = ""; location.reload(); } }
     
-    function renderUnitSelection() { const grid = document.getElementById('unitBtnGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="selectUnit('${u.replace(/'/g, "\\'")}')">${u}</button>`).join('') : '<div class="loading-text">No units found.</div>'; }
+    function renderUnitSelection() { 
+        const grid = document.getElementById('unitBtnGrid'); 
+        if (!isDataLoaded) return; 
+        const keys = Object.keys(units); 
+        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" style="flex-direction:column; gap:5px;" onclick="selectUnit('${u.replace(/'/g, "\\'")}')">${getUnitIcon(u)} ${u}</button>`).join('') : '<div class="loading-text">No units found.</div>'; 
+    }
+    
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l.replace(/'/g, "\\'")}')">${l}</button>`).join(''); }
     function selectList(l) { currentClass = l; document.getElementById('listSelection').classList.add('hidden'); document.getElementById('studyInterface').classList.remove('hidden'); document.getElementById('activeListName').innerText = l; document.getElementById('backToListsBtn').innerHTML = `&larr; ${currentUnit}`; setStudyMode('list'); }
     function backToUnits() { document.getElementById('listSelection').classList.add('hidden'); document.getElementById('unitSelection').classList.remove('hidden'); }
@@ -1424,11 +1428,22 @@
             showToast(`Class '${className}' created!`, "success");
             
             if (!document.getElementById('adminRosterArea').classList.contains('hidden')) {
-                fetchRosterData();
+                fetchRosterData(true);
             } else {
                 fetchResultsAnalytics(); 
             }
         } catch(e) { showToast("Error adding class.", "error"); }
+    }
+
+    async function deleteClassPrompt(className) {
+        if (!confirm(`Are you sure you want to delete the class period "${className}"? (This will unassign students, but won't delete their accounts)`)) return;
+        triggerSyncIndicator();
+        try {
+            await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteClass", teacherID: TEACHER_ID, className: className }) });
+            showToast(`Class '${className}' deleted!`, "success");
+            fetchRosterData(true);
+            hasFetchedAnalytics = false; 
+        } catch(e) { showToast("Error deleting class.", "error"); }
     }
     
     // --- RESULTS / ANALYTICS LOGIC ---
@@ -1615,7 +1630,7 @@
     }
 
     // --- ROSTER MANAGEMENT LOGIC ---
-    async function fetchRosterData() {
+    async function fetchRosterData(force = false) {
         document.getElementById('rosterClassGrid').innerHTML = `<div class="loading-text">Fetching roster...</div>`;
         try {
             const classRes = await fetch(`${EXPORT_URL}?action=getClasses&teacherID=${TEACHER_ID}&cb=${Date.now()}`);
@@ -1641,10 +1656,13 @@
         if(!classArray.includes("Unassigned")) classArray.push("Unassigned");
 
         grid.innerHTML = classArray.map(c => `
-            <button class="nav-btn" onclick="viewRosterClass('${c.replace(/'/g, "\\'")}')">
-                <svg width="20" height="20" style="margin-right:10px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                ${c}
-            </button>
+            <div style="display:flex; gap:5px;">
+                <button class="nav-btn" style="flex:1;" onclick="viewRosterClass('${c.replace(/'/g, "\\'")}')">
+                    <svg width="20" height="20" style="margin-right:10px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    ${c}
+                </button>
+                <button class="main-btn" style="background:var(--danger); padding: 0 15px;" onclick="deleteClassPrompt('${c.replace(/'/g, "\\'")}')" title="Delete Class">X</button>
+            </div>
         `).join(''); 
     }
 
@@ -1702,13 +1720,19 @@
         try {
             await fetch(EXPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: "deleteStudent", teacherID: TEACHER_ID, username: username }) });
             showToast(`Student ${username} deleted.`, "success");
-            fetchRosterData(); 
+            fetchRosterData(true); 
         } catch(e) {
             showToast("Error deleting student.", "error");
         }
     }
 
-    function renderAdminUnitSelection() { const grid = document.getElementById('adminUnitGrid'); if (!isDataLoaded) return; const keys = Object.keys(units); grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" onclick="adminSelectUnit('${u.replace(/'/g, "\\'")}')">${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; }
+    function renderAdminUnitSelection() { 
+        const grid = document.getElementById('adminUnitGrid'); 
+        if (!isDataLoaded) return; 
+        const keys = Object.keys(units); 
+        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" style="flex-direction:column; gap:5px;" onclick="adminSelectUnit('${u.replace(/'/g, "\\'")}')">${getUnitIcon(u)} ${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; 
+    }
+    
     function adminSelectUnit(u) { adminSelectedUnit = u; document.getElementById('adminUnitSelection').classList.add('hidden'); document.getElementById('adminListSelection').classList.remove('hidden'); document.getElementById('adminBackToUnits').innerHTML = `&larr; All Units`; document.getElementById('adminListGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="adminSelectList('${l.replace(/'/g, "\\'")}')">${l}</button>`).join(''); }
     function adminSelectList(l) { adminSelectedList = l; document.getElementById('adminEditArea').classList.remove('hidden'); document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminBackToLists').innerHTML = `&larr; ${adminSelectedUnit}`; renderAdminWordList(); }
     function resetAdminView() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminEditArea').classList.add('hidden'); document.getElementById('adminUnitSelection').classList.remove('hidden'); }
