@@ -689,6 +689,11 @@
     let hasFetchedAnalytics = false;
     let hasFetchedRoster = false;
 
+    // === MATRIX CANVAS SETUP (FIXED) ===
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    let columns = [];
+
     const BADGES = {
         quiz_whiz: { id: "quiz_whiz", title: "Quiz Whiz", desc: "Score 100% on any Quick Quiz.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>` },
         expert_explorer: { id: "expert_explorer", title: "Expert Explorer", desc: "Achieve 100% accuracy on an Expert Quiz.", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 22 22 22"></polygon><polyline points="12 2 12 12 18 12"></polyline></svg>` },
@@ -876,12 +881,10 @@
 
             units = newUnits; isDataLoaded = true; 
             if (globalTerms.length > 0) { allTerms = globalTerms; columns.forEach(col => col.word = allTerms[Math.floor(Math.random() * allTerms.length)]); }
-            function renderUnitSelection() { 
-        const grid = document.getElementById('unitBtnGrid'); 
-        if (!isDataLoaded) return; 
-        const keys = Object.keys(units).filter(u => u.trim() !== ""); // Safely ignores blank names
-        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" style="flex-direction:column; gap:5px;" onclick="selectUnit('${u.replace(/'/g, "\\'")}')">${getUnitIcon(u)} ${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; 
-    }; renderAdminUnitSelection();
+            
+            // FIXED: Render BOTH student units AND admin units every time data is fetched
+            renderUnitSelection();
+            renderAdminUnitSelection();
         } catch (e) { console.error("Fetch Error:", e); }
     }
 
@@ -1049,7 +1052,6 @@
                 if (localStorage.getItem('vocabSojournRole') === 'educator') enterTeacherMode();
                 else unlockApp(); 
             } else { document.getElementById('loginOverlay').classList.remove('hidden'); }
-            renderUnitSelection(); 
         }, 800); 
     }
 
@@ -1159,36 +1161,13 @@
         } catch (e) { showToast("Network Error. Check console.", "error"); console.error(e); } finally { btn.innerText = oldText; btn.disabled = false; }
     }
 
-    function enterTeacherMode(skipAnim = false) {
-        document.getElementById('teacherLoginOverlay').classList.add('hidden'); document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studyView').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden'); 
-        
-        document.querySelector('.bg-orbs').classList.add('show'); 
-        
-        document.getElementById('adminView').classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        fetchTeacherData(true); switchAdminTab('content'); 
-        if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID; }
-    }
-
-    function unlockApp(skipAnim = false) { 
-        document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden');
-        
-        document.querySelector('.bg-orbs').classList.add('show'); 
-        
-        document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        
-        initStudentStats();
-        fetchTeacherData(true); 
-        
-        if (!skipAnim) { playWelcomeAnimation('student'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to your Vocabulary Journey.\nPlease select a unit..."; }
-    }
-
     function logout() { if(confirm("Logout?")) { localStorage.clear(); studentName = ""; location.reload(); } }
     
     function renderUnitSelection() { 
         const grid = document.getElementById('unitBtnGrid'); 
         if (!isDataLoaded) return; 
-        const keys = Object.keys(units); 
-        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" style="flex-direction:column; gap:5px;" onclick="selectUnit('${u.replace(/'/g, "\\'")}')">${getUnitIcon(u)} ${u}</button>`).join('') : '<div class="loading-text">No units found.</div>'; 
+        const keys = Object.keys(units).filter(u => u.trim() !== ""); 
+        grid.innerHTML = keys.length ? keys.map(u => `<button class="nav-btn" style="flex-direction:column; gap:5px;" onclick="selectUnit('${u.replace(/'/g, "\\'")}')">${getUnitIcon(u)} ${u}</button>`).join('') : `<div class="loading-text" style="grid-column: 1 / -1;">No units found for ${TEACHER_ID}. Let's create one!</div>`; 
     }
     
     function selectUnit(u) { currentUnit = u; document.getElementById('unitSelection').classList.add('hidden'); document.getElementById('listSelection').classList.remove('hidden'); document.getElementById('backToUnitsBtn').innerHTML = `&larr; All Units`; document.getElementById('listBtnGrid').innerHTML = Object.keys(units[u]).map(l => `<button class="nav-btn" onclick="selectList('${l.replace(/'/g, "\\'")}')">${l}</button>`).join(''); }
