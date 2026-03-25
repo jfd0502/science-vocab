@@ -637,7 +637,7 @@
 <script>
     let TEACHER_ID = ""; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwbPmk1KJuwC8y8oBy_oKB7N8LMfgJcA7LykdRSsaAj-imKQnf4ZkF6h6A28P74Ibx-lRtHclXtlF4/pub?gid=0&single=true&output=csv";
-    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwwW3dfUgUqRNkkUecp7o6cY1-_M9euoMV97RkvM4nTKbWnXB8SYlxEx5s-CNzgjvYGvg/exec"; 
+    const EXPORT_URL = "https://script.google.com/macros/s/AKfycbwSups3uNkuctt0us4Q3uzGPw4dXn5KDkXoytT4qWyzCuXVtC37-1-5HmzmgB4-VdnTIg/exec"; 
 
     let units = {}, currentUnit = "", currentClass = "", cardIdx = 0, studentName = "", draggedItem = null, sessionHistory = [];
     let allTerms = ["Sojourn", "Voyage", "Discovery", "Knowledge"]; 
@@ -678,7 +678,7 @@
     const ctx = canvas.getContext('2d');
     let columns = [];
 
-    // === SVG ICONS (fixes toasts + list/flashcard words) ===
+    // === SVG ICONS ===
     const speakerSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
     const speakerSVG_large = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
     const heartFull = '❤️';
@@ -774,7 +774,7 @@
         setTimeout(() => { 
             document.getElementById('landingPage').classList.add('hidden'); 
             document.querySelector('.bg-orbs').classList.add('show'); 
-            document.getElementById('matrixCanvas').style.opacity = '0';   // Matrix disappears here
+            document.getElementById('matrixCanvas').style.opacity = '0';
 
             if (studentName) {
                 if (localStorage.getItem('vocabSojournRole') === 'educator') enterTeacherMode();
@@ -782,6 +782,27 @@
             } else { document.getElementById('loginOverlay').classList.remove('hidden'); }
             renderUnitSelection(); 
         }, 800); 
+    }
+
+    function enterTeacherMode(skipAnim = false) {
+        document.getElementById('teacherLoginOverlay').classList.add('hidden'); 
+        document.getElementById('landingPage').style.display = 'none'; 
+        document.getElementById('loginOverlay').classList.add('hidden'); 
+        document.getElementById('studyView').classList.add('hidden'); 
+        document.getElementById('teacherLoginBtn').classList.add('hidden'); 
+        
+        document.querySelector('.bg-orbs').classList.add('show'); 
+        document.getElementById('matrixCanvas').style.opacity = '0';   // ← THIS WAS MISSING — now the matrix disappears exactly like student login
+        
+        document.getElementById('adminView').classList.remove('hidden'); 
+        document.querySelector('.app-container').style.opacity = '1'; 
+        document.querySelector('.app-container').style.pointerEvents = 'auto'; 
+        
+        fetchTeacherData(true); 
+        switchAdminTab('content'); 
+        
+        if (!skipAnim) { playWelcomeAnimation('teacher'); } 
+        else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID; }
     }
 
     function initStudentStats() {
@@ -1039,20 +1060,11 @@
     function showCreateListForm() { document.getElementById('adminListSelection').classList.add('hidden'); document.getElementById('adminCreateListArea').classList.remove('hidden'); document.getElementById('createListUnitLabel').innerText = adminSelectedUnit; document.getElementById('newListName').value = ""; document.getElementById('newListTerm').value = ""; document.getElementById('newListDef').value = ""; document.getElementById('newListImg').value = ""; }
     function cancelCreate() { document.getElementById('adminCreateUnitArea').classList.add('hidden'); document.getElementById('adminCreateListArea').classList.add('hidden'); if (adminSelectedUnit && document.getElementById('adminEditArea').classList.contains('hidden')) { document.getElementById('adminListSelection').classList.remove('hidden'); } else { document.getElementById('adminUnitSelection').classList.remove('hidden'); } }
     
-    function enterTeacherMode(skipAnim = false) {
-        document.getElementById('teacherLoginOverlay').classList.add('hidden'); document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('studyView').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden'); 
-        
-        document.querySelector('.bg-orbs').classList.add('show'); 
-        
-        document.getElementById('adminView').classList.remove('hidden'); document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
-        fetchTeacherData(true); switchAdminTab('content'); 
-        if (!skipAnim) { playWelcomeAnimation('teacher'); } else { document.getElementById('typingTitleContainer').innerText = "Welcome to Teacher Mode.\nManaging Identity: " + TEACHER_ID; }
-    }
-
     function unlockApp(skipAnim = false) { 
         document.getElementById('landingPage').style.display = 'none'; document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('teacherLoginBtn').classList.add('hidden');
         
         document.querySelector('.bg-orbs').classList.add('show'); 
+        document.getElementById('matrixCanvas').style.opacity = '0';
         
         document.getElementById('studentWelcome').innerText = "Explorer: " + studentName; document.querySelector('.app-container').style.opacity = '1'; document.querySelector('.app-container').style.pointerEvents = 'auto'; 
         
