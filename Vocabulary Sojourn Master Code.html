@@ -170,6 +170,27 @@
         .toast-icon { width: 30px; height: 30px; color: var(--gold); filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.8)); }
         .toast-text-small { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
         .toast-text-large { font-size: 1rem; font-weight: 800; color: var(--gold); }
+
+/* New rule to prevent words from splitting across lines */
+.scramble-word-wrapper {
+    display: flex;
+    flex-wrap: nowrap; /* Forces letters within a word to stay together */
+    flex-shrink: 0;    /* Prevents the word from squishing */
+    gap: 5px;
+    margin: 10px 15px; /* Adds a clear gap between words */
+    position: relative; 
+    z-index: 10;
+}
+
+/* Ensure the main board allows these word groups to wrap to new lines */
+#scrambleAssembled {
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
     </style>
 </head>
 <body>
@@ -1369,15 +1390,57 @@
         currentAssembledLetters = []; document.getElementById('scrambleDef').innerText = card.d; updateScrambleBoard();
     }
     function updateScrambleBoard() {
-        let assembledHTML = ''; let letterIdx = 0; 
-        for(let i=0; i<currentScrambleWord.length; i++) {
-            if (currentScrambleWord[i] === ' ') { assembledHTML += `<div style="display:inline-block; width:20px;"></div>`; } 
-            else {
-                if(currentAssembledLetters[letterIdx]) { assembledHTML += `<div class="scramble-tile" onclick="removeScrambleLetter(${letterIdx})">${currentAssembledLetters[letterIdx].char}</div>`; } 
-                else { assembledHTML += `<div class="scramble-slot"></div>`; }
-                letterIdx++;
+    var word = currentScrambleWord;
+    var board = document.getElementById('scrambleAssembled');
+    if (!board) return; 
+    
+    board.innerHTML = '';
+    
+    var wordsArray = word.split(' ');
+    var currentGlobalIdx = 0;
+
+    for (var w = 0; w < wordsArray.length; w++) {
+        var wordString = wordsArray[w];
+        var wordWrap = document.createElement('div');
+        wordWrap.className = 'scramble-word-wrapper';
+        
+        for (var j = 0; j < wordString.length; j++) {
+            var slot = document.createElement('div');
+            slot.className = 'scramble-slot';
+            
+            var targetIdx = currentGlobalIdx;
+            
+            if (currentAssembledLetters[targetIdx]) {
+                var charObj = currentAssembledLetters[targetIdx];
+                // Standard string concatenation to avoid template literal errors
+                slot.innerHTML = '<div class="scramble-tile" onclick="removeScrambleLetter(' + targetIdx + ')">' + charObj.char + '</div>';
+            }
+            
+            wordWrap.appendChild(slot);
+            currentGlobalIdx++;
+        }
+        
+        board.appendChild(wordWrap);
+        
+        // Skip space index for data logic
+        if (w < wordsArray.length - 1) {
+            currentGlobalIdx++;
+        }
+    }
+
+    // Safely update the letter pool
+    var pool = document.getElementById('scramblePool');
+    if (pool) {
+        var poolHTML = '';
+        for (var p = 0; p < currentScrambledLetters.length; p++) {
+            var l = currentScrambledLetters[p];
+            if (!l.used) {
+                poolHTML += '<div class="scramble-tile" onclick="selectScrambleLetter(' + p + ')">' + l.char + '</div>';
             }
         }
+        pool.innerHTML = poolHTML;
+    }
+}
         document.getElementById('scrambleAssembled').innerHTML = assembledHTML;
         let poolHTML = ''; currentScrambledLetters.forEach((l, i) => { if(!l.used && l.char !== ' ') { poolHTML += `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`; } });
         document.getElementById('scramblePool').innerHTML = poolHTML;
