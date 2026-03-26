@@ -1369,15 +1369,49 @@
         currentAssembledLetters = []; document.getElementById('scrambleDef').innerText = card.d; updateScrambleBoard();
     }
     function updateScrambleBoard() {
-        let assembledHTML = ''; let letterIdx = 0; 
-        for(let i=0; i<currentScrambleWord.length; i++) {
-            if (currentScrambleWord[i] === ' ') { assembledHTML += `<div style="display:inline-block; width:20px;"></div>`; } 
-            else {
-                if(currentAssembledLetters[letterIdx]) { assembledHTML += `<div class="scramble-tile" onclick="removeScrambleLetter(${letterIdx})">${currentAssembledLetters[letterIdx].char}</div>`; } 
-                else { assembledHTML += `<div class="scramble-slot"></div>`; }
-                letterIdx++;
+    const word = currentScrambleWord; 
+    const board = document.getElementById('scrambleAssembled');
+    board.innerHTML = '';
+    
+    // Split the term into words (e.g., ["Balanced", "Force"])
+    const words = word.split(' ');
+    let charPointer = 0; // This tracks our position in the master term string
+
+    words.forEach((wordStr, wordIdx) => {
+        // Create the unbreakable wrapper for this word
+        const wordWrapper = document.createElement('div');
+        wordWrapper.className = 'scramble-word-wrapper';
+        
+        for (let i = 0; i < wordStr.length; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'scramble-slot';
+            
+            // Capture the current pointer for this specific slot
+            const thisSlotIdx = charPointer;
+            
+            if (currentAssembledLetters[thisSlotIdx]) {
+                const charObj = currentAssembledLetters[thisSlotIdx];
+                slot.innerHTML = `<div class="scramble-tile" onclick="removeScrambleLetter(${thisSlotIdx})">${charObj.char}</div>`;
             }
+            
+            wordWrapper.appendChild(slot);
+            charPointer++; // Move to next character
         }
+        
+        board.appendChild(wordWrapper);
+        
+        // IMPORTANT: If there is another word coming, skip the space character index
+        if (wordIdx < words.length - 1) {
+            charPointer++; 
+        }
+    });
+
+    // Pool rendering remains the same
+    const pool = document.getElementById('scramblePool');
+    pool.innerHTML = currentScrambledLetters.map((l, i) => 
+        l.used ? '' : `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`
+    ).join('');
+}
         document.getElementById('scrambleAssembled').innerHTML = assembledHTML;
         let poolHTML = ''; currentScrambledLetters.forEach((l, i) => { if(!l.used && l.char !== ' ') { poolHTML += `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`; } });
         document.getElementById('scramblePool').innerHTML = poolHTML;
