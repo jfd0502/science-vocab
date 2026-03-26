@@ -170,26 +170,6 @@
         .toast-icon { width: 30px; height: 30px; color: var(--gold); filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.8)); }
         .toast-text-small { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
         .toast-text-large { font-size: 1rem; font-weight: 800; color: var(--gold); }
-/* Ensure the word groups don't break internally */
-/* Ensure the word groups don't break internally */
-.scramble-word-wrapper {
-    display: flex;
-    flex-wrap: nowrap; /* Prevents letters in the word from wrapping */
-    flex-shrink: 0;    /* Forces the word to maintain its full width */
-    white-space: nowrap; 
-    gap: 5px;
-    margin: 10px 15px; /* Increased margin to make word separation obvious */
-}
-
-/* Ensure the main board allows these word groups to wrap to new lines */
-#scrambleAssembled {
-    display: flex;
-    flex-wrap: wrap; 
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-}
     </style>
 </head>
 <body>
@@ -313,7 +293,7 @@
             </div>
         </div>
 
-        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">  Sync Online</div>
+        <div id="syncStatus" style="font-size: 0.65rem; color: var(--accent); text-align:center; margin-bottom:15px; text-transform: uppercase; letter-spacing: 2px;">• Sync Online</div>
         
         <div id="studyView" class="panel">
             <div id="unitSelection">
@@ -701,8 +681,8 @@
     // === SVG ICONS ===
     const speakerSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
     const speakerSVG_large = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
-    const heartFull = '??';
-    const heartEmpty = '?';
+    const heartFull = '❤️';
+    const heartEmpty = '♡';
     const successSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
     const errorSVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
 
@@ -812,7 +792,7 @@
         document.getElementById('teacherLoginBtn').classList.add('hidden'); 
         
         document.querySelector('.bg-orbs').classList.add('show'); 
-        document.getElementById('matrixCanvas').style.opacity = '0';   // ? THIS WAS MISSING   now the matrix disappears exactly like student login
+        document.getElementById('matrixCanvas').style.opacity = '0';   // ← THIS WAS MISSING — now the matrix disappears exactly like student login
         
         document.getElementById('adminView').classList.remove('hidden'); 
         document.querySelector('.app-container').style.opacity = '1'; 
@@ -1389,49 +1369,15 @@
         currentAssembledLetters = []; document.getElementById('scrambleDef').innerText = card.d; updateScrambleBoard();
     }
     function updateScrambleBoard() {
-    const word = currentScrambleWord; 
-    const board = document.getElementById('scrambleAssembled');
-    board.innerHTML = '';
-    
-    // Split the term into words (e.g., ["Balanced", "Force"])
-    const words = word.split(' ');
-    let charPointer = 0; // This tracks our position in the master term string
-
-    words.forEach((wordStr, wordIdx) => {
-        // Create the unbreakable wrapper for this word
-        const wordWrapper = document.createElement('div');
-        wordWrapper.className = 'scramble-word-wrapper';
-        
-        for (let i = 0; i < wordStr.length; i++) {
-            const slot = document.createElement('div');
-            slot.className = 'scramble-slot';
-            
-            // Capture the current pointer for this specific slot
-            const thisSlotIdx = charPointer;
-            
-            if (currentAssembledLetters[thisSlotIdx]) {
-                const charObj = currentAssembledLetters[thisSlotIdx];
-                slot.innerHTML = `<div class="scramble-tile" onclick="removeScrambleLetter(${thisSlotIdx})">${charObj.char}</div>`;
+        let assembledHTML = ''; let letterIdx = 0; 
+        for(let i=0; i<currentScrambleWord.length; i++) {
+            if (currentScrambleWord[i] === ' ') { assembledHTML += `<div style="display:inline-block; width:20px;"></div>`; } 
+            else {
+                if(currentAssembledLetters[letterIdx]) { assembledHTML += `<div class="scramble-tile" onclick="removeScrambleLetter(${letterIdx})">${currentAssembledLetters[letterIdx].char}</div>`; } 
+                else { assembledHTML += `<div class="scramble-slot"></div>`; }
+                letterIdx++;
             }
-            
-            wordWrapper.appendChild(slot);
-            charPointer++; // Move to next character
         }
-        
-        board.appendChild(wordWrapper);
-        
-        // IMPORTANT: If there is another word coming, skip the space character index
-        if (wordIdx < words.length - 1) {
-            charPointer++; 
-        }
-    });
-
-    // Pool rendering remains the same
-    const pool = document.getElementById('scramblePool');
-    pool.innerHTML = currentScrambledLetters.map((l, i) => 
-        l.used ? '' : `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`
-    ).join('');
-}
         document.getElementById('scrambleAssembled').innerHTML = assembledHTML;
         let poolHTML = ''; currentScrambledLetters.forEach((l, i) => { if(!l.used && l.char !== ' ') { poolHTML += `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`; } });
         document.getElementById('scramblePool').innerHTML = poolHTML;
@@ -1886,3 +1832,5 @@
 </script>
 </body>
 </html>
+
+
