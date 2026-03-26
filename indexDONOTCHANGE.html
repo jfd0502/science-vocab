@@ -170,6 +170,23 @@
         .toast-icon { width: 30px; height: 30px; color: var(--gold); filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.8)); }
         .toast-text-small { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
         .toast-text-large { font-size: 1rem; font-weight: 800; color: var(--gold); }
+/* Ensure the word groups don't break internally */
+.scramble-word-wrapper {
+    display: flex;
+    flex-wrap: nowrap; /* Prevents the word itself from breaking */
+    gap: 5px;
+    margin: 5px 10px;
+}
+
+/* Ensure the main board allows these word groups to wrap to new lines */
+#scrambleAssembled {
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
     </style>
 </head>
 <body>
@@ -1369,43 +1386,43 @@
         currentAssembledLetters = []; document.getElementById('scrambleDef').innerText = card.d; updateScrambleBoard();
     }
     function updateScrambleBoard() {
-    const word = currentScrambleWord;
+    const word = currentScrambleWord; // e.g., "Balanced Force"
     const board = document.getElementById('scrambleAssembled');
     board.innerHTML = '';
     
-    // Split the term into words
     const words = word.split(' ');
-    let charCounter = 0;
+    let globalCharIdx = 0; // Tracks position in the full phrase (including spaces)
 
     words.forEach((wordStr, wordIdx) => {
-        // Create a wrapper for each word to keep it together
+        // Create the wrapper that keeps the word together
         const wordWrapper = document.createElement('div');
-        wordWrapper.style.display = 'flex';
-        wordWrapper.style.gap = '5px';
-        wordWrapper.style.margin = '5px 15px'; // Adds space between words
+        wordWrapper.className = 'scramble-word-wrapper';
         
         for (let i = 0; i < wordStr.length; i++) {
             const slot = document.createElement('div');
             slot.className = 'scramble-slot';
             
-            // Check if this position in the assembled array has a letter
-            if (currentAssembledLetters[charCounter]) {
-                const charObj = currentAssembledLetters[charCounter];
-                slot.innerHTML = `<div class="scramble-tile" onclick="removeScrambleLetter(${charCounter})">${charObj.char}</div>`;
+            // We use a local capture of the current global index for the click handler
+            const currentIdx = globalCharIdx;
+            
+            if (currentAssembledLetters[currentIdx]) {
+                const charObj = currentAssembledLetters[currentIdx];
+                slot.innerHTML = `<div class="scramble-tile" onclick="removeScrambleLetter(${currentIdx})">${charObj.char}</div>`;
             }
+            
             wordWrapper.appendChild(slot);
-            charCounter++;
+            globalCharIdx++;
         }
         
         board.appendChild(wordWrapper);
         
-        // Skip the space in the underlying logic count if not at the end
+        // Account for the space between words in the data array
         if (wordIdx < words.length - 1) {
-            charCounter++; 
+            globalCharIdx++; 
         }
     });
 
-    // Render the available pool of letters
+    // Render the pool (Keep this part as you have it)
     const pool = document.getElementById('scramblePool');
     pool.innerHTML = currentScrambledLetters.map((l, i) => 
         l.used ? '' : `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`
