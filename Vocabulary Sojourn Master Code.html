@@ -1456,7 +1456,7 @@
                 document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--danger); font-weight:bold; font-size:1.5rem;">Try Again!</div>`;
                 setTimeout(() => { currentAssembledLetters.forEach(a => currentScrambledLetters[a.poolIdx].used = false); currentAssembledLetters = []; updateScrambleBoard(); }, 800);
             }
-        }
+     
     
     function selectScrambleLetter(poolIdx) { currentScrambledLetters[poolIdx].used = true; currentAssembledLetters.push({ char: currentScrambledLetters[poolIdx].char, poolIdx: poolIdx }); updateScrambleBoard(); }
     function removeScrambleLetter(assembledIdx) { let removed = currentAssembledLetters.splice(assembledIdx, 1)[0]; currentScrambledLetters[removed.poolIdx].used = false; updateScrambleBoard(); }
