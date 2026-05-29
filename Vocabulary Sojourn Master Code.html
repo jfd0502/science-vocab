@@ -1406,29 +1406,40 @@
         }
     });
 
-    // Pool rendering remains the same
-    const pool = document.getElementById('scramblePool');
-    pool.innerHTML = currentScrambledLetters.map((l, i) => 
-        l.used ? '' : `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`
-    ).join('');
-}
-        document.getElementById('scrambleAssembled').innerHTML = assembledHTML;
-        let poolHTML = ''; currentScrambledLetters.forEach((l, i) => { if(!l.used && l.char !== ' ') { poolHTML += `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`; } });
-        document.getElementById('scramblePool').innerHTML = poolHTML;
-        
-        const wordNoSpaces = currentScrambleWord.replace(/ /g, '');
-        if(currentAssembledLetters.length === wordNoSpaces.length && currentAssembledLetters.length > 0) {
-            let attempt = currentAssembledLetters.map(x => x.char).join('');
-            if(attempt === wordNoSpaces) {
-                scrambleScore++; document.getElementById('scrambleStats').innerText = `Progress: ${scrambleScore} / ${scrambleCards.length}`;
-                document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--accent); font-weight:bold; font-size:1.5rem; text-transform: uppercase; letter-spacing: 2px;">${currentScrambleWord}</div>`;
-                document.getElementById('scramblePool').innerHTML = ''; setTimeout(() => { scrambleIdx++; renderScramble(); }, 1200);
-            } else {
-                document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--danger); font-weight:bold; font-size:1.5rem;">Try Again!</div>`;
-                setTimeout(() => { currentAssembledLetters.forEach(a => currentScrambledLetters[a.poolIdx].used = false); currentAssembledLetters = []; updateScrambleBoard(); }, 800);
-            }
-        }
+    // 1. Render the scramble pool cleanly (Removed the duplicate map logic and stray bracket)
+    let poolHTML = ''; 
+    currentScrambledLetters.forEach((l, i) => { 
+        if(!l.used && l.char !== ' ') { 
+            poolHTML += `<div class="scramble-tile" onclick="selectScrambleLetter(${i})">${l.char}</div>`; 
+        } 
+    });
+    document.getElementById('scramblePool').innerHTML = poolHTML;
     
+    // 2. Check if the user has assembled the full word
+    const wordNoSpaces = currentScrambleWord.replace(/ /g, '');
+    if(currentAssembledLetters.length === wordNoSpaces.length && currentAssembledLetters.length > 0) {
+        let attempt = currentAssembledLetters.map(x => x.char).join('');
+        
+        // Correct Answer
+        if(attempt === wordNoSpaces) {
+            scrambleScore++; 
+            document.getElementById('scrambleStats').innerText = `Progress: ${scrambleScore} / ${scrambleCards.length}`;
+            document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--accent); font-weight:bold; font-size:1.5rem; text-transform: uppercase; letter-spacing: 2px;">${currentScrambleWord}</div>`;
+            document.getElementById('scramblePool').innerHTML = ''; 
+            setTimeout(() => { scrambleIdx++; renderScramble(); }, 1200);
+            
+        // Incorrect Answer
+        } else {
+            document.getElementById('scrambleAssembled').innerHTML = `<div style="color:var(--danger); font-weight:bold; font-size:1.5rem;">Try Again!</div>`;
+            setTimeout(() => { 
+                currentAssembledLetters.forEach(a => currentScrambledLetters[a.poolIdx].used = false); 
+                currentAssembledLetters = []; 
+                updateScrambleBoard(); 
+            }, 800);
+        }
+    } // <--- Closes the main "if" statement
+} // <--- Closes your outer function cleanly!
+       
     function selectScrambleLetter(poolIdx) { currentScrambledLetters[poolIdx].used = true; currentAssembledLetters.push({ char: currentScrambledLetters[poolIdx].char, poolIdx: poolIdx }); updateScrambleBoard(); }
     function removeScrambleLetter(assembledIdx) { let removed = currentAssembledLetters.splice(assembledIdx, 1)[0]; currentScrambledLetters[removed.poolIdx].used = false; updateScrambleBoard(); }
     function endScramble() {
